@@ -1,8 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:api');
+Route::post('sign-up', [AuthController::class, 'signUp']);
+Route::post('sign-in', [AuthController::class, 'signIn']);
+Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
+
+Route::middleware('auth:api')->get('/user', function (Request $request) {
+    return response()->json($request->user());
+});

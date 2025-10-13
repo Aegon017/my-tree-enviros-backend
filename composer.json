@@ -13,6 +13,7 @@
         "laravel/framework": "^12.0",
         "laravel/passport": "^13.0",
         "laravel/tinker": "^2.10.1",
+        "propaganistas/laravel-phone": "^6.0",
         "spatie/laravel-one-time-passwords": "^1.0"
     },
     "require-dev": {

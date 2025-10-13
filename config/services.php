@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'sms_login' => [
+        'endpoint' => env('SMS_LOGIN_ENDPOINT', 'https://smslogin.co/v3/api.php'),
+        'username' => env('SMS_LOGIN_USERNAME', 'MYTREE'),
+        'apikey'   => env('SMS_LOGIN_APIKEY', '17cb6bf26e826eb64035'),
+        'senderid' => env('SMS_LOGIN_SENDERID', 'MYTREN'),
+        'otptemplateid' => env('SMS_LOGIN_OTP_TEMPLATE_ID', '1707175231272775110'),
+    ]
 ];
