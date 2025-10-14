@@ -31,7 +31,8 @@ class LocationForm
                         'city' => 'City',
                         'area' => 'Area',
                     ])
-                    ->native(false),
+                    ->native(false)
+                    ->preload(),
 
                 Toggle::make('is_active')->label('Is Active')->default(true),
             ]);
