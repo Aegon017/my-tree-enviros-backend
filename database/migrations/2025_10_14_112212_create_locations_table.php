@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('type')->index();
             $table->foreignId('parent_id')->nullable()->constrained('locations')->cascadeOnDelete();
-            $table->boolean('is_active')->default(true);
+            $table->boolean('is_active');
             $table->timestamps();
         });
     }

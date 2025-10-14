@@ -23,7 +23,6 @@ class LocationsTable
                 TextColumn::make('name')
                     ->label('Location')
                     ->formatStateUsing(fn($state, $record) => str_repeat('— ', $record->depth()) . $state)
-                    ->sortable()
                     ->searchable(),
 
                 TextColumn::make('type')

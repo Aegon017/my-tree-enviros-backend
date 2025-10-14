@@ -17,6 +17,8 @@ class LocationForm
                     ->label('Parent Location')
                     ->relationship('parent', 'name')
                     ->searchable()
+                    ->native(false)
+                    ->preload()
                     ->nullable(),
 
                 TextInput::make('name')->required(),

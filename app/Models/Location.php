@@ -10,6 +10,10 @@ class Location extends Model
 {
     protected $fillable = ['name', 'type', 'parent_id', 'is_active'];
 
+    protected $casts = [
+        'is_active' => 'boolean'
+    ];
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'parent_id');
