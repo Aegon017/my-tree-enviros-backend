@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Api\Services\AuthService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Auth\ResendOtpRequest;
 use App\Http\Requests\Api\Auth\SignInRequest;
 use App\Http\Requests\Api\Auth\SignUpRequest;
 use App\Http\Requests\Api\Auth\VerifyOtpRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -30,7 +32,31 @@ class AuthController extends Controller
         $data = $request->validated();
 
         $user = $this->authService->findUserByPhone(
-            $data['coutry_code'],
+            $data['country_code'],
+            $data['phone'],
+        );
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'No user found with this phone number.',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $user->sendOneTimePassword();
+
+        return response()->json([
+            'message' => 'OTP sent successfully.',
+        ]);
+    }
+
+    public function resendOtp(ResendOtpRequest $request)
+    {
+        $data = $request->validated();
+
+        Log::info($data);
+
+        $user = $this->authService->findUserByPhone(
+            $data['country_code'],
             $data['phone'],
         );
 
@@ -52,7 +78,7 @@ class AuthController extends Controller
         $data = $request->validated();
 
         $user = $this->authService->findUserByPhone(
-            $data['coutry_code'],
+            $data['country_code'],
             $data['phone']
         );
 
