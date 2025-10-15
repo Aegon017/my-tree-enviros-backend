@@ -43,4 +43,9 @@ final class Location extends Model
 
         return $depth;
     }
+
+    public function treeLocations(): HasMany
+    {
+        return $this->hasMany(TreeLocation::class);
+    }
 }

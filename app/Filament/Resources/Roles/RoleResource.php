@@ -158,7 +158,7 @@ final class RoleResource extends Resource
         return Utils::getResourceCluster();
     }
 
-    public static function getEssentialsPlugin(): \BezhanSalleh\FilamentShield\FilamentShieldPlugin
+    public static function getEssentialsPlugin(): FilamentShieldPlugin
     {
         return FilamentShieldPlugin::get();
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -7,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Product extends Model implements HasMedia
+final class Product extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
@@ -30,7 +32,6 @@ class Product extends Model implements HasMedia
         $this->addMediaCollection('image')->singleFile();
         $this->addMediaCollection('sub_images');
     }
-
 
     public function productCategory(): BelongsTo
     {

@@ -10,15 +10,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('locations', function (Blueprint $table) {
+        Schema::create('tree_prices', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('type')->index();
-            $table->foreignId('parent_id')->nullable()->constrained('locations')->cascadeOnDelete();
+            $table->foreignId('tree_id')->constrained()->cascadeOnDelete();
+            $table->decimal('price', 8, 2);
+            $table->unsignedTinyInteger('duration');
+            $table->string('duration_type');
             $table->boolean('is_active');
             $table->timestamps();
-
-            $table->unique(['parent_id', 'name']);
         });
     }
 };
