@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -7,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-class ProductCategory extends Model implements HasMedia
+final class ProductCategory extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
@@ -17,7 +19,6 @@ class ProductCategory extends Model implements HasMedia
     {
         $this->addMediaCollection('image')->singleFile();
     }
-
 
     public function products(): HasMany
     {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Products\Schemas;
 
 use App\Models\ProductCategory;
@@ -15,7 +17,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
-class ProductForm
+final class ProductForm
 {
     public static function configure(Schema $schema): Schema
     {
@@ -35,7 +37,7 @@ class ProductForm
                             ->schema([
                                 TextInput::make('name')->required()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state))),
+                                    ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
                                 TextInput::make('slug')
                                     ->unique(table: 'products', column: 'slug')
                                     ->required(),
