@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Trees;
 use App\Filament\Resources\Trees\Pages\CreateTree;
 use App\Filament\Resources\Trees\Pages\EditTree;
 use App\Filament\Resources\Trees\Pages\ListTrees;
+use App\Filament\Resources\Trees\RelationManagers\TreePricesRelationManager;
 use App\Filament\Resources\Trees\Schemas\TreeForm;
 use App\Filament\Resources\Trees\Tables\TreesTable;
 use App\Models\Tree;
@@ -37,7 +38,7 @@ final class TreeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            TreePricesRelationManager::class
         ];
     }
 

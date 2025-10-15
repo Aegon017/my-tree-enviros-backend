@@ -29,7 +29,7 @@ final class Location extends Model
     public function allDescendants()
     {
         return $this->children()->with('allDescendants')->get()
-            ->flatMap(fn ($child) => collect([$child])->merge($child->allDescendants()));
+            ->flatMap(fn($child) => collect([$child])->merge($child->allDescendants()));
     }
 
     public function depth(): int
@@ -42,5 +42,10 @@ final class Location extends Model
         }
 
         return $depth;
+    }
+
+    public function treeLocations(): HasMany
+    {
+        return $this->hasMany(TreeLocation::class);
     }
 }
