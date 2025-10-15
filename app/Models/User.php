@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,16 +12,20 @@ use Laravel\Passport\HasApiTokens;
 use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements OAuthenticatable
+final class User extends Authenticatable implements OAuthenticatable
 {
-    use HasFactory, Notifiable, HasOneTimePasswords, HasApiTokens, HasRoles;
+    use HasApiTokens;
+    use HasFactory;
+    use HasOneTimePasswords;
+    use HasRoles;
+    use Notifiable;
 
     protected $fillable = [
         'name',
         'email',
         'country_code',
         'phone',
-        'password'
+        'password',
     ];
 
     protected $hidden = [
@@ -27,16 +33,16 @@ class User extends Authenticatable implements OAuthenticatable
         'remember_token',
     ];
 
+    public function routeNotificationForSmsLogin(): string
+    {
+        return $this->phone;
+    }
+
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    public function routeNotificationForSmsLogin(): string
-    {
-        return $this->phone;
     }
 }

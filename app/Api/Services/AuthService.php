@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Api\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-class AuthService
+final class AuthService
 {
     public function registerUser(array $data): User
     {

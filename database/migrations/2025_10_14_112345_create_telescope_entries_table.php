@@ -1,22 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Get the migration connection name.
-     */
     public function getConnection(): ?string
     {
         return config('telescope.storage.database.connection');
     }
 
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         $schema = Schema::connection($this->getConnection());
@@ -54,17 +50,5 @@ return new class extends Migration
         $schema->create('telescope_monitoring', function (Blueprint $table) {
             $table->string('tag')->primary();
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        $schema = Schema::connection($this->getConnection());
-
-        $schema->dropIfExists('telescope_entries_tags');
-        $schema->dropIfExists('telescope_entries');
-        $schema->dropIfExists('telescope_monitoring');
     }
 };

@@ -1,23 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Api\Auth;
 
 use App\Rules\PhoneNumberRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class SignInRequest extends FormRequest
+final class SignInRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'phone' => preg_replace('/\s+/', '', (string) $this->phone),
-        ]);
     }
 
     public function rules(): array
@@ -29,7 +24,7 @@ class SignInRequest extends FormRequest
                 'string',
                 new PhoneNumberRule($this->country_code),
                 Rule::exists('users')->where(
-                    fn($query) => $query->where('country_code', $this->country_code)
+                    fn ($query) => $query->where('country_code', $this->country_code)
                 ),
             ],
         ];
@@ -42,5 +37,12 @@ class SignInRequest extends FormRequest
             'phone.required' => 'The phone number field is required.',
             'phone.exists' => 'No user found with this phone number and country code.',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'phone' => preg_replace('/\s+/', '', (string) $this->phone),
+        ]);
     }
 }

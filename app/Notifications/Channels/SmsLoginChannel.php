@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications\Channels;
 
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
-class SmsLoginChannel
+final class SmsLoginChannel
 {
     /**
      * Send the notification.
@@ -14,7 +17,7 @@ class SmsLoginChannel
     {
         $smsData = $notification->toPhone($notifiable);
 
-        if (!$this->isValidSmsData($smsData)) {
+        if (! $this->isValidSmsData($smsData)) {
             return;
         }
 
@@ -27,8 +30,8 @@ class SmsLoginChannel
     private function isValidSmsData(mixed $smsData): bool
     {
         return is_array($smsData) &&
-            !empty($smsData['phone']) &&
-            !empty($smsData['message']);
+            ! empty($smsData['phone']) &&
+            ! empty($smsData['message']);
     }
 
     /**
@@ -38,15 +41,9 @@ class SmsLoginChannel
     {
         $params = $this->buildRequestParams($smsData);
         $url = config('services.sms_login.endpoint');
-
-        try {
-            $response = Http::timeout(10)->get($url, $params);
-
-            if (!$response->successful()) {
-                throw new \RuntimeException("SMS provider returned status: {$response->status()}");
-            }
-        } catch (\Exception $e) {
-            throw $e;
+        $response = Http::timeout(10)->get($url, $params);
+        if (! $response->successful()) {
+            throw new RuntimeException('SMS provider returned status: '.$response->status());
         }
     }
 
@@ -56,14 +53,14 @@ class SmsLoginChannel
     private function buildRequestParams(array $smsData): array
     {
         $params = [
-            'username'   => config('services.sms_login.username'),
-            'apikey'     => config('services.sms_login.apikey'),
-            'mobile'     => $smsData['phone'],
-            'senderid'   => config('services.sms_login.senderid'),
-            'message'    => $smsData['message'],
+            'username' => config('services.sms_login.username'),
+            'apikey' => config('services.sms_login.apikey'),
+            'mobile' => $smsData['phone'],
+            'senderid' => config('services.sms_login.senderid'),
+            'message' => $smsData['message'],
             'templateid' => $smsData['templateid'] ?? null,
         ];
 
-        return array_filter($params, fn($value) => $value !== null && $value !== '');
+        return array_filter($params, fn ($value): bool => $value !== null && $value !== '');
     }
 }

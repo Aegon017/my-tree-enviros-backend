@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Notifications\Channels\SmsLoginChannel;
@@ -7,7 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Spatie\OneTimePasswords\Notifications\OneTimePasswordNotification as NotificationsOneTimePasswordNotification;
 
-class OneTimePasswordNotification extends NotificationsOneTimePasswordNotification implements ShouldQueue
+final class OneTimePasswordNotification extends NotificationsOneTimePasswordNotification implements ShouldQueue
 {
     use Queueable;
 
@@ -28,7 +30,7 @@ class OneTimePasswordNotification extends NotificationsOneTimePasswordNotificati
     {
         return [
             'phone' => $notifiable->phone,
-            'message' => "Your OTP to sign in to My Tree is {$this->oneTimePassword->password} . Please do not share it with anyone.",
+            'message' => sprintf('Your OTP to sign in to My Tree is %s . Please do not share it with anyone.', $this->oneTimePassword->password),
             'templateid' => config('services.sms_login.otptemplateid'),
         ];
     }

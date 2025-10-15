@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Api\Services\AuthService;
@@ -13,9 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
-class AuthController extends Controller
+final class AuthController extends Controller
 {
-    public function __construct(private AuthService $authService) {}
+    public function __construct(private readonly AuthService $authService) {}
 
     public function signUp(SignUpRequest $request): JsonResponse
     {
@@ -36,7 +38,7 @@ class AuthController extends Controller
             $data['phone'],
         );
 
-        if (!$user) {
+        if (! $user instanceof \App\Models\User) {
             return response()->json([
                 'message' => 'No user found with this phone number.',
             ], Response::HTTP_NOT_FOUND);
@@ -60,7 +62,7 @@ class AuthController extends Controller
             $data['phone'],
         );
 
-        if (!$user) {
+        if (! $user instanceof \App\Models\User) {
             return response()->json([
                 'message' => 'No user found with this phone number.',
             ], Response::HTTP_NOT_FOUND);
@@ -82,7 +84,7 @@ class AuthController extends Controller
             $data['phone']
         );
 
-        if (!$user) {
+        if (! $user instanceof \App\Models\User) {
             return response()->json([
                 'message' => 'No user found with this phone number.',
             ], Response::HTTP_NOT_FOUND);
