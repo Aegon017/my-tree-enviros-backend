@@ -1,22 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Api\Auth;
 
 use App\Rules\PhoneNumberRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class VerifyOtpRequest extends FormRequest
+final class VerifyOtpRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'phone' => preg_replace('/\s+/', '', (string) $this->phone),
-        ]);
     }
 
     public function rules(): array
@@ -38,5 +33,12 @@ class VerifyOtpRequest extends FormRequest
             'otp.required' => 'The OTP code is required.',
             'otp.digits' => 'The OTP code must be exactly 6 digits.',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'phone' => preg_replace('/\s+/', '', (string) $this->phone),
+        ]);
     }
 }

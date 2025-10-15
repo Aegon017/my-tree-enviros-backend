@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 use App\Traits\HasLabelOptions;
@@ -15,9 +17,9 @@ enum AgeUnitEnum: string
     public function label(): string
     {
         return match ($this) {
-            self::DAY   => 'Day',
+            self::DAY => 'Day',
             self::MONTH => 'Month',
-            self::YEAR  => 'Year',
+            self::YEAR => 'Year',
         };
     }
 }

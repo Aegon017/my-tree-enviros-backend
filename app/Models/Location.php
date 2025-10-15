@@ -1,33 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Location extends Model
+final class Location extends Model
 {
     protected $fillable = ['name', 'type', 'parent_id', 'is_active'];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(Location::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(Location::class, 'parent_id');
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function allDescendants()
     {
         return $this->children()->with('allDescendants')->get()
-            ->flatMap(fn($child) => collect([$child])->merge($child->allDescendants()));
+            ->flatMap(fn ($child) => collect([$child])->merge($child->allDescendants()));
     }
 
     public function depth(): int
@@ -35,9 +37,10 @@ class Location extends Model
         $depth = 0;
         $parent = $this->parent;
         while ($parent) {
-            $depth++;
+            ++$depth;
             $parent = $parent->parent;
         }
+
         return $depth;
     }
 }

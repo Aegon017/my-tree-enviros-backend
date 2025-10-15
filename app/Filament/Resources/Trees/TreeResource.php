@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Trees;
 
 use App\Filament\Resources\Trees\Pages\CreateTree;
@@ -14,7 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class TreeResource extends Resource
+final class TreeResource extends Resource
 {
     protected static ?string $model = Tree::class;
 

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Trees\Pages;
 
 use App\Filament\Resources\Trees\TreeResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditTree extends EditRecord
+final class EditTree extends EditRecord
 {
     protected static string $resource = TreeResource::class;
 

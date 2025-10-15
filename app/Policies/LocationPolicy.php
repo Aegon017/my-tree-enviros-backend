@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Location;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class LocationPolicy
+final class LocationPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Location');
     }
 
-    public function view(AuthUser $authUser, Location $location): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Location');
     }
@@ -27,22 +27,22 @@ class LocationPolicy
         return $authUser->can('Create:Location');
     }
 
-    public function update(AuthUser $authUser, Location $location): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Location');
     }
 
-    public function delete(AuthUser $authUser, Location $location): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Location');
     }
 
-    public function restore(AuthUser $authUser, Location $location): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Location');
     }
 
-    public function forceDelete(AuthUser $authUser, Location $location): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Location');
     }
@@ -57,7 +57,7 @@ class LocationPolicy
         return $authUser->can('RestoreAny:Location');
     }
 
-    public function replicate(AuthUser $authUser, Location $location): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Location');
     }
@@ -66,5 +66,4 @@ class LocationPolicy
     {
         return $authUser->can('Reorder:Location');
     }
-
 }

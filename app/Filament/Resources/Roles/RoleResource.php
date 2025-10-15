@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Roles;
 
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Resources\Roles\Pages\CreateRole;
 use App\Filament\Resources\Roles\Pages\EditRole;
 use App\Filament\Resources\Roles\Pages\ListRoles;
 use App\Filament\Resources\Roles\Pages\ViewRole;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use BezhanSalleh\FilamentShield\Support\Utils;
 use BezhanSalleh\FilamentShield\Traits\HasShieldFormComponents;
 use BezhanSalleh\PluginEssentials\Concerns\Resource as Essentials;
@@ -29,7 +29,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Unique;
 
-class RoleResource extends Resource
+final class RoleResource extends Resource
 {
     use Essentials\BelongsToParent;
     use Essentials\BelongsToTenant;
@@ -69,9 +69,9 @@ class RoleResource extends Resource
                                     /** @phpstan-ignore-next-line */
                                     ->default(Filament::getTenant()?->id)
                                     ->options(fn (): array => in_array(Utils::getTenantModel(), [null, '', '0'], true) ? [] : Utils::getTenantModel()::pluck('name', 'id')->toArray())
-                                    ->visible(fn (): bool => static::shield()->isCentralApp() && Utils::isTenancyEnabled())
-                                    ->dehydrated(fn (): bool => static::shield()->isCentralApp() && Utils::isTenancyEnabled()),
-                                static::getSelectAllFormComponent(),
+                                    ->visible(fn (): bool => self::shield()->isCentralApp() && Utils::isTenancyEnabled())
+                                    ->dehydrated(fn (): bool => self::shield()->isCentralApp() && Utils::isTenancyEnabled()),
+                                self::getSelectAllFormComponent(),
 
                             ])
                             ->columns([
@@ -81,7 +81,7 @@ class RoleResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
-                static::getShieldFormComponents(),
+                self::getShieldFormComponents(),
             ]);
     }
 
@@ -104,7 +104,7 @@ class RoleResource extends Resource
                     ->color(fn (mixed $state): string => str($state)->contains('Global') ? 'gray' : 'primary')
                     ->label(__('filament-shield::filament-shield.column.team'))
                     ->searchable()
-                    ->visible(fn (): bool => static::shield()->isCentralApp() && Utils::isTenancyEnabled()),
+                    ->visible(fn (): bool => self::shield()->isCentralApp() && Utils::isTenancyEnabled()),
                 TextColumn::make('permissions_count')
                     ->badge()
                     ->label(__('filament-shield::filament-shield.column.permissions'))
@@ -158,7 +158,7 @@ class RoleResource extends Resource
         return Utils::getResourceCluster();
     }
 
-    public static function getEssentialsPlugin(): ?FilamentShieldPlugin
+    public static function getEssentialsPlugin(): \BezhanSalleh\FilamentShield\FilamentShieldPlugin
     {
         return FilamentShieldPlugin::get();
     }
