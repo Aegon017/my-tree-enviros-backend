@@ -32,13 +32,13 @@ class Product extends Model implements HasMedia
     }
 
 
-
-
-
-
-
     public function productCategory(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class);
+    }
+
+    public function inventories()
+    {
+        return $this->hasMany(Inventory::class);
     }
 }
