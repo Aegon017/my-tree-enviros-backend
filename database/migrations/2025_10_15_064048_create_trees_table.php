@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('trees', function (Blueprint $table) {
             $table->id();
-            $table->uuid('sku')->unique();
+            $table->string('sku')->unique();
             $table->string('name')->unique();
             $table->string('slug')->unique();
             $table->unsignedSmallInteger('age');
