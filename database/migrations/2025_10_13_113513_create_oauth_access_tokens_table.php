@@ -21,7 +21,7 @@ return new class extends Migration
             $table->dateTime('expires_at')->nullable();
         });
     }
-    
+
     public function getConnection(): ?string
     {
         return $this->connection ?? config('passport.connection');
