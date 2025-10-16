@@ -10,11 +10,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tree_identifiers', function (Blueprint $table) {
+        Schema::create('tree_renewal_schedules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tree_instance_id')->constrained()->cascadeOnDelete();
-            $table->string('type');
-            $table->string('identifier')->unique();
+            $table->foreignId('order_item_id')->constrained()->cascadeOnDelete();
+            $table->timestamp('reminder_date');
+            $table->boolean('reminder_sent');
             $table->timestamps();
         });
     }

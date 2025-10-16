@@ -10,11 +10,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tree_identifiers', function (Blueprint $table) {
+        Schema::create('tree_media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tree_instance_id')->constrained()->cascadeOnDelete();
             $table->string('type');
-            $table->string('identifier')->unique();
+            $table->string('url');
             $table->timestamps();
         });
     }

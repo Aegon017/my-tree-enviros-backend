@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Inventories;
 
 use App\Filament\Resources\Inventories\Pages\CreateInventory;
@@ -17,12 +19,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class InventoryResource extends Resource
+final class InventoryResource extends Resource
 {
     protected static ?string $model = Inventory::class;
 
     protected static UnitEnum|string|null $navigationGroup = 'E-commerce';
-
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 

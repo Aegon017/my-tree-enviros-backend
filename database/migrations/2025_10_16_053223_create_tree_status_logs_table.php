@@ -10,11 +10,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tree_identifiers', function (Blueprint $table) {
+        Schema::create('tree_status_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tree_instance_id')->constrained()->cascadeOnDelete();
-            $table->string('type');
-            $table->string('identifier')->unique();
+            $table->string('status');
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('order_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->timestamp('changed_at')->useCurrent();
             $table->timestamps();
         });
     }
