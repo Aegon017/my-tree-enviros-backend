@@ -6,12 +6,15 @@ namespace App\Models;
 
 use App\Enums\AgeUnitEnum;
 use App\Enums\TreeTypeEnum;
+use App\Traits\GeneratesSku;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class TreePricePlan extends Model
 {
+    use GeneratesSku;
+
     protected $casts = [
         'type' => TreeTypeEnum::class,
         'price' => 'decimal:2',
@@ -34,7 +37,7 @@ final class TreePricePlan extends Model
 
     private static function skuPrefix($model = null): string
     {
-        return $model && $model->type ? mb_strtoupper(mb_substr((string) $model->type, 0, 3)).'-' : 'TPP-';
+        return $model && $model->type->label() ? mb_strtoupper(mb_substr((string) $model->type->label(), 0, 3)) . '-' : 'TPP-';
     }
 
     private static function skuPadding(): int

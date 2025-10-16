@@ -7,8 +7,8 @@ namespace App\Filament\Resources\Trees;
 use App\Filament\Resources\Trees\Pages\CreateTree;
 use App\Filament\Resources\Trees\Pages\EditTree;
 use App\Filament\Resources\Trees\Pages\ListTrees;
-use App\Filament\Resources\Trees\RelationManagers\TreeLocationsRelationManager;
-use App\Filament\Resources\Trees\RelationManagers\TreePricesRelationManager;
+use App\Filament\Resources\Trees\RelationManagers\InstancesRelationManager;
+use App\Filament\Resources\Trees\RelationManagers\PlanPricesRelationManager;
 use App\Filament\Resources\Trees\Schemas\TreeForm;
 use App\Filament\Resources\Trees\Tables\TreesTable;
 use App\Models\Tree;
@@ -17,10 +17,13 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 final class TreeResource extends Resource
 {
     protected static ?string $model = Tree::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Tree Management';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
@@ -39,8 +42,8 @@ final class TreeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            TreeLocationsRelationManager::class,
-            TreePricesRelationManager::class,
+            InstancesRelationManager::class,
+            PlanPricesRelationManager::class
         ];
     }
 

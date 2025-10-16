@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\Inventory;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
-final class InventoryPolicy
+class InventoryPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Inventory');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(AuthUser $authUser, Inventory $inventory): bool
     {
         return $authUser->can('View:Inventory');
     }
@@ -26,22 +27,22 @@ final class InventoryPolicy
         return $authUser->can('Create:Inventory');
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, Inventory $inventory): bool
     {
         return $authUser->can('Update:Inventory');
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, Inventory $inventory): bool
     {
         return $authUser->can('Delete:Inventory');
     }
 
-    public function restore(AuthUser $authUser): bool
+    public function restore(AuthUser $authUser, Inventory $inventory): bool
     {
         return $authUser->can('Restore:Inventory');
     }
 
-    public function forceDelete(AuthUser $authUser): bool
+    public function forceDelete(AuthUser $authUser, Inventory $inventory): bool
     {
         return $authUser->can('ForceDelete:Inventory');
     }
@@ -56,7 +57,7 @@ final class InventoryPolicy
         return $authUser->can('RestoreAny:Inventory');
     }
 
-    public function replicate(AuthUser $authUser): bool
+    public function replicate(AuthUser $authUser, Inventory $inventory): bool
     {
         return $authUser->can('Replicate:Inventory');
     }
@@ -65,4 +66,5 @@ final class InventoryPolicy
     {
         return $authUser->can('Reorder:Inventory');
     }
+
 }

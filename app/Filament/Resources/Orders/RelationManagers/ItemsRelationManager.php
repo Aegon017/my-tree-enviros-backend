@@ -2,48 +2,47 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\Trees\RelationManagers;
+namespace App\Filament\Resources\Orders\RelationManagers;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-final class TreeLocationsRelationManager extends RelationManager
+final class ItemsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'treeLocations';
+    protected static string $relationship = 'items';
 
     public function form(Schema $schema): Schema
     {
         return $schema
-            ->components([
-                Select::make('location_id')
-                    ->relationship('location', 'name')
-                    ->native(false)
-                    ->preload()
-                    ->required(),
-                Toggle::make('is_active')
-                    ->inline(false)
-                    ->required(),
-            ]);
+            ->components([]);
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('tree')
             ->columns([
-                TextColumn::make('location.name')
+                TextColumn::make('treeInstance.tree.name')
                     ->searchable(),
-                IconColumn::make('is_active')
+                TextColumn::make('treePlanPrice.plan.name')
+                    ->searchable(),
+                TextColumn::make('price')
+                    ->money()
+                    ->sortable(),
+                TextColumn::make('start_date')
+                    ->dateTime()
+                    ->sortable(),
+                TextColumn::make('end_date')
+                    ->dateTime()
+                    ->sortable(),
+                IconColumn::make('is_renewal')
                     ->boolean(),
             ])
             ->filters([

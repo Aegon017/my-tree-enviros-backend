@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Trees\RelationManagers;
 
-use App\Enums\AgeUnitEnum;
+use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DissociateAction;
+use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -19,25 +21,25 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-final class TreePricesRelationManager extends RelationManager
+final class PlanPricesRelationManager extends RelationManager
 {
-    protected static string $relationship = 'treePrices';
+    protected static string $relationship = 'planPrices';
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
+                TextInput::make('sku')
+                    ->label('SKU')
+                    ->disabled(),
+                Select::make('tree_price_plan_id')
+                    ->relationship('plan', 'name')
+                    ->native(false)
+                    ->required(),
                 TextInput::make('price')
                     ->required()
                     ->numeric()
                     ->prefix('INR'),
-                TextInput::make('duration')
-                    ->numeric()
-                    ->required(),
-                Select::make('duration_type')
-                    ->options(AgeUnitEnum::options())
-                    ->native(false)
-                    ->required(),
                 Toggle::make('is_active')
                     ->inline(false)
                     ->required(),
@@ -47,18 +49,15 @@ final class TreePricesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('price')
             ->columns([
+                TextColumn::make('plan.name')->label('Plan'),
+                TextColumn::make('sku')
+                    ->label('SKU')
+                    ->searchable(),
                 TextColumn::make('price')
                     ->money('INR')
                     ->sortable(),
-                TextColumn::make('duration')
-                    ->searchable(),
-                TextColumn::make('duration_type')
-                    ->badge()
-                    ->searchable(),
-                IconColumn::make('is_active')
-                    ->boolean(),
+                IconColumn::make('is_active')->boolean(),
             ])
             ->filters([
                 //
