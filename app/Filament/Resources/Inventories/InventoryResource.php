@@ -5,9 +5,11 @@ namespace App\Filament\Resources\Inventories;
 use App\Filament\Resources\Inventories\Pages\CreateInventory;
 use App\Filament\Resources\Inventories\Pages\EditInventory;
 use App\Filament\Resources\Inventories\Pages\ListInventories;
+use App\Filament\Resources\Inventories\RelationManagers\ProductVariantsRelationManager;
 use App\Filament\Resources\Inventories\Schemas\InventoryForm;
 use App\Filament\Resources\Inventories\Tables\InventoriesTable;
 use App\Models\Inventory;
+use App\Models\Product;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -39,7 +41,7 @@ class InventoryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ProductVariantsRelationManager::class,
         ];
     }
 

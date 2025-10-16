@@ -18,9 +18,6 @@ final class ProductsTable
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make('image')
-                    ->collection('images')
-                    ->toggleable(true),
                 TextColumn::make('productCategory.name')
                     ->label('Category')
                     ->searchable()
@@ -31,8 +28,6 @@ final class ProductsTable
                 TextColumn::make('botanical_name')
                     ->toggleable(true),
                 TextColumn::make('nick_name')->toggleable(true),
-                TextColumn::make('base_price')->toggleable(true),
-                TextColumn::make('discount_price')->toggleable(true),
                 IconColumn::make('is_active')->label('Active')->boolean()->toggleable(true),
             ])
             ->filters([

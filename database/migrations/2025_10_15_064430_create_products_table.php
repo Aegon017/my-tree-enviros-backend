@@ -19,8 +19,6 @@ return new class extends Migration
             $table->string('nick_name');
             $table->string('short_description');
             $table->text('description');
-            $table->decimal('base_price', 10, 2);
-            $table->decimal('discount_price', 10, 2)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

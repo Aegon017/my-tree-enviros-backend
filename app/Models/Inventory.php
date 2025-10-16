@@ -16,4 +16,10 @@ class Inventory extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+
+    public function productVariants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
 }
