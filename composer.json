@@ -14,7 +14,6 @@
         "filament/filament": "~4.0",
         "filament/spatie-laravel-media-library-plugin": "~4.0",
         "laravel/framework": "^12.0",
-        "laravel/passport": "^13.0",
         "laravel/tinker": "^2.10.1",
         "propaganistas/laravel-phone": "^6.0",
         "spatie/laravel-one-time-passwords": "^1.0"
@@ -25,7 +24,6 @@
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.25",
         "laravel/sail": "^1.41",
-        "laravel/telescope": "^5.14",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "pestphp/pest": "^4.1",
@@ -83,9 +81,7 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": [
-                "laravel/telescope"
-            ]
+            "dont-discover": []
         }
     },
     "config": {

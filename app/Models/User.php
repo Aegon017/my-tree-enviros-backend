@@ -7,14 +7,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Passport\Contracts\OAuthenticatable;
-use Laravel\Passport\HasApiTokens;
 use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 use Spatie\Permission\Traits\HasRoles;
 
-final class User extends Authenticatable implements OAuthenticatable
+final class User extends Authenticatable
 {
-    use HasApiTokens;
     use HasFactory;
     use HasOneTimePasswords;
     use HasRoles;
