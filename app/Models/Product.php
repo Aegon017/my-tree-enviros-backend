@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class Product extends Model
 {
-
     protected $fillable = [
         'product_category_id',
         'name',
@@ -21,7 +20,6 @@ final class Product extends Model
         'description',
         'is_active',
     ];
-
 
     public function productCategory(): BelongsTo
     {

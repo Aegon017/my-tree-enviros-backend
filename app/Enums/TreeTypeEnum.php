@@ -9,7 +9,7 @@ use App\Traits\HasLabelOptions;
 enum TreeTypeEnum: string
 {
     use HasLabelOptions;
-    
+
     case SPONSORSHIP = 'sponsorship';
     case ADOPTION = 'adoption';
 

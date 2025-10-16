@@ -37,7 +37,7 @@ final class TreePricePlan extends Model
 
     private static function skuPrefix($model = null): string
     {
-        return $model && $model->type->label() ? mb_strtoupper(mb_substr((string) $model->type->label(), 0, 3)) . '-' : 'TPP-';
+        return $model && $model->type->label() ? mb_strtoupper(mb_substr((string) $model->type->label(), 0, 3)).'-' : 'TPP-';
     }
 
     private static function skuPadding(): int

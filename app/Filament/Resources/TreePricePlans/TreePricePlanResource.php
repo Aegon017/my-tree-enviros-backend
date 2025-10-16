@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\TreePricePlans;
 
 use App\Filament\Resources\TreePricePlans\Pages\CreateTreePricePlan;
@@ -15,7 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class TreePricePlanResource extends Resource
+final class TreePricePlanResource extends Resource
 {
     protected static ?string $model = TreePricePlan::class;
 

@@ -43,7 +43,7 @@ final class TreePlanPrice extends Model
     private static function skuPrefix($model = null): string
     {
         if ($model && $model->tree && $model->plan) {
-            return $model->tree->sku . '-' . $model->plan->sku . '-';
+            return $model->tree->sku.'-'.$model->plan->sku.'-';
         }
 
         return 'TPP-';

@@ -7,7 +7,6 @@ namespace App\Filament\Resources\Locations;
 use App\Filament\Resources\Locations\Pages\CreateLocation;
 use App\Filament\Resources\Locations\Pages\EditLocation;
 use App\Filament\Resources\Locations\Pages\ListLocations;
-use App\Filament\Resources\Locations\RelationManagers\TreeInstancesRelationManager;
 use App\Filament\Resources\Locations\Schemas\LocationForm;
 use App\Filament\Resources\Locations\Tables\LocationsTable;
 use App\Models\Location;

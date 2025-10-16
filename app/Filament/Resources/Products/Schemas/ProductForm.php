@@ -7,7 +7,6 @@ namespace App\Filament\Resources\Products\Schemas;
 use App\Models\ProductCategory;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -38,7 +37,7 @@ final class ProductForm
                                 Toggle::make('is_active')->label('Is Active')->default(true),
                                 TextInput::make('name')->required()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
+                                    ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
                                 TextInput::make('slug')
                                     ->unique(table: 'products', column: 'slug')
                                     ->required(),
@@ -49,7 +48,7 @@ final class ProductForm
                             ]),
                         Textarea::make('short_description')->required(),
                         RichEditor::make('description')->required(),
-                    ])->columnSpan(12)
+                    ])->columnSpan(12),
 
                 ])->columns(12)->columnSpanFull(),
             ]);

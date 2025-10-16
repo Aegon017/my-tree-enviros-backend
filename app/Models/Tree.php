@@ -14,7 +14,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 final class Tree extends Model implements HasMedia
 {
-    use InteractsWithMedia, GeneratesSku;
+    use GeneratesSku;
+    use InteractsWithMedia;
 
     protected $casts = [
         'is_active' => 'boolean',

@@ -29,7 +29,7 @@ final class TreesTable
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

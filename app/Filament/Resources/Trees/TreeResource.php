@@ -43,7 +43,7 @@ final class TreeResource extends Resource
     {
         return [
             InstancesRelationManager::class,
-            PlanPricesRelationManager::class
+            PlanPricesRelationManager::class,
         ];
     }
 
