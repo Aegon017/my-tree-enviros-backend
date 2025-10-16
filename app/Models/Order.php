@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\OrderStatusEnum;
 use App\Enums\TreeTypeEnum;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,13 +30,13 @@ final class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    #[Scope]
     protected function paid($query)
     {
         return $query->where('status', 'paid');
     }
 
-    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    #[Scope]
     protected function sponsorship($query)
     {
         return $query->where('type', 'sponsorship');

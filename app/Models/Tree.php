@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AgeUnitEnum;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
@@ -35,9 +36,19 @@ final class Tree extends Model implements HasMedia
         return $this->hasMany(TreePlanPrice::class);
     }
 
-    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    #[Scope]
     protected function active($query)
     {
         return $query->where('is_active', true);
+    }
+
+    private static function skuPrefix(): string
+    {
+        return 'TREE-';
+    }
+
+    private static function skuPadding(): int
+    {
+        return 4;
     }
 }

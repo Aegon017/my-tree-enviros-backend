@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\AgeUnitEnum;
 use App\Enums\TreeTypeEnum;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -25,9 +26,19 @@ final class TreePricePlan extends Model
         return $this->hasMany(TreePlanPrice::class);
     }
 
-    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    #[Scope]
     protected function active($query)
     {
         return $query->where('is_active', true);
+    }
+
+    private static function skuPrefix($model = null): string
+    {
+        return $model && $model->type ? mb_strtoupper(mb_substr((string) $model->type, 0, 3)).'-' : 'TPP-';
+    }
+
+    private static function skuPadding(): int
+    {
+        return 4;
     }
 }

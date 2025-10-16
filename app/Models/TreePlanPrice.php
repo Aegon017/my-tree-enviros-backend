@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,9 +31,23 @@ final class TreePlanPrice extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    #[Scope]
     protected function active($query)
     {
         return $query->where('is_active', true);
+    }
+
+    private static function skuPrefix($model = null): string
+    {
+        if ($model && $model->tree && $model->plan) {
+            return $model->tree->sku.'-'.$model->plan->sku.'-';
+        }
+
+        return 'TPP-';
+    }
+
+    private static function skuPadding(): int
+    {
+        return 4;
     }
 }
