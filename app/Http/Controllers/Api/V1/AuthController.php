@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Api\Services\AuthService;
 use App\Http\Controllers\Controller;
@@ -13,7 +13,6 @@ use App\Http\Requests\Api\Auth\VerifyOtpRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 
 final class AuthController extends Controller
 {
@@ -54,8 +53,6 @@ final class AuthController extends Controller
     public function resendOtp(ResendOtpRequest $request)
     {
         $data = $request->validated();
-
-        Log::info($data);
 
         $user = $this->authService->findUserByPhone(
             $data['country_code'],
