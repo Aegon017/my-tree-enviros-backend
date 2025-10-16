@@ -10,8 +10,8 @@ Route::post('/sign-up', [AuthController::class, 'signUp']);
 Route::post('/sign-in', [AuthController::class, 'signIn']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:api');
 
-Route::middleware('auth:api')->group(function (): void {
+Route::middleware('auth:sanctum')->group(function (): void {
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', fn (Request $request) => response()->json($request->user()));
 });

@@ -23,16 +23,13 @@ final class AuthService
         $result = $user->consumeOneTimePassword($otp);
 
         if ($result->isOk()) {
-            $tokenResult = $user->createToken('Personal Access Token');
-            $token = $tokenResult->token;
-            $token->save();
+            $token = $user->createToken('Personal Access Token');
 
             return [
                 'success' => true,
                 'user' => $user,
-                'access_token' => $tokenResult->accessToken,
-                'token_type' => 'Bearer',
-                'expires_at' => $tokenResult->token->expires_at,
+                'access_token' => $token->plainTextToken,
+                'token_type' => 'Bearer'
             ];
         }
 

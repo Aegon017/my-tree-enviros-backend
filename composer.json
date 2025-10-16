@@ -14,6 +14,7 @@
         "filament/filament": "~4.0",
         "filament/spatie-laravel-media-library-plugin": "~4.0",
         "laravel/framework": "^12.0",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "propaganistas/laravel-phone": "^6.0",
         "spatie/laravel-one-time-passwords": "^1.0"

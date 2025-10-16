@@ -27,7 +27,7 @@ return [
      * If you do not wish to enforce this, set this value to
      * Spatie\OneTimePasswords\Support\OriginInspector\DoNotEnforceOrigin
      */
-    'origin_enforcer' => Spatie\OneTimePasswords\Support\OriginInspector\DefaultOriginEnforcer::class,
+    'origin_enforcer' => Spatie\OneTimePasswords\Support\OriginInspector\DoNotEnforceOrigin::class,
 
     /*
      * This class generates a random password

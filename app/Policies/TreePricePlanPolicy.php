@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\TreePricePlan;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
-final class TreePricePlanPolicy
+class TreePricePlanPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:TreePricePlan');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(AuthUser $authUser, TreePricePlan $treePricePlan): bool
     {
         return $authUser->can('View:TreePricePlan');
     }
@@ -26,22 +27,22 @@ final class TreePricePlanPolicy
         return $authUser->can('Create:TreePricePlan');
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, TreePricePlan $treePricePlan): bool
     {
         return $authUser->can('Update:TreePricePlan');
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, TreePricePlan $treePricePlan): bool
     {
         return $authUser->can('Delete:TreePricePlan');
     }
 
-    public function restore(AuthUser $authUser): bool
+    public function restore(AuthUser $authUser, TreePricePlan $treePricePlan): bool
     {
         return $authUser->can('Restore:TreePricePlan');
     }
 
-    public function forceDelete(AuthUser $authUser): bool
+    public function forceDelete(AuthUser $authUser, TreePricePlan $treePricePlan): bool
     {
         return $authUser->can('ForceDelete:TreePricePlan');
     }
@@ -56,7 +57,7 @@ final class TreePricePlanPolicy
         return $authUser->can('RestoreAny:TreePricePlan');
     }
 
-    public function replicate(AuthUser $authUser): bool
+    public function replicate(AuthUser $authUser, TreePricePlan $treePricePlan): bool
     {
         return $authUser->can('Replicate:TreePricePlan');
     }
@@ -65,4 +66,5 @@ final class TreePricePlanPolicy
     {
         return $authUser->can('Reorder:TreePricePlan');
     }
+
 }
