@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Location extends Model
 {
-    protected $fillable = ['name', 'type', 'parent_id', 'is_active'];
-
     protected $casts = [
         'is_active' => 'boolean',
     ];
@@ -44,8 +42,14 @@ final class Location extends Model
         return $depth;
     }
 
-    public function treeLocations(): HasMany
+    public function treeInstances(): HasMany
     {
-        return $this->hasMany(TreeLocation::class);
+        return $this->hasMany(TreeInstance::class);
+    }
+
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function active($query)
+    {
+        return $query->where('is_active', true);
     }
 }

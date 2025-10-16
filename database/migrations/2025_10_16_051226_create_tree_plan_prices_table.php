@@ -10,18 +10,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('tree_price_plans', function (Blueprint $table) {
+        Schema::create('tree_plan_prices', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tree_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tree_price_plan_id')->constrained()->cascadeOnDelete();
             $table->string('sku')->unique();
-            $table->string('name');
-            $table->string('type', 13);
-            $table->unsignedTinyInteger('duration');
-            $table->string('duration_type', 13);
-            $table->json('features')->nullable();
+            $table->decimal('price', 10, 2);
             $table->boolean('is_active');
             $table->timestamps();
 
-            $table->unique(['name', 'type']);
+            $table->unique(['tree_id', 'tree_price_plan_id']);
         });
     }
 };

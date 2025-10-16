@@ -5,30 +5,20 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AgeUnitEnum;
+use App\Enums\TreeTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
-final class Tree extends Model implements HasMedia
+final class TreePricePlan extends Model
 {
-    use InteractsWithMedia;
-
     protected $casts = [
+        'type' => TreeTypeEnum::class,
+        'price' => 'decimal:2',
+        'duration' => 'integer',
+        'duration_type' => AgeUnitEnum::class,
+        'features' => 'json',
         'is_active' => 'boolean',
-        'age_unit' => AgeUnitEnum::class,
     ];
-
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('thumbnails')->singleFile();
-        $this->addMediaCollection('images');
-    }
-
-    public function instances(): HasMany
-    {
-        return $this->hasMany(TreeInstance::class);
-    }
 
     public function planPrices(): HasMany
     {
