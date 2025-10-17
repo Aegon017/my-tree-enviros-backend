@@ -13,11 +13,18 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number')->unique();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('type');
+            $table->morphs('orderable');
+            $table->decimal('total_amount', 12, 2);
+            $table->decimal('discount_amount', 12, 2);
+            $table->decimal('gst_amount', 12, 2);
+            $table->decimal('cgst_amount', 12, 2);
+            $table->decimal('sgst_amount', 12, 2);
+            $table->foreignId('shipping_address_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('coupon_id')->nullable()->constrained('coupons')->nullOnDelete();
             $table->string('status');
-            $table->decimal('total_amount', 10, 2);
-            $table->timestamp('paid_at')->nullable();
+            $table->string('currency', 8);
             $table->timestamps();
         });
     }

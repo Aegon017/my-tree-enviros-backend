@@ -8,6 +8,8 @@ enum OrderStatusEnum: string
 {
     case PENDING = 'pending';
     case PAID = 'paid';
+    case FAILED = 'failed';
+    case SUCCESS = 'success';
     case CANCELLED = 'cancelled';
     case REFUNDED = 'refunded';
     case COMPLETED = 'completed';
@@ -15,6 +17,8 @@ enum OrderStatusEnum: string
     public function label(): string
     {
         return match ($this) {
+            self::FAILED => 'Failed',
+            self::SUCCESS => 'Success',
             self::PENDING => 'Pending',
             self::PAID => 'Paid',
             self::CANCELLED => 'Cancelled',
