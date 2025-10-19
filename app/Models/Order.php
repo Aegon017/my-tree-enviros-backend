@@ -38,10 +38,10 @@ final class Order extends Model
         return $this->belongsTo(Coupon::class);
     }
 
-    // public function payments()
-    // {
-    //     return $this->hasMany(OrderPayment::class);
-    // }
+    public function payments(): HasMany
+    {
+        return $this->hasMany(OrderPayment::class);
+    }
 
     public function shippingAddress(): BelongsTo
     {

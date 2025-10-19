@@ -10,6 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class TreeStatusLog extends Model
 {
+    protected $fillable = [
+        'tree_instance_id',
+        'status',
+        'changed_by',
+        'notes',
+    ];
+
     protected $casts = [
         'status' => TreeStatusEnum::class,
         'changed_at' => 'datetime',

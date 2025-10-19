@@ -21,8 +21,8 @@ return new class extends Migration
             $table->decimal('gst_amount', 12, 2);
             $table->decimal('cgst_amount', 12, 2);
             $table->decimal('sgst_amount', 12, 2);
-            $table->foreignId('shipping_address_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('coupon_id')->nullable()->constrained('coupons')->nullOnDelete();
+            $table->unsignedBigInteger('shipping_address_id')->nullable();
+            $table->unsignedBigInteger('coupon_id')->nullable();
             $table->string('status');
             $table->string('currency', 8);
             $table->timestamps();
