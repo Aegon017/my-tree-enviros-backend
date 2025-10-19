@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -38,8 +40,22 @@ return [
     'sms_login' => [
         'endpoint' => env('SMS_LOGIN_ENDPOINT', 'https://smslogin.co/v3/api.php'),
         'username' => env('SMS_LOGIN_USERNAME', 'MYTREE'),
-        'apikey'   => env('SMS_LOGIN_APIKEY', '17cb6bf26e826eb64035'),
+        'apikey' => env('SMS_LOGIN_APIKEY', '17cb6bf26e826eb64035'),
         'senderid' => env('SMS_LOGIN_SENDERID', 'MYTREN'),
         'otptemplateid' => env('SMS_LOGIN_OTP_TEMPLATE_ID', '1707175231272775110'),
-    ]
+    ],
+
+    'razorpay' => [
+        'key' => env('RAZORPAY_KEY'),
+        'secret' => env('RAZORPAY_SECRET'),
+        'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
+    ],
+
+    'fcm' => [
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+        'database_url' => env('FIREBASE_DATABASE_URL'),
+        'storage_bucket' => env('FIREBASE_STORAGE_BUCKET'),
+        'server_key' => env('FCM_SERVER_KEY'),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+    ],
 ];

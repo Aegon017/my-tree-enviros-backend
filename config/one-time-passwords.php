@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     /*
      * one-time passwords should be consumed within this number of minutes
@@ -25,7 +27,7 @@ return [
      * If you do not wish to enforce this, set this value to
      * Spatie\OneTimePasswords\Support\OriginInspector\DoNotEnforceOrigin
      */
-    'origin_enforcer' => Spatie\OneTimePasswords\Support\OriginInspector\DefaultOriginEnforcer::class,
+    'origin_enforcer' => Spatie\OneTimePasswords\Support\OriginInspector\DoNotEnforceOrigin::class,
 
     /*
      * This class generates a random password

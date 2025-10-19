@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Locations;
 
 use App\Filament\Resources\Locations\Pages\CreateLocation;
@@ -13,12 +15,13 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
-class LocationResource extends Resource
+final class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
-    
-    // protected static string|BackedEnum|null $navigationGroup = 'Geo Management';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Geo Management';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMap;
 

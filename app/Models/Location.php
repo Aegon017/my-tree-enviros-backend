@@ -1,27 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Location extends Model
+final class Location extends Model
 {
-    protected $fillable = ['name', 'type', 'parent_id', 'is_active'];
-
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(Location::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(Location::class, 'parent_id');
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function allDescendants()
@@ -35,9 +36,26 @@ class Location extends Model
         $depth = 0;
         $parent = $this->parent;
         while ($parent) {
-            $depth++;
+            ++$depth;
             $parent = $parent->parent;
         }
+
         return $depth;
+    }
+
+    public function treeInstances(): HasMany
+    {
+        return $this->hasMany(TreeInstance::class);
+    }
+
+    #[Scope]
+    protected function active($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
     }
 }

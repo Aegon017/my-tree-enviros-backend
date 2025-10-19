@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Locations\Tables;
 
 use App\Models\Location;
@@ -14,7 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
-class LocationsTable
+final class LocationsTable
 {
     public static function configure(Table $table): Table
     {
@@ -22,12 +24,12 @@ class LocationsTable
             ->columns([
                 TextColumn::make('name')
                     ->label('Location')
-                    ->formatStateUsing(fn($state, $record) => str_repeat('— ', $record->depth()) . $state)
+                    ->formatStateUsing(fn ($state, $record): string => str_repeat('— ', $record->depth()).$state)
                     ->searchable(),
 
                 TextColumn::make('type')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'country' => 'primary',
                         'state' => 'info',
                         'city' => 'success',
@@ -53,7 +55,7 @@ class LocationsTable
                     ->label('Disable with Children')
                     ->icon('heroicon-o-x-circle')
                     ->requiresConfirmation()
-                    ->action(function (Location $record) {
+                    ->action(function (Location $record): void {
                         $record->update(['is_active' => false]);
 
                         $descendants = $record->allDescendants();
@@ -62,11 +64,11 @@ class LocationsTable
                         }
 
                         Notification::make()
-                            ->title("Disabled location and {$descendants->count()} child(ren)")
+                            ->title(sprintf('Disabled location and %s child(ren)', $descendants->count()))
                             ->success()
                             ->send();
                     })
-                    ->visible(fn(Location $record) => $record->is_active),
+                    ->visible(fn (Location $record) => $record->is_active),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
