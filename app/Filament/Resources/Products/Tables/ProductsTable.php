@@ -18,29 +18,27 @@ final class ProductsTable
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make('thumbnail')->collection('thumbnails')->imageHeight(120),
-                TextColumn::make('productCategory.name')
-                    ->label('Category')
+                SpatieMediaLibraryImageColumn::make("thumbnail")
+                    ->collection("thumbnails")
+                    ->imageHeight(120),
+                TextColumn::make("productCategory.name")
+                    ->label("Category")
                     ->searchable()
                     ->toggleable(true),
-                TextColumn::make('name')
-                    ->searchable()
+                TextColumn::make("name")->searchable()->toggleable(true),
+                TextColumn::make("botanical_name")->toggleable(true),
+                TextColumn::make("nick_name")->toggleable(true),
+                IconColumn::make("is_active")
+                    ->label("Active")
+                    ->boolean()
                     ->toggleable(true),
-                TextColumn::make('botanical_name')
-                    ->toggleable(true),
-                TextColumn::make('nick_name')->toggleable(true),
-                IconColumn::make('is_active')->label('Active')->boolean()->toggleable(true),
             ])
             ->filters([
                 //
             ])
-            ->recordActions([
-                EditAction::make(),
-            ])
+            ->recordActions([EditAction::make()])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                BulkActionGroup::make([DeleteBulkAction::make()]),
             ]);
     }
 }
