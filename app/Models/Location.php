@@ -28,7 +28,7 @@ final class Location extends Model
     public function allDescendants()
     {
         return $this->children()->with('allDescendants')->get()
-            ->flatMap(fn ($child) => collect([$child])->merge($child->allDescendants()));
+            ->flatMap(fn($child) => collect([$child])->merge($child->allDescendants()));
     }
 
     public function depth(): int
@@ -52,5 +52,10 @@ final class Location extends Model
     protected function active($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
     }
 }

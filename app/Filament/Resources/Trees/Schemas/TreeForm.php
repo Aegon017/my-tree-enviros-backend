@@ -28,9 +28,7 @@ final class TreeForm
                         Flex::make([
                             TextInput::make('sku')
                                 ->label('SKU')
-                                ->default(fn (): string => (string) Str::uuid())
-                                ->readOnly()
-                                ->required(),
+                                ->disabled(),
                             Toggle::make('is_active')
                                 ->required()
                                 ->Inline(false)

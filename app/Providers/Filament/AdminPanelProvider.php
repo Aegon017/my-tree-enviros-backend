@@ -63,6 +63,13 @@ final class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->navigationGroups([
+                'Tree Management',
+                'E-commerce',
+                'Geo Management',
+                'Transactions',
+                'Filament Shield'
             ]);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\Auth;
 
+use App\Enums\UserTypeEnum;
 use App\Rules\PhoneNumberRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -18,12 +19,13 @@ final class SignUpRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'type' => ['required', Rule::enum(UserTypeEnum::class)],
             'country_code' => ['required', 'string', 'max:5'],
             'phone' => [
                 'required',
                 'string',
                 new PhoneNumberRule($this->country_code),
-                Rule::unique('users')->where(fn ($query) => $query->where('country_code', $this->country_code)),
+                Rule::unique('users')->where(fn($query) => $query->where('country_code', $this->country_code)),
             ],
         ];
     }
