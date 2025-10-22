@@ -18,6 +18,7 @@ final class ProductsTable
     {
         return $table
             ->columns([
+                SpatieMediaLibraryImageColumn::make('thumbnail')->collection('thumbnails')->imageHeight(120),
                 TextColumn::make('productCategory.name')
                     ->label('Category')
                     ->searchable()

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Inventories\RelationManagers;
 
+use App\Models\Variant;
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -11,7 +12,9 @@ use Filament\Actions\DissociateAction;
 use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -26,13 +29,24 @@ class ProductVariantsRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('sku')
-                    ->label('SKU')
+                Select::make('variant_id')
+                    ->label('Variant')
+                    ->options(
+                        Variant::with(['color', 'size', 'planter'])->get()->mapWithKeys(function ($variant) {
+                            return [
+                                $variant->id => "{$variant->color->name} - {$variant->size->name} - {$variant->planter->name}",
+                            ];
+                        })
+                    )
+                    ->searchable()
+                    ->native(false)
+                    ->preload()
                     ->required(),
-                TextInput::make('color')
-                    ->default(null),
-                TextInput::make('size')
-                    ->default(null),
+                TextInput::make('sku')->required(),
+                TextInput::make('base_price')->required(),
+                TextInput::make('discount_price')->required(),
+                TextInput::make('stock_quantity')->numeric()->required(),
+                Toggle::make('is_instock')->label('In Stock')->default(true),
             ]);
     }
 
@@ -40,12 +54,7 @@ class ProductVariantsRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextEntry::make('sku')
-                    ->label('SKU'),
-                TextEntry::make('color')
-                    ->placeholder('-'),
-                TextEntry::make('size')
-                    ->placeholder('-'),
+                //
             ]);
     }
 
@@ -54,21 +63,13 @@ class ProductVariantsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('ProductVariant')
             ->columns([
-                TextColumn::make('sku')
-                    ->label('SKU')
-                    ->searchable(),
-                TextColumn::make('color')
-                    ->searchable(),
-                TextColumn::make('size')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('variant.color.name')->label('Color'),
+                TextColumn::make('variant.size.name')->label('Size'),
+                TextColumn::make('variant.planter.name')->label('Planter'),
+                TextColumn::make('sku'),
+                TextColumn::make('base_price'),
+                TextColumn::make('discount_price'),
+                TextColumn::make('stock_quantity'),
             ])
             ->filters([
                 //

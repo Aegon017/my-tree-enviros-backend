@@ -10,8 +10,10 @@ final class Inventory extends Model
 {
     protected $fillable = [
         'product_id',
-        'stock_quantity',
-        'is_instock',
+    ];
+
+    protected $casts = [
+        'product_id' => 'integer',
     ];
 
     public function product()

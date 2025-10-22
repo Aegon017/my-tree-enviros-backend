@@ -11,6 +11,7 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
@@ -24,32 +25,46 @@ final class ProductForm
         return $schema
             ->components([
                 Grid::make()->schema([
-                    Section::make()->schema([
+                    Section::make('Details')->schema([
+                        Flex::make([
+                            Select::make('product_category_id')
+                                ->label('Category')
+                                ->options(ProductCategory::query()->pluck('name', 'id'))
+                                ->searchable()
+                                ->native(false)
+                                ->preload()
+                                ->columns(8)
+                                ->required(),
+                            Toggle::make('is_active')->required()
+                                ->Inline(false)
+                                ->grow(false),
+                        ]),
                         Grid::make()
                             ->columns(2)
                             ->schema([
-                                Select::make('product_category_id')
-                                    ->label('Category')
-                                    ->options(ProductCategory::query()->pluck('name', 'id'))
-                                    ->searchable()
-                                    ->native(false)
-                                    ->preload()
-                                    ->required(),
-                                Toggle::make('is_active')->label('Is Active')->default(true),
                                 TextInput::make('name')->required()
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn(Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
                                 TextInput::make('slug')
                                     ->unique(table: 'products', column: 'slug')
+                                    ->readOnly()
                                     ->required(),
                                 TextInput::make('botanical_name')
                                     ->required(),
                                 TextInput::make('nick_name')
                                     ->required(),
+                                TextInput::make('base_price')
+                                    ->required(),
+                                TextInput::make('discount_price')
+                                    ->required(),
                             ]),
                         Textarea::make('short_description')->required(),
                         RichEditor::make('description')->required(),
-                    ])->columnSpan(12)
+                    ])->columnSpan(8),
+                    Section::make('Media')->schema([
+                        SpatieMediaLibraryFileUpload::make('thumbnail')->collection('thumbnails'),
+                        SpatieMediaLibraryFileUpload::make('image')->collection('images')->multiple(),
+                    ])->columnSpan(4),
 
                 ])->columns(12)->columnSpanFull(),
             ]);

@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\ProductCategory;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
-final class ProductCategoryPolicy
+class ProductCategoryPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:ProductCategory');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(AuthUser $authUser, ProductCategory $productCategory): bool
     {
         return $authUser->can('View:ProductCategory');
     }
@@ -26,22 +27,22 @@ final class ProductCategoryPolicy
         return $authUser->can('Create:ProductCategory');
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, ProductCategory $productCategory): bool
     {
         return $authUser->can('Update:ProductCategory');
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, ProductCategory $productCategory): bool
     {
         return $authUser->can('Delete:ProductCategory');
     }
 
-    public function restore(AuthUser $authUser): bool
+    public function restore(AuthUser $authUser, ProductCategory $productCategory): bool
     {
         return $authUser->can('Restore:ProductCategory');
     }
 
-    public function forceDelete(AuthUser $authUser): bool
+    public function forceDelete(AuthUser $authUser, ProductCategory $productCategory): bool
     {
         return $authUser->can('ForceDelete:ProductCategory');
     }
@@ -56,7 +57,7 @@ final class ProductCategoryPolicy
         return $authUser->can('RestoreAny:ProductCategory');
     }
 
-    public function replicate(AuthUser $authUser): bool
+    public function replicate(AuthUser $authUser, ProductCategory $productCategory): bool
     {
         return $authUser->can('Replicate:ProductCategory');
     }
@@ -65,4 +66,5 @@ final class ProductCategoryPolicy
     {
         return $authUser->can('Reorder:ProductCategory');
     }
+
 }
