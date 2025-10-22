@@ -18,7 +18,7 @@ final class ProductCategoriesTable
         return $table
             ->columns([
                 SpatieMediaLibraryImageColumn::make('image')
-                    ->collection('image'),
+                    ->collection('images')->imageHeight(120),
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('slug')
