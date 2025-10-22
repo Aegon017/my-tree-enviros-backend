@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('type', 13);
+            $table->string('type', 13)->nullable();
             $table->string('name')->nullable();
             $table->string('email')->nullable();
             $table->string('country_code')->nullable();
