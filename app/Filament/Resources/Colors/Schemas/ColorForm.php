@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Colors\Schemas;
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -13,7 +14,7 @@ class ColorForm
             ->components([
                 TextInput::make('name')
                     ->required(),
-                TextInput::make('code')
+                ColorPicker::make('code')
                     ->required(),
             ]);
     }
