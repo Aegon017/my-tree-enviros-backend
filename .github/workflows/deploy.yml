@@ -31,4 +31,4 @@ jobs:
             /opt/cpanel/ea-php84/root/usr/bin/php /usr/local/bin/composer install --no-interaction --prefer-dist
 
             # Use PHP 8.4 to run Artisan
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan migrate --force
+            /opt/cpanel/ea-php84/root/usr/bin/php artisan migrate
