@@ -48,6 +48,18 @@ Route::prefix("sliders")->group(function () {
     ]);
 });
 
+// Blogs (public)
+Route::prefix("blogs")->group(function () {
+    Route::get("/", [
+        \App\Http\Controllers\Api\V1\BlogController::class,
+        "index",
+    ]);
+    Route::get("/{id}", [
+        \App\Http\Controllers\Api\V1\BlogController::class,
+        "show",
+    ]);
+});
+
 // Razorpay webhook (public)
 Route::post("payments/webhook/razorpay", [PaymentController::class, "webhook"]);
 
