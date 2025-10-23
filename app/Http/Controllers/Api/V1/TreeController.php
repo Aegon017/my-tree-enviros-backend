@@ -117,52 +117,54 @@ final class TreeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Tree::query()
-            ->with(['planPrices.plan'])
-            ->where('is_active', true)
-            ->withCount(['instances' => function ($query) {
-                $query->where('status', 'available');
-            }]);
+            ->with(["planPrices.plan"])
+            ->where("is_active", true)
+            ->withCount([
+                "instances" => function ($query) {
+                    $query->where("status", "available");
+                },
+            ]);
 
         // Search by name
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        if ($request->has("search")) {
+            $query->where("name", "like", "%" . $request->search . "%");
         }
 
         // Filter by age range
-        if ($request->has('min_age')) {
-            $query->where('age', '>=', $request->min_age);
+        if ($request->has("min_age")) {
+            $query->where("age", ">=", $request->min_age);
         }
 
-        if ($request->has('max_age')) {
-            $query->where('age', '<=', $request->max_age);
+        if ($request->has("max_age")) {
+            $query->where("age", "<=", $request->max_age);
         }
 
         // Filter by age unit
-        if ($request->has('age_unit')) {
-            $query->where('age_unit', $request->age_unit);
+        if ($request->has("age_unit")) {
+            $query->where("age_unit", $request->age_unit);
         }
 
         // Sort options
-        $sortBy = $request->input('sort_by', 'name');
-        $sortOrder = $request->input('sort_order', 'asc');
+        $sortBy = $request->input("sort_by", "name");
+        $sortOrder = $request->input("sort_order", "asc");
 
-        $allowedSortFields = ['name', 'age', 'created_at'];
+        $allowedSortFields = ["name", "age", "created_at"];
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        $perPage = min($request->input('per_page', 15), 50);
+        $perPage = min($request->input("per_page", 15), 50);
         $trees = $query->paginate($perPage);
 
         return $this->success([
-            'trees' => TreeResource::collection($trees->items()),
-            'meta' => [
-                'current_page' => $trees->currentPage(),
-                'last_page' => $trees->lastPage(),
-                'per_page' => $trees->perPage(),
-                'total' => $trees->total(),
-                'from' => $trees->firstItem(),
-                'to' => $trees->lastItem(),
+            "trees" => TreeResource::collection($trees->items()),
+            "meta" => [
+                "current_page" => $trees->currentPage(),
+                "last_page" => $trees->lastPage(),
+                "per_page" => $trees->perPage(),
+                "total" => $trees->total(),
+                "from" => $trees->firstItem(),
+                "to" => $trees->lastItem(),
             ],
         ]);
     }
@@ -203,18 +205,22 @@ final class TreeController extends Controller
     public function show(string $id): JsonResponse
     {
         $tree = Tree::query()
-            ->with(['planPrices.plan', 'instances' => function ($query) {
-                $query->where('status', 'available')->limit(5);
-            }])
-            ->where('is_active', true)
+            ->with([
+                "planPrices.plan",
+                "instances" => function ($query) {
+                    $query->where("status", "available")->limit(5);
+                },
+                "instances.location",
+            ])
+            ->where("is_active", true)
             ->find($id);
 
         if (!$tree) {
-            return $this->notFound('Tree not found');
+            return $this->notFound("Tree not found");
         }
 
         return $this->success([
-            'tree' => new TreeResource($tree),
+            "tree" => new TreeResource($tree),
         ]);
     }
 
@@ -275,39 +281,42 @@ final class TreeController extends Controller
     public function sponsorship(Request $request): JsonResponse
     {
         $query = Tree::query()
-            ->with(['planPrices.plan'])
-            ->where('is_active', true)
-            ->whereHas('planPrices.plan', function ($query) {
-                $query->where('type', 'sponsorship')
-                    ->where('is_active', true);
+            ->with(["planPrices.plan"])
+            ->where("is_active", true)
+            ->whereHas("planPrices.plan", function ($query) {
+                $query->where("type", "sponsorship")->where("is_active", true);
             })
-            ->withCount(['instances' => function ($query) {
-                $query->where('status', 'available');
-            }]);
+            ->withCount([
+                "instances" => function ($query) {
+                    $query->where("status", "available");
+                },
+            ]);
 
         // Search
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        if ($request->has("search")) {
+            $query->where("name", "like", "%" . $request->search . "%");
         }
 
         // Filter by location
-        if ($request->has('location_id')) {
-            $query->whereHas('instances', function ($q) use ($request) {
-                $q->where('location_id', $request->location_id)
-                    ->where('status', 'available');
+        if ($request->has("location_id")) {
+            $query->whereHas("instances", function ($q) use ($request) {
+                $q->where("location_id", $request->location_id)->where(
+                    "status",
+                    "available",
+                );
             });
         }
 
-        $perPage = min($request->input('per_page', 15), 50);
+        $perPage = min($request->input("per_page", 15), 50);
         $trees = $query->paginate($perPage);
 
         return $this->success([
-            'trees' => TreeResource::collection($trees->items()),
-            'meta' => [
-                'current_page' => $trees->currentPage(),
-                'last_page' => $trees->lastPage(),
-                'per_page' => $trees->perPage(),
-                'total' => $trees->total(),
+            "trees" => TreeResource::collection($trees->items()),
+            "meta" => [
+                "current_page" => $trees->currentPage(),
+                "last_page" => $trees->lastPage(),
+                "per_page" => $trees->perPage(),
+                "total" => $trees->total(),
             ],
         ]);
     }
@@ -369,39 +378,42 @@ final class TreeController extends Controller
     public function adoption(Request $request): JsonResponse
     {
         $query = Tree::query()
-            ->with(['planPrices.plan'])
-            ->where('is_active', true)
-            ->whereHas('planPrices.plan', function ($query) {
-                $query->where('type', 'adoption')
-                    ->where('is_active', true);
+            ->with(["planPrices.plan"])
+            ->where("is_active", true)
+            ->whereHas("planPrices.plan", function ($query) {
+                $query->where("type", "adoption")->where("is_active", true);
             })
-            ->withCount(['instances' => function ($query) {
-                $query->where('status', 'available');
-            }]);
+            ->withCount([
+                "instances" => function ($query) {
+                    $query->where("status", "available");
+                },
+            ]);
 
         // Search
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        if ($request->has("search")) {
+            $query->where("name", "like", "%" . $request->search . "%");
         }
 
         // Filter by location
-        if ($request->has('location_id')) {
-            $query->whereHas('instances', function ($q) use ($request) {
-                $q->where('location_id', $request->location_id)
-                    ->where('status', 'available');
+        if ($request->has("location_id")) {
+            $query->whereHas("instances", function ($q) use ($request) {
+                $q->where("location_id", $request->location_id)->where(
+                    "status",
+                    "available",
+                );
             });
         }
 
-        $perPage = min($request->input('per_page', 15), 50);
+        $perPage = min($request->input("per_page", 15), 50);
         $trees = $query->paginate($perPage);
 
         return $this->success([
-            'trees' => TreeResource::collection($trees->items()),
-            'meta' => [
-                'current_page' => $trees->currentPage(),
-                'last_page' => $trees->lastPage(),
-                'per_page' => $trees->perPage(),
-                'total' => $trees->total(),
+            "trees" => TreeResource::collection($trees->items()),
+            "meta" => [
+                "current_page" => $trees->currentPage(),
+                "last_page" => $trees->lastPage(),
+                "per_page" => $trees->perPage(),
+                "total" => $trees->total(),
             ],
         ]);
     }
@@ -454,33 +466,33 @@ final class TreeController extends Controller
      */
     public function plans(string $treeId, Request $request): JsonResponse
     {
-        $tree = Tree::where('is_active', true)->find($treeId);
+        $tree = Tree::where("is_active", true)->find($treeId);
 
         if (!$tree) {
-            return $this->notFound('Tree not found');
+            return $this->notFound("Tree not found");
         }
 
         $query = TreePlanPrice::query()
-            ->with(['plan', 'tree'])
-            ->where('tree_id', $treeId)
-            ->where('is_active', true)
-            ->whereHas('plan', function ($query) {
-                $query->where('is_active', true);
+            ->with(["plan", "tree"])
+            ->where("tree_id", $treeId)
+            ->where("is_active", true)
+            ->whereHas("plan", function ($query) {
+                $query->where("is_active", true);
             });
 
         // Filter by type (sponsorship/adoption)
-        if ($request->has('type')) {
-            $query->whereHas('plan', function ($q) use ($request) {
-                $q->where('type', $request->type);
+        if ($request->has("type")) {
+            $query->whereHas("plan", function ($q) use ($request) {
+                $q->where("type", $request->type);
             });
         }
 
         $planPrices = $query->get();
 
         return $this->success([
-            'tree_id' => $tree->id,
-            'tree_name' => $tree->name,
-            'plans' => TreePlanPriceResource::collection($planPrices),
+            "tree_id" => $tree->id,
+            "tree_name" => $tree->name,
+            "plans" => TreePlanPriceResource::collection($planPrices),
         ]);
     }
 }

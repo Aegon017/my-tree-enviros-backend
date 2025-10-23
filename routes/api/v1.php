@@ -36,6 +36,18 @@ Route::prefix("trees")->group(function () {
     Route::get("/{id}/plans", [TreeController::class, "plans"]);
 });
 
+// Sliders (public)
+Route::prefix("sliders")->group(function () {
+    Route::get("/", [
+        \App\Http\Controllers\Api\V1\SliderController::class,
+        "index",
+    ]);
+    Route::get("/{id}", [
+        \App\Http\Controllers\Api\V1\SliderController::class,
+        "show",
+    ]);
+});
+
 // Razorpay webhook (public)
 Route::post("payments/webhook/razorpay", [PaymentController::class, "webhook"]);
 
@@ -80,9 +92,15 @@ Route::middleware("auth:sanctum")->group(function () {
     });
 
     // Products
-Route::prefix('products')->group(function () {
-        Route::get('/category/{categoryId}', [\App\Http\Controllers\Api\V1\ProductController::class, 'byCategory']);
-        Route::get('/{id}/variants', [\App\Http\Controllers\Api\V1\ProductController::class, 'variants']);
+    Route::prefix("products")->group(function () {
+        Route::get("/category/{categoryId}", [
+            \App\Http\Controllers\Api\V1\ProductController::class,
+            "byCategory",
+        ]);
+        Route::get("/{id}/variants", [
+            \App\Http\Controllers\Api\V1\ProductController::class,
+            "variants",
+        ]);
     });
 
     // Wishlist
@@ -127,8 +145,17 @@ Route::prefix('products')->group(function () {
 });
 
 // Public product routes
-Route::prefix('products')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Api\V1\ProductController::class, 'index']);
-    Route::get('/featured', [\App\Http\Controllers\Api\V1\ProductController::class, 'featured']);
-    Route::get('/{id}', [\App\Http\Controllers\Api\V1\ProductController::class, 'show']);
+Route::prefix("products")->group(function () {
+    Route::get("/", [
+        \App\Http\Controllers\Api\V1\ProductController::class,
+        "index",
+    ]);
+    Route::get("/featured", [
+        \App\Http\Controllers\Api\V1\ProductController::class,
+        "featured",
+    ]);
+    Route::get("/{id}", [
+        \App\Http\Controllers\Api\V1\ProductController::class,
+        "show",
+    ]);
 });
