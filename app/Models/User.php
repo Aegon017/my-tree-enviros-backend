@@ -17,9 +17,11 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 use Spatie\Permission\Traits\HasRoles;
-use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 
-final class User extends Authenticatable implements HasMedia, FilamentUser
+final class User extends Authenticatable implements
+    HasMedia,
+    FilamentUserContract
 {
     use HasApiTokens;
     use HasFactory;
