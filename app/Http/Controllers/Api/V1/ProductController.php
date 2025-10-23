@@ -109,65 +109,76 @@ final class ProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Product::query()
-            ->with(['productCategory', 'inventory.productVariants'])
-            ->where('is_active', true);
+            ->with(["productCategory", "inventory.productVariants"])
+            ->where("is_active", true);
 
         // Search by name, botanical name, or nick name
-        if ($request->has('search')) {
+        if ($request->has("search")) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('botanical_name', 'like', '%' . $search . '%')
-                    ->orWhere('nick_name', 'like', '%' . $search . '%');
+                $q->where("name", "like", "%" . $search . "%")
+                    ->orWhere("botanical_name", "like", "%" . $search . "%")
+                    ->orWhere("nick_name", "like", "%" . $search . "%");
             });
         }
 
         // Filter by category
-        if ($request->has('category_id')) {
-            $query->where('product_category_id', $request->category_id);
+        if ($request->has("category_id")) {
+            $query->where("product_category_id", $request->category_id);
         }
 
         // Filter by stock availability
-        if ($request->has('in_stock')) {
+        if ($request->has("in_stock")) {
             $inStock = filter_var($request->in_stock, FILTER_VALIDATE_BOOLEAN);
-            $query->whereHas('inventory', function ($q) use ($inStock) {
-                $q->where('is_instock', $inStock);
+            $query->whereHas("inventory", function ($q) use ($inStock) {
+                $q->where("is_instock", $inStock);
             });
         }
 
         // Sort options
-        $sortBy = $request->input('sort_by', 'name');
-        $sortOrder = $request->input('sort_order', 'asc');
+        $sortBy = $request->input("sort_by", "name");
+        $sortOrder = $request->input("sort_order", "asc");
 
-        $allowedSortFields = ['name', 'created_at'];
+        $allowedSortFields = ["name", "created_at"];
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        $perPage = min($request->input('per_page', 15), 50);
+        $perPage = min($request->input("per_page", 15), 50);
         $products = $query->paginate($perPage);
 
         // Check wishlist status if user is authenticated
         if ($request->user()) {
-            $wishlist = Wishlist::where('user_id', $request->user()->id)->first();
+            $wishlist = Wishlist::where(
+                "user_id",
+                $request->user()->id,
+            )->first();
             if ($wishlist) {
-                $wishlistProductIds = $wishlist->items()->pluck('product_id')->toArray();
-                $products->getCollection()->transform(function ($product) use ($wishlistProductIds) {
-                    $product->in_wishlist = in_array($product->id, $wishlistProductIds);
-                    return $product;
-                });
+                $wishlistProductIds = $wishlist
+                    ->items()
+                    ->pluck("product_id")
+                    ->toArray();
+                $products
+                    ->getCollection()
+                    ->transform(function ($product) use ($wishlistProductIds) {
+                        $product->in_wishlist = in_array(
+                            $product->id,
+                            $wishlistProductIds,
+                        );
+                        return $product;
+                    });
             }
         }
 
         return $this->success([
-            'products' => ProductResource::collection($products->items()),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'per_page' => $products->perPage(),
-                'total' => $products->total(),
-                'from' => $products->firstItem(),
-                'to' => $products->lastItem(),
+            "data" => ProductResource::collection($products->items()),
+            "meta" => [
+                "current_page" => $products->currentPage(),
+                "last_page" => $products->lastPage(),
+                "per_page" => $products->perPage(),
+                "total" => $products->total(),
+                "from" => $products->firstItem(),
+                "to" => $products->lastItem(),
             ],
         ]);
     }
@@ -210,24 +221,30 @@ final class ProductController extends Controller
      */
     public function show(Request $request, string $id): JsonResponse
     {
-        $product = Product::with(['productCategory', 'inventory.productVariants'])
-            ->where('is_active', true)
+        $product = Product::with([
+            "productCategory",
+            "inventory.productVariants",
+        ])
+            ->where("is_active", true)
             ->find($id);
 
         if (!$product) {
-            return $this->notFound('Product not found');
+            return $this->notFound("Product not found");
         }
 
         // Check wishlist status if user is authenticated
         if ($request->user()) {
-            $wishlist = Wishlist::where('user_id', $request->user()->id)->first();
+            $wishlist = Wishlist::where(
+                "user_id",
+                $request->user()->id,
+            )->first();
             if ($wishlist) {
                 $product->in_wishlist = $wishlist->hasProduct($product->id);
             }
         }
 
         return $this->success([
-            'product' => new ProductResource($product),
+            "product" => new ProductResource($product),
         ]);
     }
 
@@ -277,34 +294,47 @@ final class ProductController extends Controller
      *     )
      * )
      */
-    public function byCategory(Request $request, string $categoryId): JsonResponse
-    {
-        $query = Product::with(['productCategory', 'inventory.productVariants'])
-            ->where('is_active', true)
-            ->where('product_category_id', $categoryId);
+    public function byCategory(
+        Request $request,
+        string $categoryId,
+    ): JsonResponse {
+        $query = Product::with(["productCategory", "inventory.productVariants"])
+            ->where("is_active", true)
+            ->where("product_category_id", $categoryId);
 
-        $perPage = min($request->input('per_page', 15), 50);
+        $perPage = min($request->input("per_page", 15), 50);
         $products = $query->paginate($perPage);
 
         // Check wishlist status if user is authenticated
         if ($request->user()) {
-            $wishlist = Wishlist::where('user_id', $request->user()->id)->first();
+            $wishlist = Wishlist::where(
+                "user_id",
+                $request->user()->id,
+            )->first();
             if ($wishlist) {
-                $wishlistProductIds = $wishlist->items()->pluck('product_id')->toArray();
-                $products->getCollection()->transform(function ($product) use ($wishlistProductIds) {
-                    $product->in_wishlist = in_array($product->id, $wishlistProductIds);
-                    return $product;
-                });
+                $wishlistProductIds = $wishlist
+                    ->items()
+                    ->pluck("product_id")
+                    ->toArray();
+                $products
+                    ->getCollection()
+                    ->transform(function ($product) use ($wishlistProductIds) {
+                        $product->in_wishlist = in_array(
+                            $product->id,
+                            $wishlistProductIds,
+                        );
+                        return $product;
+                    });
             }
         }
 
         return $this->success([
-            'products' => ProductResource::collection($products->items()),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'per_page' => $products->perPage(),
-                'total' => $products->total(),
+            "products" => ProductResource::collection($products->items()),
+            "meta" => [
+                "current_page" => $products->currentPage(),
+                "last_page" => $products->lastPage(),
+                "per_page" => $products->perPage(),
+                "total" => $products->total(),
             ],
         ]);
     }
@@ -349,30 +379,43 @@ final class ProductController extends Controller
      */
     public function variants(Request $request, string $id): JsonResponse
     {
-        $product = Product::with(['inventory.productVariants'])->find($id);
+        $product = Product::with(["inventory.productVariants"])->find($id);
 
         if (!$product) {
-            return $this->notFound('Product not found');
+            return $this->notFound("Product not found");
         }
 
         $variants = $product->inventory?->productVariants ?? collect();
 
         // Check wishlist status if user is authenticated
         if ($request->user()) {
-            $wishlist = Wishlist::where('user_id', $request->user()->id)->first();
+            $wishlist = Wishlist::where(
+                "user_id",
+                $request->user()->id,
+            )->first();
             if ($wishlist) {
-                $wishlistVariantIds = $wishlist->items()->pluck('product_variant_id')->toArray();
-                $variants->transform(function ($variant) use ($wishlistVariantIds) {
-                    $variant->in_wishlist = in_array($variant->id, $wishlistVariantIds);
+                $wishlistVariantIds = $wishlist
+                    ->items()
+                    ->pluck("product_variant_id")
+                    ->toArray();
+                $variants->transform(function ($variant) use (
+                    $wishlistVariantIds,
+                ) {
+                    $variant->in_wishlist = in_array(
+                        $variant->id,
+                        $wishlistVariantIds,
+                    );
                     return $variant;
                 });
             }
         }
 
         return $this->success([
-            'product_id' => $product->id,
-            'product_name' => $product->name,
-            'variants' => \App\Http\Resources\Api\V1\ProductVariantResource::collection($variants),
+            "product_id" => $product->id,
+            "product_name" => $product->name,
+            "variants" => \App\Http\Resources\Api\V1\ProductVariantResource::collection(
+                $variants,
+            ),
         ]);
     }
 
@@ -410,12 +453,12 @@ final class ProductController extends Controller
      */
     public function featured(Request $request): JsonResponse
     {
-        $limit = min($request->input('limit', 10), 20);
+        $limit = min($request->input("limit", 10), 20);
 
-        $products = Product::with(['productCategory', 'inventory'])
-            ->where('is_active', true)
-            ->whereHas('inventory', function ($q) {
-                $q->where('is_instock', true);
+        $products = Product::with(["productCategory", "inventory"])
+            ->where("is_active", true)
+            ->whereHas("inventory", function ($q) {
+                $q->where("is_instock", true);
             })
             ->inRandomOrder()
             ->limit($limit)
@@ -423,18 +466,29 @@ final class ProductController extends Controller
 
         // Check wishlist status if user is authenticated
         if ($request->user()) {
-            $wishlist = Wishlist::where('user_id', $request->user()->id)->first();
+            $wishlist = Wishlist::where(
+                "user_id",
+                $request->user()->id,
+            )->first();
             if ($wishlist) {
-                $wishlistProductIds = $wishlist->items()->pluck('product_id')->toArray();
-                $products->transform(function ($product) use ($wishlistProductIds) {
-                    $product->in_wishlist = in_array($product->id, $wishlistProductIds);
+                $wishlistProductIds = $wishlist
+                    ->items()
+                    ->pluck("product_id")
+                    ->toArray();
+                $products->transform(function ($product) use (
+                    $wishlistProductIds,
+                ) {
+                    $product->in_wishlist = in_array(
+                        $product->id,
+                        $wishlistProductIds,
+                    );
                     return $product;
                 });
             }
         }
 
         return $this->success([
-            'products' => ProductResource::collection($products),
+            "products" => ProductResource::collection($products),
         ]);
     }
 }
