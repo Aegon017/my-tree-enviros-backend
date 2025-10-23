@@ -15,23 +15,23 @@ final class Product extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
-        'product_category_id',
-        'name',
-        'slug',
-        'botanical_name',
-        'nick_name',
-        'base_price',
-        'discount_price',
-        'short_description',
-        'description',
-        'is_active',
+        "product_category_id",
+        "name",
+        "slug",
+        "botanical_name",
+        "nick_name",
+        "base_price",
+        "discount_price",
+        "short_description",
+        "description",
+        "is_active",
     ];
 
     protected $casts = [
-        'product_category_id' => 'integer',
-        'base_price' => 'float',
-        'discount_price' => 'float',
-        'is_active' => 'boolean',
+        "product_category_id" => "integer",
+        "base_price" => "float",
+        "discount_price" => "float",
+        "is_active" => "boolean",
     ];
 
     public function registerMediaCollections(): void
@@ -39,7 +39,6 @@ final class Product extends Model implements HasMedia
         $this->addMediaCollection('thumbnails')->singleFile();
         $this->addMediaCollection('images');
     }
-
 
 
     public function productCategory(): BelongsTo

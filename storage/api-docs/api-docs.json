@@ -883,6 +883,635 @@
                 ]
             }
         },
+        "/api/v1/fcm-tokens": {
+            "get": {
+                "tags": [
+                    "FCM Tokens"
+                ],
+                "summary": "Get all FCM tokens for authenticated user",
+                "description": "Get all FCM tokens for the authenticated user.",
+                "operationId": "b17b40c29abe102da50a231c200ed731",
+                "responses": {
+                    "200": {
+                        "description": "FCM tokens retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "token": {
+                                                        "type": "string"
+                                                    },
+                                                    "device_type": {
+                                                        "type": "string",
+                                                        "example": "android"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "FCM Tokens"
+                ],
+                "summary": "Store or update FCM token",
+                "description": "Store or update FCM token for the authenticated user.",
+                "operationId": "2ce885d477ab07af931e9450a5fd9b9c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "device_type"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "dGhpcyBpcyBhIHRva2Vu..."
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios",
+                                            "web"
+                                        ],
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "FCM token stored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FCM token stored successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "token": {
+                                                    "type": "string"
+                                                },
+                                                "device_type": {
+                                                    "type": "string",
+                                                    "example": "android"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/fcm-tokens/{id}": {
+            "delete": {
+                "tags": [
+                    "FCM Tokens"
+                ],
+                "summary": "Delete a specific FCM token",
+                "description": "Delete a specific FCM token.",
+                "operationId": "3c1e70cc5f654354158525edb88b23b6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FCM token deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FCM token deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "FCM token not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/fcm-tokens/delete-by-token": {
+            "post": {
+                "tags": [
+                    "FCM Tokens"
+                ],
+                "summary": "Delete FCM token by token string",
+                "description": "Delete FCM token by token string.",
+                "operationId": "a94dbd9291cdda98e30317d89b013eaa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "dGhpcyBpcyBhIHRva2Vu..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "FCM token deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FCM token deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "FCM token not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/fcm-tokens/all": {
+            "delete": {
+                "tags": [
+                    "FCM Tokens"
+                ],
+                "summary": "Delete all FCM tokens for authenticated user",
+                "description": "Delete all FCM tokens for the authenticated user.",
+                "operationId": "0bf7809bf9abe8602846e02d74d0d62e",
+                "responses": {
+                    "200": {
+                        "description": "All FCM tokens deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "All FCM tokens deleted successfully"
+                                        },
+                                        "deleted_count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/locations": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get all active locations",
+                "description": "Retrieve list of all active locations with optional parent filtering",
+                "operationId": "49873ce3b7837cc865db7849ec7cccda",
+                "parameters": [
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "description": "Filter by parent location ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by location type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "country",
+                                "state",
+                                "city",
+                                "area"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "with_children",
+                        "in": "query",
+                        "description": "Include children locations",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locations": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Location"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/locations/root": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get root locations",
+                "description": "Retrieve all top-level locations (without parent)",
+                "operationId": "5f32b708617f74bdcb81525ad009d899",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locations": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Location"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/locations/{id}": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get location by ID",
+                "description": "Retrieve a specific location with its details",
+                "operationId": "297bb90722857403e546b74145806a12",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Location ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "with_children",
+                        "in": "query",
+                        "description": "Include children locations",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "with_parent",
+                        "in": "query",
+                        "description": "Include parent location",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "location": {
+                                                    "$ref": "#/components/schemas/Location"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Location not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/locations/{id}/children": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get location children",
+                "description": "Retrieve all child locations of a specific location",
+                "operationId": "e8262e699a64bf4ebe4afb9a9f82ff61",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Parent location ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "locations": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Location"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Location not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/locations/{id}/tree-count": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Get available tree count for location",
+                "description": "Get count of available trees in a specific location",
+                "operationId": "1b5511af6fbcf744694e799bcc294e72",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Location ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "location_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_trees": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "available_trees": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Location not found"
+                    }
+                }
+            }
+        },
         "/api/v1/orders": {
             "get": {
                 "tags": [
@@ -2207,6 +2836,112 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/api/sliders": {
+            "get": {
+                "tags": [
+                    "Sliders"
+                ],
+                "summary": "List sliders",
+                "description": "Returns a list of sliders for the homepage. Active-only by default.",
+                "operationId": "listSliders",
+                "parameters": [
+                    {
+                        "name": "active",
+                        "in": "query",
+                        "description": "Filter by active status (true/false). Defaults to true.",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Limit the number of returned sliders (1-100).",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Sort order by ID (asc or desc). Defaults to desc.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Slider"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/sliders/{id}": {
+            "get": {
+                "tags": [
+                    "Sliders"
+                ],
+                "summary": "Get slider by ID",
+                "description": "Show a single slider by ID.",
+                "operationId": "getSlider",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Slider ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Slider"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
                     }
                 }
             }
@@ -3929,6 +4664,82 @@
                     }
                 },
                 "type": "object"
+            },
+            "Location": {
+                "title": "Location",
+                "description": "Location model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Hyderabad"
+                    },
+                    "parent_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Slider": {
+                "title": "Slider",
+                "description": "Homepage slider model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Plant More Trees",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Join our green mission and plant a tree today.",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "main_image_url": {
+                        "description": "Signed URL to access the slider image (expires in 60 minutes)",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://api.example.com/media/12345?expires=1700000000&signature=xyz",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-02T12:34:56.000000Z"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -3950,6 +4761,10 @@
             "description": "Shopping cart management for all item types (trees, products, campaigns)"
         },
         {
+            "name": "Locations",
+            "description": "Location management endpoints"
+        },
+        {
             "name": "Orders",
             "description": "Order management for trees, products, and campaigns"
         },
@@ -3968,6 +4783,14 @@
         {
             "name": "Wishlist",
             "description": "Wishlist management for e-commerce products"
+        },
+        {
+            "name": "FCM Tokens",
+            "description": "FCM Tokens"
+        },
+        {
+            "name": "Sliders",
+            "description": "Sliders"
         }
     ]
 }

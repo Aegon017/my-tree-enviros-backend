@@ -36,17 +36,18 @@ final class CartController extends Controller
     {
         $user = $request->user();
 
-        $cart = Cart::where('user_id', $user->id)
+        $cart = Cart::where("user_id", $user->id)
             ->where(function ($query) {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
+                $query
+                    ->whereNull("expires_at")
+                    ->orWhere("expires_at", ">", now());
             })
             ->first();
 
         if (!$cart) {
             $cart = Cart::create([
-                'user_id' => $user->id,
-                'expires_at' => now()->addDays(7),
+                "user_id" => $user->id,
+                "expires_at" => now()->addDays(7),
             ]);
         }
 
@@ -84,9 +85,7 @@ final class CartController extends Controller
     {
         $cart = $this->getOrCreateCart($request);
 
-        $cart->load([
-            'items.cartable',
-        ]);
+        $cart->load(["items.cartable"]);
 
         // Clean up expired items if cart expired
         if ($cart->isExpired()) {
@@ -94,7 +93,7 @@ final class CartController extends Controller
         }
 
         return $this->success([
-            'cart' => new CartResource($cart),
+            "cart" => new CartResource($cart),
         ]);
     }
 
@@ -146,35 +145,58 @@ final class CartController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'item_type' => ['required', 'string', Rule::in(['tree', 'product', 'campaign'])],
-            'tree_instance_id' => 'required_if:item_type,tree|nullable|exists:tree_instances,id',
-            'tree_plan_price_id' => 'required_if:item_type,tree|nullable|exists:tree_plan_prices,id',
-            'product_id' => 'required_if:item_type,product|nullable|exists:products,id',
-            'product_variant_id' => 'nullable|exists:product_variants,id',
-            'campaign_id' => 'required_if:item_type,campaign|nullable|exists:campaigns,id',
-            'quantity' => 'nullable|integer|min:1|max:100',
-            'amount' => 'nullable|numeric|min:1',
+            "item_type" => [
+                "required",
+                "string",
+                Rule::in(["tree", "product", "campaign"]),
+            ],
+            // Allow either explicit instance OR (tree_id + location_id) to be provided
+            "tree_instance_id" => "nullable|exists:tree_instances,id",
+            "tree_id" => "required_if:item_type,tree|nullable|exists:trees,id",
+            "location_id" =>
+                "required_if:item_type,tree|nullable|exists:locations,id",
+            "tree_plan_price_id" =>
+                "required_if:item_type,tree|nullable|exists:tree_plan_prices,id",
+            "product_id" =>
+                "required_if:item_type,product|nullable|exists:products,id",
+            "product_variant_id" => "nullable|exists:product_variants,id",
+            "campaign_id" =>
+                "required_if:item_type,campaign|nullable|exists:campaigns,id",
+            "quantity" => "nullable|integer|min:1|max:100",
+            "amount" => "nullable|numeric|min:1",
+            // Dedication details (optional)
+            "name" => "nullable|string|max:100",
+            "occasion" => "nullable|string|max:100",
+            "message" => "nullable|string|max:500",
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
             $cart = $this->getOrCreateCart($request);
 
-            $itemType = $validated['item_type'];
-            $quantity = $validated['quantity'] ?? 1;
+            $itemType = $validated["item_type"];
+            $quantity = $validated["quantity"] ?? 1;
 
             // Handle different item types
             switch ($itemType) {
-                case 'tree':
+                case "tree":
                     return $this->addTreeToCart($cart, $validated, $quantity);
 
-                case 'product':
-                    return $this->addProductToCart($cart, $validated, $quantity);
+                case "product":
+                    return $this->addProductToCart(
+                        $cart,
+                        $validated,
+                        $quantity,
+                    );
 
-                case 'campaign':
-                    return $this->addCampaignToCart($cart, $validated, $quantity);
+                case "campaign":
+                    return $this->addCampaignToCart(
+                        $cart,
+                        $validated,
+                        $quantity,
+                    );
 
                 default:
-                    return $this->error('Invalid item type', 422);
+                    return $this->error("Invalid item type", 422);
             }
         });
     }
@@ -182,73 +204,121 @@ final class CartController extends Controller
     /**
      * Add tree to cart
      */
-    private function addTreeToCart(Cart $cart, array $validated, int $quantity): JsonResponse
-    {
-        // Verify tree instance is available
-        $treeInstance = TreeInstance::with('tree')->find($validated['tree_instance_id']);
+    private function addTreeToCart(
+        Cart $cart,
+        array $validated,
+        int $quantity,
+    ): JsonResponse {
+        // Resolve tree instance: explicit tree_instance_id or find by tree_id + location_id
+        $treeInstance = null;
+        if (!empty($validated["tree_instance_id"])) {
+            $treeInstance = TreeInstance::with("tree")->find(
+                $validated["tree_instance_id"],
+            );
+        } else {
+            $treeInstance = TreeInstance::with("tree")
+                ->where("tree_id", $validated["tree_id"] ?? 0)
+                ->where("location_id", $validated["location_id"] ?? 0)
+                ->available()
+                ->first();
+        }
 
-        if ($treeInstance->status->value !== 'available') {
-            return $this->error('This tree is not available for sponsorship/adoption', 422);
+        if (!$treeInstance) {
+            return $this->error(
+                "No available tree found for the selected location",
+                422,
+            );
+        }
+        if ($treeInstance->status->value !== "available") {
+            return $this->error(
+                "This tree is not available for sponsorship/adoption",
+                422,
+            );
         }
 
         // Verify tree plan price is active
-        $treePlanPrice = TreePlanPrice::with(['plan', 'tree'])
-            ->where('id', $validated['tree_plan_price_id'])
-            ->where('is_active', true)
+        $treePlanPrice = TreePlanPrice::with(["plan", "tree"])
+            ->where("id", $validated["tree_plan_price_id"])
+            ->where("is_active", true)
             ->first();
 
         if (!$treePlanPrice) {
-            return $this->error('This pricing plan is not available', 422);
+            return $this->error("This pricing plan is not available", 422);
         }
 
         // Verify the plan belongs to the tree
         if ($treePlanPrice->tree_id !== $treeInstance->tree_id) {
-            return $this->error('Invalid tree and plan combination', 422);
+            return $this->error("Invalid tree and plan combination", 422);
         }
 
         // Check if item already exists in cart
-        $existingItem = CartItem::where('cart_id', $cart->id)
-            ->where('cartable_type', TreeInstance::class)
-            ->where('cartable_id', $validated['tree_instance_id'])
-            ->whereJsonContains('options->tree_plan_price_id', $validated['tree_plan_price_id'])
+        $existingItem = CartItem::where("cart_id", $cart->id)
+            ->where("cartable_type", TreeInstance::class)
+            ->where("cartable_id", $validated["tree_instance_id"])
+            ->whereJsonContains(
+                "options->tree_plan_price_id",
+                $validated["tree_plan_price_id"],
+            )
             ->first();
 
         if ($existingItem) {
-            return $this->error('This tree with the selected plan is already in your cart', 422);
+            return $this->error(
+                "This tree with the selected plan is already in your cart",
+                422,
+            );
         }
 
         // Create cart item with tree plan options
         CartItem::create([
-            'cart_id' => $cart->id,
-            'cartable_type' => TreeInstance::class,
-            'cartable_id' => $validated['tree_instance_id'],
-            'quantity' => 1, // Trees are always quantity 1
-            'price' => $treePlanPrice->price,
-            'options' => [
-                'tree_plan_price_id' => $treePlanPrice->id,
-                'plan_name' => $treePlanPrice->plan->name,
-                'plan_type' => $treePlanPrice->plan->type->value,
-                'duration' => $treePlanPrice->plan->duration,
-                'duration_type' => $treePlanPrice->plan->duration_type->value,
-                'duration_display' => $treePlanPrice->plan->duration . ' ' . ucfirst($treePlanPrice->plan->duration_type->value),
-                'features' => $treePlanPrice->plan->features,
+            "cart_id" => $cart->id,
+            "cartable_type" => TreeInstance::class,
+            "cartable_id" => $validated["tree_instance_id"],
+            "quantity" => 1, // Trees are always quantity 1
+            "price" => $treePlanPrice->price,
+            "options" => [
+                "tree_plan_price_id" => $treePlanPrice->id,
+                "plan_name" => $treePlanPrice->plan->name,
+                "plan_type" => $treePlanPrice->plan->type->value,
+                "duration" => $treePlanPrice->plan->duration,
+                "duration_type" => $treePlanPrice->plan->duration_type->value,
+                "duration_display" =>
+                    $treePlanPrice->plan->duration .
+                    " " .
+                    ucfirst($treePlanPrice->plan->duration_type->value),
+                "features" => $treePlanPrice->plan->features,
+                "dedication" => [
+                    "name" => $validated["name"] ?? null,
+                    "occasion" => $validated["occasion"] ?? null,
+                    "message" => $validated["message"] ?? null,
+                    "location_id" =>
+                        $validated["location_id"] ??
+                        ($treeInstance->location_id ?? null),
+                ],
             ],
         ]);
 
-        return $this->loadCartAndRespond($cart, 'Tree added to cart successfully');
+        return $this->loadCartAndRespond(
+            $cart,
+            "Tree added to cart successfully",
+        );
     }
 
     /**
      * Add product to cart
      */
-    private function addProductToCart(Cart $cart, array $validated, int $quantity): JsonResponse
-    {
+    private function addProductToCart(
+        Cart $cart,
+        array $validated,
+        int $quantity,
+    ): JsonResponse {
         // Determine if it's a product or product variant
-        if (!empty($validated['product_variant_id'])) {
-            $productVariant = ProductVariant::with(['inventory.product'])->find($validated['product_variant_id']);
+        if (!empty($validated["product_variant_id"])) {
+            $productVariant = ProductVariant::with(["inventory.product"])->find(
+                $validated["product_variant_id"],
+            );
 
             if (!$productVariant) {
-                return $this->error('Product variant not found', 404);
+                return $this->error("Product variant not found", 404);
             }
 
             $cartableType = ProductVariant::class;
@@ -257,27 +327,41 @@ final class CartController extends Controller
             $sku = $productVariant->sku;
 
             // Check inventory
-            if ($productVariant->inventory && !$productVariant->inventory->is_instock) {
-                return $this->error('Product is out of stock', 422);
+            if (
+                $productVariant->inventory &&
+                !$productVariant->inventory->is_instock
+            ) {
+                return $this->error("Product is out of stock", 422);
             }
 
-            if ($productVariant->inventory && $productVariant->inventory->stock_quantity < $quantity) {
-                return $this->error('Insufficient stock. Only ' . $productVariant->inventory->stock_quantity . ' available', 422);
+            if (
+                $productVariant->inventory &&
+                $productVariant->inventory->stock_quantity < $quantity
+            ) {
+                return $this->error(
+                    "Insufficient stock. Only " .
+                        $productVariant->inventory->stock_quantity .
+                        " available",
+                    422,
+                );
             }
 
             $options = [
-                'variant' => [
-                    'sku' => $productVariant->sku,
-                    'color' => $productVariant->color,
-                    'size' => $productVariant->size,
+                "variant" => [
+                    "sku" => $productVariant->sku,
+                    "color" => $productVariant->color,
+                    "size" => $productVariant->size,
                 ],
-                'product_name' => $productVariant->inventory->product->name ?? 'Product',
+                "product_name" =>
+                    $productVariant->inventory->product->name ?? "Product",
             ];
         } else {
-            $product = Product::with('inventory')->find($validated['product_id']);
+            $product = Product::with("inventory")->find(
+                $validated["product_id"],
+            );
 
             if (!$product) {
-                return $this->error('Product not found', 404);
+                return $this->error("Product not found", 404);
             }
 
             $cartableType = Product::class;
@@ -287,23 +371,31 @@ final class CartController extends Controller
 
             // Check inventory
             if ($product->inventory && !$product->inventory->is_instock) {
-                return $this->error('Product is out of stock', 422);
+                return $this->error("Product is out of stock", 422);
             }
 
-            if ($product->inventory && $product->inventory->stock_quantity < $quantity) {
-                return $this->error('Insufficient stock. Only ' . $product->inventory->stock_quantity . ' available', 422);
+            if (
+                $product->inventory &&
+                $product->inventory->stock_quantity < $quantity
+            ) {
+                return $this->error(
+                    "Insufficient stock. Only " .
+                        $product->inventory->stock_quantity .
+                        " available",
+                    422,
+                );
             }
 
             $options = [
-                'product_name' => $product->name,
-                'sku' => $sku,
+                "product_name" => $product->name,
+                "sku" => $sku,
             ];
         }
 
         // Check if item already exists in cart
-        $existingItem = CartItem::where('cart_id', $cart->id)
-            ->where('cartable_type', $cartableType)
-            ->where('cartable_id', $cartableId)
+        $existingItem = CartItem::where("cart_id", $cart->id)
+            ->where("cartable_type", $cartableType)
+            ->where("cartable_id", $cartableId)
             ->first();
 
         if ($existingItem) {
@@ -311,49 +403,58 @@ final class CartController extends Controller
             $existingItem->quantity += $quantity;
             $existingItem->save();
 
-            return $this->loadCartAndRespond($cart, 'Cart item quantity updated');
+            return $this->loadCartAndRespond(
+                $cart,
+                "Cart item quantity updated",
+            );
         }
 
         // Create new cart item
         CartItem::create([
-            'cart_id' => $cart->id,
-            'cartable_type' => $cartableType,
-            'cartable_id' => $cartableId,
-            'quantity' => $quantity,
-            'price' => $price,
-            'options' => $options,
+            "cart_id" => $cart->id,
+            "cartable_type" => $cartableType,
+            "cartable_id" => $cartableId,
+            "quantity" => $quantity,
+            "price" => $price,
+            "options" => $options,
         ]);
 
-        return $this->loadCartAndRespond($cart, 'Product added to cart successfully');
+        return $this->loadCartAndRespond(
+            $cart,
+            "Product added to cart successfully",
+        );
     }
 
     /**
      * Add campaign to cart
      */
-    private function addCampaignToCart(Cart $cart, array $validated, int $quantity): JsonResponse
-    {
-        $campaign = Campaign::with('location')->find($validated['campaign_id']);
+    private function addCampaignToCart(
+        Cart $cart,
+        array $validated,
+        int $quantity,
+    ): JsonResponse {
+        $campaign = Campaign::with("location")->find($validated["campaign_id"]);
 
         if (!$campaign) {
-            return $this->error('Campaign not found', 404);
+            return $this->error("Campaign not found", 404);
         }
 
         if (!$campaign->is_active) {
-            return $this->error('This campaign is not active', 422);
+            return $this->error("This campaign is not active", 422);
         }
 
         // Check if campaign has ended
         if ($campaign->end_date && $campaign->end_date->isPast()) {
-            return $this->error('This campaign has ended', 422);
+            return $this->error("This campaign has ended", 422);
         }
 
         // Use custom amount if provided, otherwise use campaign's default amount
-        $amount = $validated['amount'] ?? $campaign->amount;
+        $amount = $validated["amount"] ?? $campaign->amount;
 
         // Check if item already exists in cart
-        $existingItem = CartItem::where('cart_id', $cart->id)
-            ->where('cartable_type', Campaign::class)
-            ->where('cartable_id', $validated['campaign_id'])
+        $existingItem = CartItem::where("cart_id", $cart->id)
+            ->where("cartable_type", Campaign::class)
+            ->where("cartable_id", $validated["campaign_id"])
             ->first();
 
         if ($existingItem) {
@@ -361,26 +462,32 @@ final class CartController extends Controller
             $existingItem->quantity += $quantity;
             $existingItem->save();
 
-            return $this->loadCartAndRespond($cart, 'Campaign contribution updated');
+            return $this->loadCartAndRespond(
+                $cart,
+                "Campaign contribution updated",
+            );
         }
 
         // Create cart item
         CartItem::create([
-            'cart_id' => $cart->id,
-            'cartable_type' => Campaign::class,
-            'cartable_id' => $validated['campaign_id'],
-            'quantity' => $quantity,
-            'price' => $amount,
-            'options' => [
-                'campaign_type' => $campaign->type->value,
-                'campaign_type_label' => $campaign->type->label(),
-                'location_id' => $campaign->location_id,
-                'location_name' => $campaign->location->name ?? null,
-                'description' => $campaign->description,
+            "cart_id" => $cart->id,
+            "cartable_type" => Campaign::class,
+            "cartable_id" => $validated["campaign_id"],
+            "quantity" => $quantity,
+            "price" => $amount,
+            "options" => [
+                "campaign_type" => $campaign->type->value,
+                "campaign_type_label" => $campaign->type->label(),
+                "location_id" => $campaign->location_id,
+                "location_name" => $campaign->location->name ?? null,
+                "description" => $campaign->description,
             ],
         ]);
 
-        return $this->loadCartAndRespond($cart, 'Campaign added to cart successfully');
+        return $this->loadCartAndRespond(
+            $cart,
+            "Campaign added to cart successfully",
+        );
     }
 
     /**
@@ -431,39 +538,61 @@ final class CartController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
-            'quantity' => 'required|integer|min:1|max:100',
+            "quantity" => "required|integer|min:1|max:100",
         ]);
 
         return DB::transaction(function () use ($request, $id, $validated) {
             $cart = $this->getOrCreateCart($request);
 
-            $cartItem = CartItem::where('cart_id', $cart->id)
-                ->where('id', $id)
+            $cartItem = CartItem::where("cart_id", $cart->id)
+                ->where("id", $id)
                 ->first();
 
             if (!$cartItem) {
-                return $this->notFound('Cart item not found');
+                return $this->notFound("Cart item not found");
             }
 
             // Trees cannot have quantity > 1
-            if ($cartItem->cartable_type === TreeInstance::class && $validated['quantity'] > 1) {
-                return $this->error('Tree items can only have quantity of 1', 422);
+            if (
+                $cartItem->cartable_type === TreeInstance::class &&
+                $validated["quantity"] > 1
+            ) {
+                return $this->error(
+                    "Tree items can only have quantity of 1",
+                    422,
+                );
             }
 
             // Check inventory for products
-            if (in_array($cartItem->cartable_type, [Product::class, ProductVariant::class])) {
+            if (
+                in_array($cartItem->cartable_type, [
+                    Product::class,
+                    ProductVariant::class,
+                ])
+            ) {
                 $product = $cartItem->cartable;
                 $inventory = $product->inventory;
 
-                if ($inventory && $inventory->stock_quantity < $validated['quantity']) {
-                    return $this->error('Insufficient stock. Only ' . $inventory->stock_quantity . ' available', 422);
+                if (
+                    $inventory &&
+                    $inventory->stock_quantity < $validated["quantity"]
+                ) {
+                    return $this->error(
+                        "Insufficient stock. Only " .
+                            $inventory->stock_quantity .
+                            " available",
+                        422,
+                    );
                 }
             }
 
-            $cartItem->quantity = $validated['quantity'];
+            $cartItem->quantity = $validated["quantity"];
             $cartItem->save();
 
-            return $this->loadCartAndRespond($cart, 'Cart item updated successfully');
+            return $this->loadCartAndRespond(
+                $cart,
+                "Cart item updated successfully",
+            );
         });
     }
 
@@ -505,17 +634,17 @@ final class CartController extends Controller
         return DB::transaction(function () use ($request, $id) {
             $cart = $this->getOrCreateCart($request);
 
-            $cartItem = CartItem::where('cart_id', $cart->id)
-                ->where('id', $id)
+            $cartItem = CartItem::where("cart_id", $cart->id)
+                ->where("id", $id)
                 ->first();
 
             if (!$cartItem) {
-                return $this->notFound('Cart item not found');
+                return $this->notFound("Cart item not found");
             }
 
             $cartItem->delete();
 
-            return $this->loadCartAndRespond($cart, 'Item removed from cart');
+            return $this->loadCartAndRespond($cart, "Item removed from cart");
         });
     }
 
@@ -552,21 +681,29 @@ final class CartController extends Controller
 
             $cart->items()->delete();
 
-            return $this->success([
-                'cart' => new CartResource($cart->fresh('items')),
-            ], 'Cart cleared successfully');
+            return $this->success(
+                [
+                    "cart" => new CartResource($cart->fresh("items")),
+                ],
+                "Cart cleared successfully",
+            );
         });
     }
 
     /**
      * Helper method to load cart and return response
      */
-    private function loadCartAndRespond(Cart $cart, string $message): JsonResponse
-    {
-        $cart->load(['items.cartable']);
+    private function loadCartAndRespond(
+        Cart $cart,
+        string $message,
+    ): JsonResponse {
+        $cart->load(["items.cartable"]);
 
-        return $this->success([
-            'cart' => new CartResource($cart),
-        ], $message);
+        return $this->success(
+            [
+                "cart" => new CartResource($cart),
+            ],
+            $message,
+        );
     }
 }
