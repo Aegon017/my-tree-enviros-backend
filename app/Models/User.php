@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserTypeEnum;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,8 +17,9 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Models\Contracts\FilamentUser;
 
-final class User extends Authenticatable implements HasMedia
+final class User extends Authenticatable implements HasMedia, FilamentUser
 {
     use HasApiTokens;
     use HasFactory;
@@ -27,17 +30,14 @@ final class User extends Authenticatable implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
-        'name',
-        'email',
-        'country_code',
-        'phone',
-        'password',
+        "name",
+        "email",
+        "country_code",
+        "phone",
+        "password",
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ["password", "remember_token"];
 
     public function routeNotificationForSmsLogin(): string
     {
@@ -47,10 +47,15 @@ final class User extends Authenticatable implements HasMedia
     protected function casts(): array
     {
         return [
-            'type' => UserTypeEnum::class,
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed'
+            "type" => UserTypeEnum::class,
+            "email_verified_at" => "datetime",
+            "password" => "hashed",
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return str_ends_with($this->email, "@mytree.care");
     }
 
     public function shippingAddresses(): HasMany
@@ -60,7 +65,7 @@ final class User extends Authenticatable implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('avatars')->singleFile();
+        $this->addMediaCollection("avatars")->singleFile();
     }
 
     public function fcmTokens(): HasMany
