@@ -6,32 +6,40 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\URL;
 
 final class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Get the first image as main image
-        $mainImage = $this->getFirstMedia("images");
-        $mainImageUrl = $mainImage ? $mainImage->getUrl() : null;
+        // Map media to local media route URLs so private storage can be streamed
+        $mainImage = $this->getFirstMedia('images');
+        $mainImageUrl = null;
+        if ($mainImage) {
+            $mainImageUrl = URL::temporarySignedRoute(
+                'media.show',
+                now()->addMinutes(60),
+                ['id' => $mainImage->id]
+            );
+        }
 
-        // Get all images
-        $images = $this->getMedia("images")->map(function ($media) {
-            $thumbUrl = $media->getUrl();
-            try {
-                $thumbUrl = $media->getUrl("thumb");
-            } catch (\Exception $e) {
-                // Fallback to original if thumb conversion doesn't exist
-                $thumbUrl = $media->getUrl();
-            }
+        $thumbnail = $this->getFirstMedia('thumbnails') ?? $this->getFirstMedia('images');
+        $thumbnailUrl = null;
+        if ($thumbnail) {
+            $thumbnailUrl = URL::temporarySignedRoute(
+                'media.show',
+                now()->addMinutes(60),
+                ['id' => $thumbnail->id]
+            );
+        }
 
-            return [
-                "id" => $media->id,
-                "url" => $media->getUrl(),
-                "thumb" => $thumbUrl,
-                "name" => $media->name,
-            ];
-        });
+        $imageUrls = $this->getMedia('images')
+            ->map(fn($media) => URL::temporarySignedRoute(
+                'media.show',
+                now()->addMinutes(60),
+                ['id' => $media->id]
+            ))
+            ->toArray();
 
         // Calculate price from inventory if exists
         $price = $this->base_price ?? 0;
@@ -64,9 +72,9 @@ final class ProductResource extends JsonResource
             "price" => (float) $price,
             "discount_price" => $discountPrice ? (float) $discountPrice : null,
             "quantity" => $stockQuantity,
-            "main_image" => $mainImageUrl ? basename($mainImageUrl) : "",
+            "thumbnail_url" => $thumbnailUrl ?? "",
             "main_image_url" => $mainImageUrl ?? "",
-            "images" => $images,
+            "image_urls" => $imageUrls,
             "reviews" => [], // Reviews will be added later if needed
             "wishlist_tag" => $this->in_wishlist ?? false,
             "created_at" =>

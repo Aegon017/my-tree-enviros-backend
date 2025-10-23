@@ -36,18 +36,24 @@ final class Product extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection("thumbnails")->singleFile();
-        $this->addMediaCollection("images");
-    }
+        $this->addMediaCollection("thumbnails")
+            ->singleFile()
+            ->registerMediaConversions(function () {
+                $this->addMediaConversion("thumb")
+                    ->width(150)
+                    ->height(150)
+                    ->sharpen(10)
+                    ->nonQueued();
+            });
 
-    public function registerMediaConversions(
-        ?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null,
-    ): void {
-        $this->addMediaConversion("thumb")
-            ->width(150)
-            ->height(150)
-            ->sharpen(10)
-            ->nonQueued();
+        $this->addMediaCollection("images")
+            ->registerMediaConversions(function () {
+                $this->addMediaConversion("thumb")
+                    ->width(150)
+                    ->height(150)
+                    ->sharpen(10)
+                    ->nonQueued();
+            });
     }
 
     public function productCategory(): BelongsTo

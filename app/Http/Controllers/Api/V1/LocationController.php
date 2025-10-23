@@ -35,6 +35,13 @@ final class LocationController extends Controller
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filter by location type",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"country", "state", "city", "area"})
+     *     ),
+     *     @OA\Parameter(
      *         name="with_children",
      *         in="query",
      *         description="Include children locations",
@@ -63,6 +70,11 @@ final class LocationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Location::query()->where('is_active', true);
+
+        // Filter by type (city, state, country, area)
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
 
         // Filter by parent location
         if ($request->has('parent_id')) {

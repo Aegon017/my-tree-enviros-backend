@@ -80,19 +80,9 @@ Route::middleware("auth:sanctum")->group(function () {
     });
 
     // Products
-    Route::prefix("products")->group(function () {
-        Route::get("/featured", [
-            \App\Http\Controllers\Api\V1\ProductController::class,
-            "featured",
-        ]);
-        Route::get("/category/{categoryId}", [
-            \App\Http\Controllers\Api\V1\ProductController::class,
-            "byCategory",
-        ]);
-        Route::get("/{id}/variants", [
-            \App\Http\Controllers\Api\V1\ProductController::class,
-            "variants",
-        ]);
+Route::prefix('products')->group(function () {
+        Route::get('/category/{categoryId}', [\App\Http\Controllers\Api\V1\ProductController::class, 'byCategory']);
+        Route::get('/{id}/variants', [\App\Http\Controllers\Api\V1\ProductController::class, 'variants']);
     });
 
     // Wishlist
@@ -137,13 +127,8 @@ Route::middleware("auth:sanctum")->group(function () {
 });
 
 // Public product routes
-Route::prefix("products")->group(function () {
-    Route::get("/", [
-        \App\Http\Controllers\Api\V1\ProductController::class,
-        "index",
-    ]);
-    Route::get("/{id}", [
-        \App\Http\Controllers\Api\V1\ProductController::class,
-        "show",
-    ]);
+Route::prefix('products')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\V1\ProductController::class, 'index']);
+    Route::get('/featured', [\App\Http\Controllers\Api\V1\ProductController::class, 'featured']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\V1\ProductController::class, 'show']);
 });
