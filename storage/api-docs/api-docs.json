@@ -19,7 +19,7 @@
             "description": "Local Development Server"
         },
         {
-            "url": "https://api.mytreeenviros.com",
+            "url": "https://api.mytree.care",
             "description": "Production Server"
         }
     ],
@@ -511,6 +511,204 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/v1/blogs": {
+            "get": {
+                "tags": [
+                    "Blogs"
+                ],
+                "summary": "List blogs",
+                "description": "Get paginated list of blogs with optional filters",
+                "operationId": "3aad37e68916210cd31df39df85813c2",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search blogs by title or short description",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "mango"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by blog category id",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort field",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "created_at",
+                            "enum": [
+                                "created_at",
+                                "title"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (max 50)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 12,
+                            "maximum": 50
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "blogs": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Blog"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 60
+                                                        },
+                                                        "from": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "to": {
+                                                            "type": "integer",
+                                                            "example": 12
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/blogs/{id}": {
+            "get": {
+                "tags": [
+                    "Blogs"
+                ],
+                "summary": "Get blog details",
+                "description": "Get detailed blog data",
+                "operationId": "bb7a6becf97b31d0765f13c7b7085f10",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Blog ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "blog": {
+                                                    "$ref": "#/components/schemas/Blog"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Blog not found"
+                    }
+                }
             }
         },
         "/api/v1/cart": {
@@ -4665,6 +4863,91 @@
                 },
                 "type": "object"
             },
+            "Blog": {
+                "title": "Blog",
+                "description": "Blog post resource",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "blog_category_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "blog_category": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Environment"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Greening the City: A Mango Tree Story"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "greening-the-city-a-mango-tree-story"
+                    },
+                    "short_description": {
+                        "type": "string",
+                        "example": "How urban planting can transform communities."
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "<p>Full HTML content here...</p>"
+                    },
+                    "thumbnail_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "http://localhost:8000/media/123",
+                        "nullable": true
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 123
+                                },
+                                "image_url": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "example": "http://localhost:8000/media/124"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "image_urls": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-22T13:55:09.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-10-22T13:55:09.000000Z"
+                    }
+                },
+                "type": "object"
+            },
             "Location": {
                 "title": "Location",
                 "description": "Location model",
@@ -4722,10 +5005,10 @@
                         "example": true
                     },
                     "main_image_url": {
-                        "description": "Signed URL to access the slider image (expires in 60 minutes)",
+                        "description": "Direct URL to access the slider image",
                         "type": "string",
                         "format": "uri",
-                        "example": "https://api.example.com/media/12345?expires=1700000000&signature=xyz",
+                        "example": "https://api.example.com/media/12345",
                         "nullable": true
                     },
                     "created_at": {
@@ -4783,6 +5066,10 @@
         {
             "name": "Wishlist",
             "description": "Wishlist management for e-commerce products"
+        },
+        {
+            "name": "Blogs",
+            "description": "Blogs"
         },
         {
             "name": "FCM Tokens",
