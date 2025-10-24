@@ -91,30 +91,30 @@ final class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Order::query()
-            ->with(['items.treeInstance.tree', 'items.treePlanPrice.plan'])
-            ->where('user_id', $request->user()->id)
-            ->orderBy('created_at', 'desc');
+            ->with(["items.treeInstance.tree", "items.treePlanPrice.plan"])
+            ->where("user_id", $request->user()->id)
+            ->orderBy("created_at", "desc");
 
         // Filter by status
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        if ($request->has("status")) {
+            $query->where("status", $request->status);
         }
 
         // Filter by type
-        if ($request->has('type')) {
-            $query->where('type', $request->type);
+        if ($request->has("type")) {
+            $query->where("type", $request->type);
         }
 
-        $perPage = min($request->input('per_page', 15), 50);
+        $perPage = min($request->input("per_page", 15), 50);
         $orders = $query->paginate($perPage);
 
         return $this->success([
-            'orders' => OrderResource::collection($orders->items()),
-            'meta' => [
-                'current_page' => $orders->currentPage(),
-                'last_page' => $orders->lastPage(),
-                'per_page' => $orders->perPage(),
-                'total' => $orders->total(),
+            "orders" => OrderResource::collection($orders->items()),
+            "meta" => [
+                "current_page" => $orders->currentPage(),
+                "last_page" => $orders->lastPage(),
+                "per_page" => $orders->perPage(),
+                "total" => $orders->total(),
             ],
         ]);
     }
@@ -160,8 +160,8 @@ final class OrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'coupon_id' => 'nullable|exists:coupons,id',
-            'shipping_address_id' => 'nullable|exists:shipping_addresses,id',
+            "coupon_id" => "nullable|exists:coupons,id",
+            "shipping_address_id" => "nullable|exists:shipping_addresses,id",
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
@@ -169,22 +169,22 @@ final class OrderController extends Controller
 
             // Get user's cart
             $cart = Cart::with([
-                'items.treeInstance.tree',
-                'items.treePlanPrice.plan',
+                "items.treeInstance.tree",
+                "items.treePlanPrice.plan",
             ])
-                ->where('user_id', $user->id)
+                ->where("user_id", $user->id)
                 ->first();
 
             if (!$cart || $cart->items->isEmpty()) {
-                return $this->error('Cart is empty', 422);
+                return $this->error("Cart is empty", 422);
             }
 
             // Validate all tree instances are available
             foreach ($cart->items as $item) {
-                if ($item->treeInstance->status->value !== 'available') {
+                if ($item->treeInstance->status->value !== "available") {
                     return $this->error(
                         "Tree instance {$item->treeInstance->sku} is no longer available",
-                        422
+                        422,
                     );
                 }
             }
@@ -194,7 +194,7 @@ final class OrderController extends Controller
 
             // Calculate totals
             $subtotal = $cart->totalAmount();
-            $discountAmount = 0.00;
+            $discountAmount = 0.0;
             $gstRate = 0.18; // 18% GST
             $gstAmount = round($subtotal * $gstRate, 2);
             $cgstAmount = round($gstAmount / 2, 2);
@@ -203,20 +203,21 @@ final class OrderController extends Controller
 
             // Create order
             $order = Order::create([
-                'order_number' => $this->generateOrderNumber(),
-                'user_id' => $user->id,
-                'type' => $orderType,
-                'total_amount' => $totalAmount,
-                'discount_amount' => $discountAmount,
-                'gst_amount' => $gstAmount,
-                'cgst_amount' => $cgstAmount,
-                'sgst_amount' => $sgstAmount,
-                'status' => OrderStatusEnum::PENDING,
-                'currency' => 'INR',
-                'coupon_id' => $validated['coupon_id'] ?? null,
-                'shipping_address_id' => $validated['shipping_address_id'] ?? null,
-                'orderable_type' => null,
-                'orderable_id' => null,
+                "order_number" => $this->generateOrderNumber(),
+                "user_id" => $user->id,
+                "type" => $orderType,
+                "total_amount" => $totalAmount,
+                "discount_amount" => $discountAmount,
+                "gst_amount" => $gstAmount,
+                "cgst_amount" => $cgstAmount,
+                "sgst_amount" => $sgstAmount,
+                "status" => OrderStatusEnum::PENDING,
+                "currency" => "INR",
+                "coupon_id" => $validated["coupon_id"] ?? null,
+                "shipping_address_id" =>
+                    $validated["shipping_address_id"] ?? null,
+                "orderable_type" => null,
+                "orderable_id" => null,
             ]);
 
             // Create order items from cart
@@ -225,20 +226,40 @@ final class OrderController extends Controller
 
                 // Calculate start and end dates based on plan duration
                 $startDate = now();
-                $endDate = $this->calculateEndDate($startDate, $plan->duration, $plan->duration_type->value);
+                $endDate = $this->calculateEndDate(
+                    $startDate,
+                    $plan->duration,
+                    $plan->duration_type->value,
+                );
 
                 OrderItem::create([
-                    'order_id' => $order->id,
-                    'tree_instance_id' => $cartItem->tree_instance_id,
-                    'tree_plan_price_id' => $cartItem->tree_plan_price_id,
-                    'price' => $cartItem->price,
-                    'discount_amount' => 0.00,
-                    'gst_amount' => round($cartItem->price * $gstRate, 2),
-                    'cgst_amount' => round(($cartItem->price * $gstRate) / 2, 2),
-                    'sgst_amount' => round(($cartItem->price * $gstRate) / 2, 2),
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                    'is_renewal' => false,
+                    "order_id" => $order->id,
+                    "tree_instance_id" => $cartItem->tree_instance_id,
+                    "tree_plan_price_id" => $cartItem->tree_plan_price_id,
+                    "price" => $cartItem->price,
+                    "discount_amount" => 0.0,
+                    "gst_amount" => round($cartItem->price * $gstRate, 2),
+                    "cgst_amount" => round(
+                        ($cartItem->price * $gstRate) / 2,
+                        2,
+                    ),
+                    "sgst_amount" => round(
+                        ($cartItem->price * $gstRate) / 2,
+                        2,
+                    ),
+                    "start_date" => $startDate,
+                    "end_date" => $endDate,
+                    "is_renewal" => false,
+                    "options" => [
+                        "plan_name" => $plan->name,
+                        "plan_type" => $plan->type->value,
+                        "duration_display" =>
+                            $plan->duration .
+                            " " .
+                            ucfirst($plan->duration_type->value),
+                        "dedication" =>
+                            $cartItem->options["dedication"] ?? null,
+                    ],
                 ]);
             }
 
@@ -246,11 +267,17 @@ final class OrderController extends Controller
             $cart->items()->delete();
 
             // Load order relationships
-            $order->load(['items.treeInstance.tree', 'items.treePlanPrice.plan']);
+            $order->load([
+                "items.treeInstance.tree",
+                "items.treePlanPrice.plan",
+            ]);
 
-            return $this->created([
-                'order' => new OrderResource($order),
-            ], 'Order created successfully');
+            return $this->created(
+                [
+                    "order" => new OrderResource($order),
+                ],
+                "Order created successfully",
+            );
         });
     }
 
@@ -298,43 +325,53 @@ final class OrderController extends Controller
     public function storeDirect(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'tree_instance_id' => 'required|exists:tree_instances,id',
-            'tree_plan_price_id' => 'required|exists:tree_plan_prices,id',
-            'coupon_id' => 'nullable|exists:coupons,id',
-            'shipping_address_id' => 'nullable|exists:shipping_addresses,id',
+            "tree_instance_id" => "required|exists:tree_instances,id",
+            "tree_plan_price_id" => "required|exists:tree_plan_prices,id",
+            "coupon_id" => "nullable|exists:coupons,id",
+            "shipping_address_id" => "nullable|exists:shipping_addresses,id",
+            // Optional dedication details
+            "name" => "nullable|string|max:100",
+            "occasion" => "nullable|string|max:100",
+            "message" => "nullable|string|max:500",
+            "location_id" => "nullable|exists:locations,id",
         ]);
 
         return DB::transaction(function () use ($request, $validated) {
             $user = $request->user();
 
             // Verify tree instance is available
-            $treeInstance = TreeInstance::with('tree')->find($validated['tree_instance_id']);
+            $treeInstance = TreeInstance::with("tree")->find(
+                $validated["tree_instance_id"],
+            );
 
-            if ($treeInstance->status->value !== 'available') {
-                return $this->error('This tree is not available', 422);
+            if ($treeInstance->status->value !== "available") {
+                return $this->error("This tree is not available", 422);
             }
 
             // Get tree plan price
-            $treePlanPrice = \App\Models\TreePlanPrice::with(['plan', 'tree'])
-                ->where('id', $validated['tree_plan_price_id'])
-                ->where('is_active', true)
+            $treePlanPrice = \App\Models\TreePlanPrice::with(["plan", "tree"])
+                ->where("id", $validated["tree_plan_price_id"])
+                ->where("is_active", true)
                 ->first();
 
             if (!$treePlanPrice) {
-                return $this->error('This pricing plan is not available', 422);
+                return $this->error("This pricing plan is not available", 422);
             }
 
             // Verify the plan belongs to the tree
             if ($treePlanPrice->tree_id !== $treeInstance->tree_id) {
-                return $this->error('Invalid tree and plan combination', 422);
+                return $this->error("Invalid tree and plan combination", 422);
             }
 
             $plan = $treePlanPrice->plan;
-            $orderType = $plan->type->value === 'sponsorship' ? OrderTypeEnum::SPONSOR : OrderTypeEnum::ADOPT;
+            $orderType =
+                $plan->type->value === "sponsorship"
+                    ? OrderTypeEnum::SPONSOR
+                    : OrderTypeEnum::ADOPT;
 
             // Calculate totals
             $subtotal = (float) $treePlanPrice->price;
-            $discountAmount = 0.00;
+            $discountAmount = 0.0;
             $gstRate = 0.18; // 18% GST
             $gstAmount = round($subtotal * $gstRate, 2);
             $cgstAmount = round($gstAmount / 2, 2);
@@ -343,47 +380,72 @@ final class OrderController extends Controller
 
             // Create order
             $order = Order::create([
-                'order_number' => $this->generateOrderNumber(),
-                'user_id' => $user->id,
-                'type' => $orderType,
-                'total_amount' => $totalAmount,
-                'discount_amount' => $discountAmount,
-                'gst_amount' => $gstAmount,
-                'cgst_amount' => $cgstAmount,
-                'sgst_amount' => $sgstAmount,
-                'status' => OrderStatusEnum::PENDING,
-                'currency' => 'INR',
-                'coupon_id' => $validated['coupon_id'] ?? null,
-                'shipping_address_id' => $validated['shipping_address_id'] ?? null,
-                'orderable_type' => null,
-                'orderable_id' => null,
+                "order_number" => $this->generateOrderNumber(),
+                "user_id" => $user->id,
+                "type" => $orderType,
+                "total_amount" => $totalAmount,
+                "discount_amount" => $discountAmount,
+                "gst_amount" => $gstAmount,
+                "cgst_amount" => $cgstAmount,
+                "sgst_amount" => $sgstAmount,
+                "status" => OrderStatusEnum::PENDING,
+                "currency" => "INR",
+                "coupon_id" => $validated["coupon_id"] ?? null,
+                "shipping_address_id" =>
+                    $validated["shipping_address_id"] ?? null,
+                "orderable_type" => null,
+                "orderable_id" => null,
             ]);
 
             // Calculate start and end dates
             $startDate = now();
-            $endDate = $this->calculateEndDate($startDate, $plan->duration, $plan->duration_type->value);
+            $endDate = $this->calculateEndDate(
+                $startDate,
+                $plan->duration,
+                $plan->duration_type->value,
+            );
 
             // Create order item
             OrderItem::create([
-                'order_id' => $order->id,
-                'tree_instance_id' => $validated['tree_instance_id'],
-                'tree_plan_price_id' => $validated['tree_plan_price_id'],
-                'price' => $treePlanPrice->price,
-                'discount_amount' => 0.00,
-                'gst_amount' => $gstAmount,
-                'cgst_amount' => $cgstAmount,
-                'sgst_amount' => $sgstAmount,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'is_renewal' => false,
+                "order_id" => $order->id,
+                "tree_instance_id" => $validated["tree_instance_id"],
+                "tree_plan_price_id" => $validated["tree_plan_price_id"],
+                "price" => $treePlanPrice->price,
+                "discount_amount" => 0.0,
+                "gst_amount" => $gstAmount,
+                "cgst_amount" => $cgstAmount,
+                "sgst_amount" => $sgstAmount,
+                "start_date" => $startDate,
+                "end_date" => $endDate,
+                "is_renewal" => false,
+                "options" => [
+                    "plan_name" => $plan->name,
+                    "plan_type" => $plan->type->value,
+                    "duration_display" =>
+                        $plan->duration .
+                        " " .
+                        ucfirst($plan->duration_type->value),
+                    "dedication" => [
+                        "name" => $validated["name"] ?? null,
+                        "occasion" => $validated["occasion"] ?? null,
+                        "message" => $validated["message"] ?? null,
+                        "location_id" => $validated["location_id"] ?? null,
+                    ],
+                ],
             ]);
 
             // Load order relationships
-            $order->load(['items.treeInstance.tree', 'items.treePlanPrice.plan']);
+            $order->load([
+                "items.treeInstance.tree",
+                "items.treePlanPrice.plan",
+            ]);
 
-            return $this->created([
-                'order' => new OrderResource($order),
-            ], 'Order created successfully');
+            return $this->created(
+                [
+                    "order" => new OrderResource($order),
+                ],
+                "Order created successfully",
+            );
         });
     }
 
@@ -423,21 +485,21 @@ final class OrderController extends Controller
     public function show(Request $request, string $id): JsonResponse
     {
         $order = Order::with([
-            'items.treeInstance.tree',
-            'items.treeInstance.location',
-            'items.treePlanPrice.plan',
-            'shippingAddress',
-            'coupon',
+            "items.treeInstance.tree",
+            "items.treeInstance.location",
+            "items.treePlanPrice.plan",
+            "shippingAddress",
+            "coupon",
         ])
-            ->where('user_id', $request->user()->id)
+            ->where("user_id", $request->user()->id)
             ->find($id);
 
         if (!$order) {
-            return $this->notFound('Order not found');
+            return $this->notFound("Order not found");
         }
 
         return $this->success([
-            'order' => new OrderResource($order),
+            "order" => new OrderResource($order),
         ]);
     }
 
@@ -500,45 +562,46 @@ final class OrderController extends Controller
     {
         $query = OrderItem::query()
             ->with([
-                'treeInstance.tree',
-                'treeInstance.location',
-                'treePlanPrice.plan',
-                'order',
+                "treeInstance.tree",
+                "treeInstance.location",
+                "treePlanPrice.plan",
+                "order",
             ])
-            ->whereHas('order', function ($q) use ($request) {
-                $q->where('user_id', $request->user()->id)
-                    ->whereIn('status', [
-                        OrderStatusEnum::PAID->value,
-                        OrderStatusEnum::SUCCESS->value,
-                        OrderStatusEnum::COMPLETED->value,
-                    ]);
+            ->whereHas("order", function ($q) use ($request) {
+                $q->where("user_id", $request->user()->id)->whereIn("status", [
+                    OrderStatusEnum::PAID->value,
+                    OrderStatusEnum::SUCCESS->value,
+                    OrderStatusEnum::COMPLETED->value,
+                ]);
             })
-            ->orderBy('created_at', 'desc');
+            ->orderBy("created_at", "desc");
 
         // Filter by status
-        if ($request->has('status')) {
-            $query->whereHas('treeInstance', function ($q) use ($request) {
-                $q->where('status', $request->status);
+        if ($request->has("status")) {
+            $query->whereHas("treeInstance", function ($q) use ($request) {
+                $q->where("status", $request->status);
             });
         }
 
         // Filter by type (sponsor/adopt)
-        if ($request->has('type')) {
-            $query->whereHas('order', function ($q) use ($request) {
-                $q->where('type', $request->type);
+        if ($request->has("type")) {
+            $query->whereHas("order", function ($q) use ($request) {
+                $q->where("type", $request->type);
             });
         }
 
-        $perPage = min($request->input('per_page', 15), 50);
+        $perPage = min($request->input("per_page", 15), 50);
         $orderItems = $query->paginate($perPage);
 
         return $this->success([
-            'trees' => \App\Http\Resources\Api\V1\OrderItemResource::collection($orderItems->items()),
-            'meta' => [
-                'current_page' => $orderItems->currentPage(),
-                'last_page' => $orderItems->lastPage(),
-                'per_page' => $orderItems->perPage(),
-                'total' => $orderItems->total(),
+            "trees" => \App\Http\Resources\Api\V1\OrderItemResource::collection(
+                $orderItems->items(),
+            ),
+            "meta" => [
+                "current_page" => $orderItems->currentPage(),
+                "last_page" => $orderItems->lastPage(),
+                "per_page" => $orderItems->perPage(),
+                "total" => $orderItems->total(),
             ],
         ]);
     }
@@ -583,23 +646,33 @@ final class OrderController extends Controller
     public function cancel(Request $request, string $id): JsonResponse
     {
         return DB::transaction(function () use ($request, $id) {
-            $order = Order::where('user_id', $request->user()->id)
-                ->find($id);
+            $order = Order::where("user_id", $request->user()->id)->find($id);
 
             if (!$order) {
-                return $this->notFound('Order not found');
+                return $this->notFound("Order not found");
             }
 
             if ($order->status !== OrderStatusEnum::PENDING) {
-                return $this->error('Only pending orders can be cancelled', 422);
+                return $this->error(
+                    "Only pending orders can be cancelled",
+                    422,
+                );
             }
 
             $order->status = OrderStatusEnum::CANCELLED;
             $order->save();
 
-            return $this->success([
-                'order' => new OrderResource($order->load(['items.treeInstance.tree', 'items.treePlanPrice.plan'])),
-            ], 'Order cancelled successfully');
+            return $this->success(
+                [
+                    "order" => new OrderResource(
+                        $order->load([
+                            "items.treeInstance.tree",
+                            "items.treePlanPrice.plan",
+                        ]),
+                    ),
+                ],
+                "Order cancelled successfully",
+            );
         });
     }
 
@@ -609,8 +682,14 @@ final class OrderController extends Controller
     private function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-' . strtoupper(Str::random(3)) . '-' . now()->format('Ymd') . '-' . rand(1000, 9999);
-        } while (Order::where('order_number', $orderNumber)->exists());
+            $orderNumber =
+                "ORD-" .
+                strtoupper(Str::random(3)) .
+                "-" .
+                now()->format("Ymd") .
+                "-" .
+                rand(1000, 9999);
+        } while (Order::where("order_number", $orderNumber)->exists());
 
         return $orderNumber;
     }
@@ -620,10 +699,14 @@ final class OrderController extends Controller
      */
     private function determineOrderType(Cart $cart): OrderTypeEnum
     {
-        $types = $cart->items->map(fn($item) => $item->treePlanPrice->plan->type->value)->unique();
+        $types = $cart->items
+            ->map(fn($item) => $item->treePlanPrice->plan->type->value)
+            ->unique();
 
         if ($types->count() === 1) {
-            return $types->first() === 'sponsorship' ? OrderTypeEnum::SPONSOR : OrderTypeEnum::ADOPT;
+            return $types->first() === "sponsorship"
+                ? OrderTypeEnum::SPONSOR
+                : OrderTypeEnum::ADOPT;
         }
 
         // If mixed, default to sponsor
@@ -633,15 +716,18 @@ final class OrderController extends Controller
     /**
      * Calculate end date based on duration and type
      */
-    private function calculateEndDate($startDate, int $duration, string $durationType): \Carbon\Carbon
-    {
+    private function calculateEndDate(
+        $startDate,
+        int $duration,
+        string $durationType,
+    ): \Carbon\Carbon {
         $start = \Carbon\Carbon::parse($startDate);
 
         return match ($durationType) {
-            'days' => $start->addDays($duration),
-            'weeks' => $start->addWeeks($duration),
-            'months' => $start->addMonths($duration),
-            'years' => $start->addYears($duration),
+            "days" => $start->addDays($duration),
+            "weeks" => $start->addWeeks($duration),
+            "months" => $start->addMonths($duration),
+            "years" => $start->addYears($duration),
             default => $start->addMonths($duration),
         };
     }
