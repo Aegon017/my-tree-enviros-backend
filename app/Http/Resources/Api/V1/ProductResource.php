@@ -6,39 +6,28 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\URL;
 
 final class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
         // Map media to local media route URLs so private storage can be streamed
-        $mainImage = $this->getFirstMedia('images');
+        $mainImage = $this->getFirstMedia("images");
         $mainImageUrl = null;
         if ($mainImage) {
-            $mainImageUrl = URL::temporarySignedRoute(
-                'media.show',
-                now()->addMinutes(60),
-                ['id' => $mainImage->id]
-            );
+            $mainImageUrl = $mainImage->getFullUrl();
         }
 
-        $thumbnail = $this->getFirstMedia('thumbnails') ?? $this->getFirstMedia('images');
+        $thumbnail =
+            $this->getFirstMedia("thumbnails") ??
+            $this->getFirstMedia("images");
         $thumbnailUrl = null;
         if ($thumbnail) {
-            $thumbnailUrl = URL::temporarySignedRoute(
-                'media.show',
-                now()->addMinutes(60),
-                ['id' => $thumbnail->id]
-            );
+            $thumbnailUrl = $thumbnail->getFullUrl();
         }
 
-        $imageUrls = $this->getMedia('images')
-            ->map(fn($media) => URL::temporarySignedRoute(
-                'media.show',
-                now()->addMinutes(60),
-                ['id' => $media->id]
-            ))
+        $imageUrls = $this->getMedia("images")
+            ->map(fn($media) => $media->getFullUrl())
             ->toArray();
 
         // Calculate price from inventory if exists

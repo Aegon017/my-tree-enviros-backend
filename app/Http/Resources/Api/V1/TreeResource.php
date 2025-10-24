@@ -6,23 +6,18 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\URL;
 
 final class TreeResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Build signed URLs for main image and thumbnail (expires in 60 minutes)
+        // Build direct URLs for main image and thumbnail
         $mainImage =
             $this->getFirstMedia("images") ??
             $this->getFirstMedia("thumbnails");
         $mainImageUrl = null;
         if ($mainImage) {
-            $mainImageUrl = URL::temporarySignedRoute(
-                "media.show",
-                now()->addMinutes(60),
-                ["id" => $mainImage->id],
-            );
+            $mainImageUrl = $mainImage->getFullUrl();
         }
 
         $thumbnail =
@@ -30,11 +25,7 @@ final class TreeResource extends JsonResource
             $this->getFirstMedia("images");
         $thumbnailUrl = null;
         if ($thumbnail) {
-            $thumbnailUrl = URL::temporarySignedRoute(
-                "media.show",
-                now()->addMinutes(60),
-                ["id" => $thumbnail->id],
-            );
+            $thumbnailUrl = $thumbnail->getFullUrl();
         }
 
         return [
@@ -52,11 +43,7 @@ final class TreeResource extends JsonResource
             "images" => $this->getMedia("images")->map(
                 fn($media) => [
                     "id" => $media->id,
-                    "image_url" => URL::temporarySignedRoute(
-                        "media.show",
-                        now()->addMinutes(60),
-                        ["id" => $media->id],
-                    ),
+                    "image_url" => $media->getFullUrl(),
                 ],
             ),
             "available_instances_count" => $this->whenCounted(

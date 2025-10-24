@@ -6,7 +6,6 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\URL;
 
 final class BlogResource extends JsonResource
 {
@@ -34,7 +33,7 @@ final class BlogResource extends JsonResource
      *     type="string",
      *     format="uri",
      *     nullable=true,
-     *     example="http://localhost:8000/media/123?expires=1761200000&signature=abcdef"
+     *     example="http://localhost:8000/media/123"
      *   ),
      *   @OA\Property(
      *     property="images",
@@ -46,7 +45,7 @@ final class BlogResource extends JsonResource
      *         property="image_url",
      *         type="string",
      *         format="uri",
-     *         example="http://localhost:8000/media/124?expires=1761200000&signature=123456"
+     *         example="http://localhost:8000/media/124"
      *       )
      *     )
      *   ),
@@ -61,26 +60,18 @@ final class BlogResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Signed thumbnail URL (if exists)
+        // Direct thumbnail URL (if exists)
         $thumbnail = $this->getFirstMedia("thumbnails");
         $thumbnailUrl = null;
         if ($thumbnail) {
-            $thumbnailUrl = URL::temporarySignedRoute(
-                "media.show",
-                now()->addMinutes(60),
-                ["id" => $thumbnail->id],
-            );
+            $thumbnailUrl = $thumbnail->getFullUrl();
         }
 
-        // Signed image URLs for gallery
+        // Direct image URLs for gallery
         $image = $this->getFirstMedia("images");
         $imageUrl = null;
         if ($image) {
-            $imageUrl = URL::temporarySignedRoute(
-                "media.show",
-                now()->addMinutes(60),
-                ["id" => $image->id],
-            );
+            $imageUrl = $image->getFullUrl();
         }
 
         return [

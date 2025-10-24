@@ -6,7 +6,6 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\URL;
 
 /**
  * @OA\Schema(
@@ -23,8 +22,8 @@ use Illuminate\Support\Facades\URL;
  *         type="string",
  *         format="uri",
  *         nullable=true,
- *         example="https://api.example.com/media/12345?expires=1700000000&signature=xyz",
- *         description="Signed URL to access the slider image (expires in 60 minutes)"
+ *         example="https://api.example.com/media/12345",
+ *         description="Direct URL to access the slider image"
  *     ),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-02T12:34:56.000000Z")
@@ -41,25 +40,22 @@ final class SliderResource extends JsonResource
     {
         // The model defines collection 'image' (single file).
         // Some admin forms might have used 'images' — gracefully fall back.
-        $media = $this->getFirstMedia('image') ?: $this->getFirstMedia('images');
+        $media =
+            $this->getFirstMedia("image") ?: $this->getFirstMedia("images");
 
         $mainImageUrl = null;
         if ($media) {
-            $mainImageUrl = URL::temporarySignedRoute(
-                'media.show',
-                now()->addMinutes(60),
-                ['id' => $media->id]
-            );
+            $mainImageUrl = $media->getFullUrl();
         }
 
         return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'is_active' => (bool) $this->is_active,
-            'main_image_url' => $mainImageUrl,
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            "id" => $this->id,
+            "title" => $this->title,
+            "description" => $this->description,
+            "is_active" => (bool) $this->is_active,
+            "main_image_url" => $mainImageUrl,
+            "created_at" => $this->created_at?->toISOString(),
+            "updated_at" => $this->updated_at?->toISOString(),
         ];
     }
 }
