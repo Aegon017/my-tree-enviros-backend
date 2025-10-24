@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\TreePlanPriceResource;
 use App\Http\Resources\Api\V1\TreeResource;
+use App\Models\Location;
 use App\Models\Tree;
 use App\Models\TreePlanPrice;
 use App\Traits\ResponseHelpers;
@@ -298,13 +299,22 @@ final class TreeController extends Controller
         }
 
         // Filter by location
-        if ($request->has("location_id")) {
-            $query->whereHas("instances", function ($q) use ($request) {
-                $q->where("location_id", $request->location_id)->where(
-                    "status",
-                    "available",
-                );
-            });
+        if ($request->filled("location_id")) {
+            $location = Location::find($request->location_id);
+
+            if ($location) {
+                $locationIds = collect([$location->id])
+                    ->merge($location->allAncestors()->pluck("id"))
+                    ->unique()
+                    ->toArray();
+
+                $query->whereHas("instances", function ($q) use ($locationIds) {
+                    $q->whereIn("location_id", $locationIds)->where(
+                        "status",
+                        "available",
+                    );
+                });
+            }
         }
 
         $perPage = min($request->input("per_page", 15), 50);
@@ -394,14 +404,22 @@ final class TreeController extends Controller
             $query->where("name", "like", "%" . $request->search . "%");
         }
 
-        // Filter by location
-        if ($request->has("location_id")) {
-            $query->whereHas("instances", function ($q) use ($request) {
-                $q->where("location_id", $request->location_id)->where(
-                    "status",
-                    "available",
-                );
-            });
+        if ($request->filled("location_id")) {
+            $location = Location::find($request->location_id);
+
+            if ($location) {
+                $locationIds = collect([$location->id])
+                    ->merge($location->allAncestors()->pluck("id"))
+                    ->unique()
+                    ->toArray();
+
+                $query->whereHas("instances", function ($q) use ($locationIds) {
+                    $q->whereIn("location_id", $locationIds)->where(
+                        "status",
+                        "available",
+                    );
+                });
+            }
         }
 
         $perPage = min($request->input("per_page", 15), 50);

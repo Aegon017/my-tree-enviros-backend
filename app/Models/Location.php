@@ -12,23 +12,42 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class Location extends Model
 {
     protected $casts = [
-        'is_active' => 'boolean',
+        "is_active" => "boolean",
     ];
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(self::class, 'parent_id');
+        return $this->belongsTo(self::class, "parent_id");
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(self::class, 'parent_id');
+        return $this->hasMany(self::class, "parent_id");
     }
 
     public function allDescendants()
     {
-        return $this->children()->with('allDescendants')->get()
-            ->flatMap(fn($child) => collect([$child])->merge($child->allDescendants()));
+        return $this->children()
+            ->with("allDescendants")
+            ->get()
+            ->flatMap(
+                fn($child) => collect([$child])->merge(
+                    $child->allDescendants(),
+                ),
+            );
+    }
+
+    public function allAncestors()
+    {
+        $ancestors = collect();
+        $parent = $this->parent()->select("id", "parent_id")->first();
+
+        while ($parent) {
+            $ancestors->push($parent);
+            $parent = $parent->parent()->select("id", "parent_id")->first();
+        }
+
+        return $ancestors;
     }
 
     public function depth(): int
@@ -51,7 +70,7 @@ final class Location extends Model
     #[Scope]
     protected function active($query)
     {
-        return $query->where('is_active', true);
+        return $query->where("is_active", true);
     }
 
     public function campaigns(): HasMany

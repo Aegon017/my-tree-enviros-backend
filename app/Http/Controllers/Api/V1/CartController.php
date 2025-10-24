@@ -538,7 +538,11 @@ final class CartController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
-            "quantity" => "required|integer|min:1|max:100",
+            "quantity" => "nullable|integer|min:1|max:100",
+            "name" => "nullable|string|max:100",
+            "occasion" => "nullable|string|max:100",
+            "message" => "nullable|string|max:500",
+            "location_id" => "nullable|exists:locations,id",
         ]);
 
         return DB::transaction(function () use ($request, $id, $validated) {
@@ -554,6 +558,7 @@ final class CartController extends Controller
 
             // Trees cannot have quantity > 1
             if (
+                array_key_exists("quantity", $validated) &&
                 $cartItem->cartable_type === TreeInstance::class &&
                 $validated["quantity"] > 1
             ) {
@@ -574,6 +579,7 @@ final class CartController extends Controller
                 $inventory = $product->inventory;
 
                 if (
+                    array_key_exists("quantity", $validated) &&
                     $inventory &&
                     $inventory->stock_quantity < $validated["quantity"]
                 ) {
@@ -586,7 +592,44 @@ final class CartController extends Controller
                 }
             }
 
-            $cartItem->quantity = $validated["quantity"];
+            // Update quantity if provided
+            if (array_key_exists("quantity", $validated)) {
+                // Double-check tree quantity rule
+                if (
+                    $cartItem->cartable_type === TreeInstance::class &&
+                    (int) $validated["quantity"] > 1
+                ) {
+                    return $this->error(
+                        "Tree items can only have quantity of 1",
+                        422,
+                    );
+                }
+
+                $cartItem->quantity = (int) $validated["quantity"];
+            }
+
+            // Update dedication details (for tree items)
+            if ($cartItem->cartable_type === TreeInstance::class) {
+                $options = $cartItem->options ?? [];
+                $dedication = $options["dedication"] ?? [];
+
+                if (array_key_exists("name", $validated)) {
+                    $dedication["name"] = $validated["name"];
+                }
+                if (array_key_exists("occasion", $validated)) {
+                    $dedication["occasion"] = $validated["occasion"];
+                }
+                if (array_key_exists("message", $validated)) {
+                    $dedication["message"] = $validated["message"];
+                }
+                if (array_key_exists("location_id", $validated)) {
+                    $dedication["location_id"] = $validated["location_id"];
+                }
+
+                $options["dedication"] = $dedication;
+                $cartItem->options = $options;
+            }
+
             $cartItem->save();
 
             return $this->loadCartAndRespond(
