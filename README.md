@@ -2,7 +2,7 @@
 
 This document describes the public Slider endpoints that power the homepage hero carousel in the frontend.
 
-These endpoints are public (no authentication required) and return signed media URLs for images. Signed URLs expire — see “Image delivery and caching” below for details.
+These endpoints are public (no authentication required) and return direct media URLs for images.
 
 
 ## Base URL
@@ -46,7 +46,7 @@ Example 200 response:
       "title": "Plant More Trees",
       "description": "Join our green mission and plant a tree today.",
       "is_active": true,
-      "main_image_url": "http://localhost:8000/media/12345?expires=1730000000&signature=abc123",
+      "main_image_url": "http://localhost:8000/media/12345",
       "created_at": "2025-10-22T13:25:00.000000Z",
       "updated_at": "2025-10-22T13:25:00.000000Z"
     }
@@ -75,7 +75,7 @@ Example 200 response:
     "title": "Plant More Trees",
     "description": "Join our green mission and plant a tree today.",
     "is_active": true,
-    "main_image_url": "http://localhost:8000/media/12345?expires=1730000000&signature=abc123",
+    "main_image_url": "http://localhost:8000/media/12345",
     "created_at": "2025-10-22T13:25:00.000000Z",
     "updated_at": "2025-10-22T13:25:00.000000Z"
   }
@@ -97,7 +97,7 @@ Slider (resource: App\Http\Resources\Api\V1\SliderResource)
 - title (string|null)
 - description (string|null)
 - is_active (boolean)
-- main_image_url (string|null): Temporarily signed URL to the slider image (see media notes below)
+- main_image_url (string|null): Direct URL to the slider image
 - created_at (string|null, ISO8601)
 - updated_at (string|null, ISO8601)
 
@@ -110,9 +110,9 @@ You can regenerate the OpenAPI spec and browse it (see “OpenAPI docs” below)
 
 ## Image delivery and caching
 
-- The API returns a signed URL in `main_image_url`. It is generated against the `media.show` route, which streams media files securely.
-- Signed URLs currently expire after 60 minutes.
-- Frontends must be ready to refetch the slider list occasionally (e.g., on page load) to get fresh `main_image_url` values.
+- The API returns a direct storage URL in `main_image_url` provided by Spatie MediaLibrary (`getFullUrl()`).
+- Media URLs do not require signing and do not expire.
+- Frontends can cache these URLs as appropriate; no periodic refetch is required due to URL expiry.
 - If using Next.js Image Optimization, configure `images.remotePatterns` (or `domains`) to allow the backend host so that Next/Image can fetch these URLs.
 
 Example Next.js config snippet:
