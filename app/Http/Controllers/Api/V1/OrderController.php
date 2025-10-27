@@ -17,6 +17,7 @@ use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -159,6 +160,7 @@ final class OrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        Log::info($request->all());
         $validated = $request->validate([
             "coupon_id" => "nullable|exists:coupons,id",
             "shipping_address_id" => "nullable|exists:shipping_addresses,id",

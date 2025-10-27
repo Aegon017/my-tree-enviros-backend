@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::post("sign-up", [AuthController::class, "signUp"]);
 Route::post("sign-in", [AuthController::class, "signIn"]);
-Route::post("verify-otp", [AuthController::class, "verifyOtp"]);
+Route::middleware(["web"])->group(function () {
+    Route::post("/verify-otp", [AuthController::class, "verifyOtp"]);
+});
 Route::post("resend-otp", [AuthController::class, "resendOtp"]);
 
 // Public locations
@@ -36,18 +38,6 @@ Route::prefix("trees")->group(function () {
     Route::get("/{id}/plans", [TreeController::class, "plans"]);
 });
 
-// Sliders (public)
-Route::prefix("sliders")->group(function () {
-    Route::get("/", [
-        \App\Http\Controllers\Api\V1\SliderController::class,
-        "index",
-    ]);
-    Route::get("/{id}", [
-        \App\Http\Controllers\Api\V1\SliderController::class,
-        "show",
-    ]);
-});
-
 // Blogs (public)
 Route::prefix("blogs")->group(function () {
     Route::get("/", [
@@ -65,6 +55,16 @@ Route::post("payments/webhook/razorpay", [PaymentController::class, "webhook"]);
 
 // Protected routes
 Route::middleware("auth:sanctum")->group(function () {
+    Route::prefix("sliders")->group(function () {
+        Route::get("/", [
+            \App\Http\Controllers\Api\V1\SliderController::class,
+            "index",
+        ]);
+        Route::get("/{id}", [
+            \App\Http\Controllers\Api\V1\SliderController::class,
+            "show",
+        ]);
+    });
     // Auth
     Route::get("me", [AuthController::class, "me"]);
     Route::post("logout", [AuthController::class, "logout"]);
