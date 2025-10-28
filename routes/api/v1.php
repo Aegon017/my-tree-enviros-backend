@@ -3,21 +3,23 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BlogController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\FcmTokenController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\LocationController;
+use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\TreeController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::post("sign-up", [AuthController::class, "signUp"]);
 Route::post("sign-in", [AuthController::class, "signIn"]);
-Route::middleware(["web"])->group(function () {
-    Route::post("/verify-otp", [AuthController::class, "verifyOtp"]);
-});
+Route::post("/verify-otp", [AuthController::class, "verifyOtp"]);
 Route::post("resend-otp", [AuthController::class, "resendOtp"]);
 
 // Public locations
@@ -27,6 +29,11 @@ Route::prefix("locations")->group(function () {
     Route::get("/{id}", [LocationController::class, "show"]);
     Route::get("/{id}/children", [LocationController::class, "children"]);
     Route::get("/{id}/tree-count", [LocationController::class, "treeCount"]);
+});
+
+Route::prefix("sliders")->group(function () {
+    Route::get("/", [SliderController::class, "index"]);
+    Route::get("/{id}", [SliderController::class, "show"]);
 });
 
 // Public tree browsing
@@ -40,31 +47,15 @@ Route::prefix("trees")->group(function () {
 
 // Blogs (public)
 Route::prefix("blogs")->group(function () {
-    Route::get("/", [
-        \App\Http\Controllers\Api\V1\BlogController::class,
-        "index",
-    ]);
-    Route::get("/{id}", [
-        \App\Http\Controllers\Api\V1\BlogController::class,
-        "show",
-    ]);
+    Route::get("/", [BlogController::class, "index"]);
+    Route::get("/{id}", [BlogController::class, "show"]);
 });
 
 // Razorpay webhook (public)
 Route::post("payments/webhook/razorpay", [PaymentController::class, "webhook"]);
 
 // Protected routes
-Route::middleware("auth:sanctum")->group(function () {
-    Route::prefix("sliders")->group(function () {
-        Route::get("/", [
-            \App\Http\Controllers\Api\V1\SliderController::class,
-            "index",
-        ]);
-        Route::get("/{id}", [
-            \App\Http\Controllers\Api\V1\SliderController::class,
-            "show",
-        ]);
-    });
+Route::middleware(["auth:sanctum"])->group(function () {
     // Auth
     Route::get("me", [AuthController::class, "me"]);
     Route::post("logout", [AuthController::class, "logout"]);
@@ -106,41 +97,23 @@ Route::middleware("auth:sanctum")->group(function () {
     // Products
     Route::prefix("products")->group(function () {
         Route::get("/category/{categoryId}", [
-            \App\Http\Controllers\Api\V1\ProductController::class,
+            ProductController::class,
             "byCategory",
         ]);
-        Route::get("/{id}/variants", [
-            \App\Http\Controllers\Api\V1\ProductController::class,
-            "variants",
-        ]);
+        Route::get("/{id}/variants", [ProductController::class, "variants"]);
     });
 
     // Wishlist
     Route::prefix("wishlist")->group(function () {
-        Route::get("/", [
-            \App\Http\Controllers\Api\V1\WishlistController::class,
-            "index",
-        ]);
-        Route::post("/items", [
-            \App\Http\Controllers\Api\V1\WishlistController::class,
-            "store",
-        ]);
-        Route::delete("/items/{id}", [
-            \App\Http\Controllers\Api\V1\WishlistController::class,
-            "destroy",
-        ]);
-        Route::delete("/", [
-            \App\Http\Controllers\Api\V1\WishlistController::class,
-            "clear",
-        ]);
+        Route::get("/", [WishlistController::class, "index"]);
+        Route::post("/items", [WishlistController::class, "store"]);
+        Route::delete("/items/{id}", [WishlistController::class, "destroy"]);
+        Route::delete("/", [WishlistController::class, "clear"]);
         Route::post("/items/{id}/move-to-cart", [
-            \App\Http\Controllers\Api\V1\WishlistController::class,
+            WishlistController::class,
             "moveToCart",
         ]);
-        Route::get("/check/{productId}", [
-            \App\Http\Controllers\Api\V1\WishlistController::class,
-            "check",
-        ]);
+        Route::get("/check/{productId}", [WishlistController::class, "check"]);
     });
 
     // FCM Token Management
@@ -158,16 +131,7 @@ Route::middleware("auth:sanctum")->group(function () {
 
 // Public product routes
 Route::prefix("products")->group(function () {
-    Route::get("/", [
-        \App\Http\Controllers\Api\V1\ProductController::class,
-        "index",
-    ]);
-    Route::get("/featured", [
-        \App\Http\Controllers\Api\V1\ProductController::class,
-        "featured",
-    ]);
-    Route::get("/{id}", [
-        \App\Http\Controllers\Api\V1\ProductController::class,
-        "show",
-    ]);
+    Route::get("/", [ProductController::class, "index"]);
+    Route::get("/featured", [ProductController::class, "featured"]);
+    Route::get("/{id}", [ProductController::class, "show"]);
 });
