@@ -24,9 +24,9 @@ final class OrderResource extends JsonResource
             'gst_amount' => $this->gst_amount,
             'cgst_amount' => $this->cgst_amount,
             'sgst_amount' => $this->sgst_amount,
-            'formatted_total' => '₹' . number_format($this->total_amount, 2),
-            'formatted_discount' => '₹' . number_format($this->discount_amount, 2),
-            'formatted_gst' => '₹' . number_format($this->gst_amount, 2),
+            'formatted_total' => '₹' . number_format((float) $this->total_amount, 2),
+            'formatted_discount' => '₹' . number_format((float) $this->discount_amount, 2),
+            'formatted_gst' => '₹' . number_format((float) $this->gst_amount, 2),
             'currency' => $this->currency,
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'shipping_address' => $this->whenLoaded('shippingAddress', function () {

@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Razorpay\Api\Api;
 
 /**
  * @OA\Tag(
@@ -98,20 +99,22 @@ final class PaymentController extends Controller
 
         try {
             // Initialize Razorpay API
-            $api = new \Razorpay\Api\Api(
+            $api = new Api(
                 config('services.razorpay.key'),
                 config('services.razorpay.secret')
             );
 
             // Create Razorpay order
+            $amount = (int) round($order->total_amount * 100); // Convert to paise and ensure no decimal values
             $razorpayOrder = $api->order->create([
                 'receipt' => $order->order_number,
-                'amount' => (int) ($order->total_amount * 100), // Amount in paise
+                'amount' => $amount, // Amount in paise
                 'currency' => $order->currency,
                 'notes' => [
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'user_id' => $order->user_id,
+                    'original_amount' => $order->total_amount,
                 ],
             ]);
 
@@ -127,7 +130,9 @@ final class PaymentController extends Controller
 
             return $this->success([
                 'razorpay_order_id' => $razorpayOrder->id,
-                'amount' => $order->total_amount,
+                // Return amount in paise for the frontend/checkout (amount expected in smallest currency unit)
+                'amount' => $amount,
+                'amount_rupees' => $order->total_amount,
                 'currency' => $order->currency,
                 'order_number' => $order->order_number,
                 'key' => config('services.razorpay.key'),
@@ -217,7 +222,7 @@ final class PaymentController extends Controller
 
             try {
                 // Initialize Razorpay API
-                $api = new \Razorpay\Api\Api(
+                $api = new Api(
                     config('services.razorpay.key'),
                     config('services.razorpay.secret')
                 );
@@ -243,16 +248,20 @@ final class PaymentController extends Controller
                     ->where('transaction_id', $validated['razorpay_order_id'])
                     ->first();
 
+                // Get payment amount from Razorpay payment details and convert from paise to rupees
+                $paidAmount = $payment->amount / 100;
+
                 if ($orderPayment) {
                     $orderPayment->update([
                         'transaction_id' => $validated['razorpay_payment_id'],
                         'status' => 'success',
                         'paid_at' => now(),
+                        'amount' => $paidAmount, // Update with actual paid amount
                     ]);
                 } else {
                     OrderPayment::create([
                         'order_id' => $order->id,
-                        'amount' => $order->total_amount,
+                        'amount' => $paidAmount,
                         'payment_method' => PaymentMethodEnum::RAZORPAY->value,
                         'transaction_id' => $validated['razorpay_payment_id'],
                         'status' => 'success',
@@ -277,7 +286,7 @@ final class PaymentController extends Controller
                     \App\Models\TreeStatusLog::create([
                         'tree_instance_id' => $treeInstance->id,
                         'status' => $treeInstance->status->value,
-                        'changed_by' => $request->user()->id,
+                        'user_id' => $request->user()->id,
                         'notes' => "Status changed to {$treeInstance->status->label()} after successful payment for order {$order->order_number}",
                     ]);
 
@@ -437,10 +446,14 @@ final class PaymentController extends Controller
             $orderPayment = OrderPayment::where('transaction_id', $orderId)->first();
 
             if ($orderPayment) {
+                // Get payment amount from webhook payload and convert from paise to rupees
+                $paidAmount = ($payload['payload']['payment']['entity']['amount'] ?? 0) / 100;
+                
                 $orderPayment->update([
                     'transaction_id' => $paymentId,
                     'status' => 'success',
                     'paid_at' => now(),
+                    'amount' => $paidAmount,
                 ]);
 
                 $order = $orderPayment->order;

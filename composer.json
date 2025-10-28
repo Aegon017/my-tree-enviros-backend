@@ -19,6 +19,7 @@
         "laravel/tinker": "^2.10.1",
         "michael-rubel/laravel-couponables": "^9.0",
         "propaganistas/laravel-phone": "^6.0",
+        "razorpay/razorpay": "2.*",
         "spatie/laravel-one-time-passwords": "^1.0"
     },
     "require-dev": {
