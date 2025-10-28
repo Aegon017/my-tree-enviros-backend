@@ -221,7 +221,6 @@ final class AuthController extends Controller
         }
 
         Auth::guard("web")->login($user);
-        $request->session()->regenerate();
 
         return $this->success(
             [
