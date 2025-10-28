@@ -6,27 +6,28 @@ namespace App\Api\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 
 final class AuthService
 {
-    private const TEST_PHONE = '9876543210';
-    private const TEST_OTP = '123456';
+    private const TEST_PHONE = "9876543210";
+    private const TEST_OTP = "123456";
 
     public function register(array $data): User
     {
         return User::create([
-            'type' => $data['type'],
-            'country_code' => $data['country_code'],
-            'phone' => $data['phone'],
-            'password' => Hash::make($data['phone']),
+            "type" => $data["type"],
+            "country_code" => $data["country_code"],
+            "phone" => $data["phone"],
+            "password" => Hash::make($data["phone"]),
         ]);
     }
 
     public function findByPhone(string $countryCode, string $phone): ?User
     {
-        return User::where('country_code', $countryCode)
-            ->where('phone', $phone)
+        return User::where("country_code", $countryCode)
+            ->where("phone", $phone)
             ->first();
     }
 
@@ -40,8 +41,8 @@ final class AuthService
 
         if ($this->isTestPhone($user->phone)) {
             $user->oneTimePasswords()->create([
-                'password' => self::TEST_OTP,
-                'expires_at' => now()->addMinutes(5),
+                "password" => self::TEST_OTP,
+                "expires_at" => now()->addMinutes(5),
             ]);
         } else {
             $user->sendOneTimePassword();
@@ -73,8 +74,11 @@ final class AuthService
 
     public function createToken(User $user): string
     {
-        return $user->createToken('auth-token', ['*'], now()->addDays(30))
-            ->plainTextToken;
+        return $user->createToken(
+            "auth-token",
+            ["*"],
+            now()->addDays(30),
+        )->plainTextToken;
     }
 
     public function revokeTokens(User $user, bool $all = false): void

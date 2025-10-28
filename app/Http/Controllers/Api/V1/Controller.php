@@ -27,7 +27,7 @@ use App\Http\Controllers\Controller as BaseController;
  * )
  *
  * @OA\Server(
- *     url="https://api.mytreeenviros.com",
+ *     url="https://api.mytree.care",
  *     description="Production Server"
  * )
  *

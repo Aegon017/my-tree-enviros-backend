@@ -77,12 +77,12 @@ final class AuthController extends Controller
 
             if (!$this->authService->sendOtp($user)) {
                 return $this->tooManyRequests(
-                    'Too many OTP requests',
-                    $this->authService->getRateLimitSeconds($user)
+                    "Too many OTP requests",
+                    $this->authService->getRateLimitSeconds($user),
                 );
             }
 
-            return $this->created(null, 'OTP sent successfully');
+            return $this->created(null, "OTP sent successfully");
         });
     }
 
@@ -131,21 +131,21 @@ final class AuthController extends Controller
     {
         $user = $this->authService->findByPhone(
             $request->country_code,
-            $request->phone
+            $request->phone,
         );
 
         if (!$user) {
-            return $this->notFound('User not found');
+            return $this->notFound("User not found");
         }
 
         if (!$this->authService->sendOtp($user)) {
             return $this->tooManyRequests(
-                'Too many OTP requests',
-                $this->authService->getRateLimitSeconds($user)
+                "Too many OTP requests",
+                $this->authService->getRateLimitSeconds($user),
             );
         }
 
-        return $this->success(null, 'OTP sent successfully');
+        return $this->success(null, "OTP sent successfully");
     }
 
     /**
@@ -196,32 +196,39 @@ final class AuthController extends Controller
     {
         $user = $this->authService->findByPhone(
             $request->country_code,
-            $request->phone
+            $request->phone,
         );
 
         if (!$user) {
-            return $this->notFound('User not found');
+            return $this->notFound("User not found");
         }
 
         if (!$this->authService->verifyOtp($user, $request->otp)) {
-            return $this->error('Invalid or expired OTP', 422);
+            return $this->error("Invalid or expired OTP", 422);
         }
 
-        $platform = strtolower($request->header('X-Platform', 'web'));
-        $isMobile = in_array($platform, ['ios', 'android', 'mobile']);
+        $platform = strtolower($request->header("X-Platform", "web"));
+        $isMobile = in_array($platform, ["ios", "android", "mobile"]);
 
         if ($isMobile) {
-            return $this->success([
-                'user' => new UserResource($user),
-                'token' => $this->authService->createToken($user),
-            ], 'Authentication successful');
+            return $this->success(
+                [
+                    "user" => new UserResource($user),
+                    "token" => $this->authService->createToken($user),
+                ],
+                "Authentication successful",
+            );
         }
 
-        Auth::login($user, true);
+        Auth::guard("web")->login($user);
+        $request->session()->regenerate();
 
-        return $this->success([
-            'user' => new UserResource($user),
-        ], 'Authentication successful');
+        return $this->success(
+            [
+                "user" => new UserResource($user),
+            ],
+            "Authentication successful",
+        );
     }
 
     /**
@@ -260,21 +267,21 @@ final class AuthController extends Controller
     {
         $user = $this->authService->findByPhone(
             $request->country_code,
-            $request->phone
+            $request->phone,
         );
 
         if (!$user) {
-            return $this->notFound('User not found');
+            return $this->notFound("User not found");
         }
 
         if (!$this->authService->sendOtp($user)) {
             return $this->tooManyRequests(
-                'Too many OTP requests',
-                $this->authService->getRateLimitSeconds($user)
+                "Too many OTP requests",
+                $this->authService->getRateLimitSeconds($user),
             );
         }
 
-        return $this->success(null, 'OTP sent successfully');
+        return $this->success(null, "OTP sent successfully");
     }
 
     /**
@@ -311,15 +318,15 @@ final class AuthController extends Controller
         if ($isMobile) {
             $this->authService->revokeTokens(
                 $request->user(),
-                $request->boolean('all', false)
+                $request->boolean("all", false),
             );
         } else {
-            Auth::guard('web')->logout();
+            Auth::guard("web")->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
         }
 
-        return $this->success(null, 'Logged out successfully');
+        return $this->success(null, "Logged out successfully");
     }
 
     /**
@@ -351,7 +358,7 @@ final class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return $this->success([
-            'user' => new UserResource($request->user()),
+            "user" => new UserResource($request->user()),
         ]);
     }
 }
