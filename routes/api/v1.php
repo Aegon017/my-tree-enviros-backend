@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\TreeController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -49,6 +50,11 @@ Route::prefix("trees")->group(function () {
 Route::prefix("blogs")->group(function () {
     Route::get("/", [BlogController::class, "index"]);
     Route::get("/{id}", [BlogController::class, "show"]);
+});
+
+Route::prefix("campaigns")->group(function () {
+    Route::get("/", [CampaignController::class, "index"]);
+    Route::get("/{id}", [CampaignController::class, "show"]);
 });
 
 // Razorpay webhook (public)

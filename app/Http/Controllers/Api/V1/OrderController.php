@@ -181,9 +181,14 @@ final class OrderController extends Controller
                 return $this->error("Cart is empty", 422);
             }
 
-            // Validate all tree instances are available
+            // Validate tree items are available
             foreach ($cart->items as $item) {
-                if ($item->treeInstance->status->value !== "available") {
+                if (
+                    method_exists($item, "isTree") &&
+                    $item->isTree() &&
+                    $item->treeInstance &&
+                    $item->treeInstance->status->value !== "available"
+                ) {
                     return $this->error(
                         "Tree instance {$item->treeInstance->sku} is no longer available",
                         422,
@@ -222,47 +227,104 @@ final class OrderController extends Controller
                 "orderable_id" => null,
             ]);
 
-            // Create order items from cart
+            // Create order items from cart (trees, products, campaigns)
             foreach ($cart->items as $cartItem) {
-                $plan = $cartItem->treePlanPrice->plan;
+                if (method_exists($cartItem, "isTree") && $cartItem->isTree()) {
+                    $plan = $cartItem->treePlanPrice->plan;
 
-                // Calculate start and end dates based on plan duration
-                $startDate = now();
-                $endDate = $this->calculateEndDate(
-                    $startDate,
-                    $plan->duration,
-                    $plan->duration_type->value,
-                );
+                    // Calculate start and end dates based on plan duration
+                    $startDate = now();
+                    $endDate = $this->calculateEndDate(
+                        $startDate,
+                        $plan->duration,
+                        $plan->duration_type->value,
+                    );
 
-                OrderItem::create([
-                    "order_id" => $order->id,
-                    "tree_instance_id" => $cartItem->tree_instance_id,
-                    "tree_plan_price_id" => $cartItem->tree_plan_price_id,
-                    "price" => $cartItem->price,
-                    "discount_amount" => 0.0,
-                    "gst_amount" => round($cartItem->price * $gstRate, 2),
-                    "cgst_amount" => round(
-                        ($cartItem->price * $gstRate) / 2,
-                        2,
-                    ),
-                    "sgst_amount" => round(
-                        ($cartItem->price * $gstRate) / 2,
-                        2,
-                    ),
-                    "start_date" => $startDate,
-                    "end_date" => $endDate,
-                    "is_renewal" => false,
-                    "options" => [
-                        "plan_name" => $plan->name,
-                        "plan_type" => $plan->type->value,
-                        "duration_display" =>
-                            $plan->duration .
-                            " " .
-                            ucfirst($plan->duration_type->value),
-                        "dedication" =>
-                            $cartItem->options["dedication"] ?? null,
-                    ],
-                ]);
+                    OrderItem::create([
+                        "order_id" => $order->id,
+                        "tree_instance_id" => $cartItem->tree_instance_id,
+                        "tree_plan_price_id" => $cartItem->tree_plan_price_id,
+                        "price" => $cartItem->price,
+                        "discount_amount" => 0.0,
+                        "gst_amount" => round($cartItem->price * $gstRate, 2),
+                        "cgst_amount" => round(
+                            ($cartItem->price * $gstRate) / 2,
+                            2,
+                        ),
+                        "sgst_amount" => round(
+                            ($cartItem->price * $gstRate) / 2,
+                            2,
+                        ),
+                        "start_date" => $startDate,
+                        "end_date" => $endDate,
+                        "is_renewal" => false,
+                        "options" => [
+                            "plan_name" => $plan->name,
+                            "plan_type" => $plan->type->value,
+                            "duration_display" =>
+                                $plan->duration .
+                                " " .
+                                ucfirst($plan->duration_type->value),
+                            "dedication" =>
+                                $cartItem->options["dedication"] ?? null,
+                        ],
+                    ]);
+                    continue;
+                }
+
+                // Product items
+                if (
+                    method_exists($cartItem, "isProduct") &&
+                    $cartItem->isProduct()
+                ) {
+                    OrderItem::create([
+                        "order_id" => $order->id,
+                        "orderable_type" => $cartItem->cartable_type,
+                        "orderable_id" => $cartItem->cartable_id,
+                        "quantity" => $cartItem->quantity,
+                        "price" => $cartItem->price,
+                        "discount_amount" => 0.0,
+                        "gst_amount" => round($cartItem->price * $gstRate, 2),
+                        "cgst_amount" => round(
+                            ($cartItem->price * $gstRate) / 2,
+                            2,
+                        ),
+                        "sgst_amount" => round(
+                            ($cartItem->price * $gstRate) / 2,
+                            2,
+                        ),
+                        "is_renewal" => false,
+                        "options" => $cartItem->options ?? [],
+                    ]);
+                    continue;
+                }
+
+                // Campaign items
+                if (
+                    method_exists($cartItem, "isCampaign") &&
+                    $cartItem->isCampaign()
+                ) {
+                    OrderItem::create([
+                        "order_id" => $order->id,
+                        "orderable_type" => \App\Models\Campaign::class,
+                        "orderable_id" => $cartItem->cartable_id,
+                        "quantity" => $cartItem->quantity,
+                        "price" => $cartItem->price,
+                        "discount_amount" => 0.0,
+                        "gst_amount" => round($cartItem->price * $gstRate, 2),
+                        "cgst_amount" => round(
+                            ($cartItem->price * $gstRate) / 2,
+                            2,
+                        ),
+                        "sgst_amount" => round(
+                            ($cartItem->price * $gstRate) / 2,
+                            2,
+                        ),
+                        "is_renewal" => false,
+                        "options" => $cartItem->options ?? [],
+                    ]);
+                    continue;
+                }
             }
 
             // Clear cart after order creation
@@ -327,10 +389,21 @@ final class OrderController extends Controller
     public function storeDirect(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            "tree_instance_id" => "required|exists:tree_instances,id",
-            "tree_plan_price_id" => "required|exists:tree_plan_prices,id",
+            "item_type" => [
+                "required",
+                "string",
+                \Illuminate\Validation\Rule::in(["tree", "campaign"]),
+            ],
+            "tree_instance_id" =>
+                "required_if:item_type,tree|nullable|exists:tree_instances,id",
+            "tree_plan_price_id" =>
+                "required_if:item_type,tree|nullable|exists:tree_plan_prices,id",
             "coupon_id" => "nullable|exists:coupons,id",
             "shipping_address_id" => "nullable|exists:shipping_addresses,id",
+            "campaign_id" =>
+                "required_if:item_type,campaign|nullable|exists:campaigns,id",
+            "amount" => "required_if:item_type,campaign|nullable|numeric|min:1",
+            "quantity" => "nullable|integer|min:1|max:100",
             // Optional dedication details
             "name" => "nullable|string|max:100",
             "occasion" => "nullable|string|max:100",
@@ -340,6 +413,91 @@ final class OrderController extends Controller
 
         return DB::transaction(function () use ($request, $validated) {
             $user = $request->user();
+
+            // Direct campaign contribution
+            if (($validated["item_type"] ?? null) === "campaign") {
+                $campaign = \App\Models\Campaign::with("location")->find(
+                    $validated["campaign_id"],
+                );
+
+                if (!$campaign) {
+                    return $this->error("Campaign not found", 404);
+                }
+
+                if (!$campaign->is_active) {
+                    return $this->error("This campaign is not active", 422);
+                }
+
+                if ($campaign->end_date && $campaign->end_date->isPast()) {
+                    return $this->error("This campaign has ended", 422);
+                }
+
+                $quantity = $validated["quantity"] ?? 1;
+                $amount =
+                    (float) ($validated["amount"] ?? ($campaign->amount ?? 0));
+
+                if ($amount <= 0) {
+                    return $this->error("Invalid amount", 422);
+                }
+
+                // Calculate totals
+                $subtotal = $amount * $quantity;
+                $discountAmount = 0.0;
+                $gstRate = 0.18; // 18% GST
+                $gstAmount = round($subtotal * $gstRate, 2);
+                $cgstAmount = round($gstAmount / 2, 2);
+                $sgstAmount = round($gstAmount / 2, 2);
+                $totalAmount = $subtotal - $discountAmount + $gstAmount;
+
+                // Create order
+                $order = Order::create([
+                    "order_number" => $this->generateOrderNumber(),
+                    "user_id" => $user->id,
+                    "type" => OrderTypeEnum::CAMPAIGN,
+                    "total_amount" => $totalAmount,
+                    "discount_amount" => $discountAmount,
+                    "gst_amount" => $gstAmount,
+                    "cgst_amount" => $cgstAmount,
+                    "sgst_amount" => $sgstAmount,
+                    "status" => OrderStatusEnum::PENDING,
+                    "currency" => "INR",
+                    "coupon_id" => $validated["coupon_id"] ?? null,
+                    "shipping_address_id" =>
+                        $validated["shipping_address_id"] ?? null,
+                    "orderable_type" => null,
+                    "orderable_id" => null,
+                ]);
+
+                // Create order item (campaign)
+                OrderItem::create([
+                    "order_id" => $order->id,
+                    "orderable_type" => \App\Models\Campaign::class,
+                    "orderable_id" => $campaign->id,
+                    "quantity" => $quantity,
+                    "price" => $amount,
+                    "discount_amount" => 0.0,
+                    "gst_amount" => round($amount * $gstRate, 2),
+                    "cgst_amount" => round(($amount * $gstRate) / 2, 2),
+                    "sgst_amount" => round(($amount * $gstRate) / 2, 2),
+                    "is_renewal" => false,
+                    "options" => [
+                        "campaign_type" => $campaign->type?->value,
+                        "campaign_type_label" => $campaign->type?->label(),
+                        "location_id" => $campaign->location_id,
+                        "location_name" => $campaign->location->name ?? null,
+                        "description" => $campaign->description,
+                    ],
+                ]);
+
+                $order->load(["items"]);
+
+                return $this->created(
+                    [
+                        "order" => new OrderResource($order),
+                    ],
+                    "Order created successfully",
+                );
+            }
 
             // Verify tree instance is available
             $treeInstance = TreeInstance::with("tree")->find(
@@ -701,17 +859,58 @@ final class OrderController extends Controller
      */
     private function determineOrderType(Cart $cart): OrderTypeEnum
     {
-        $types = $cart->items
-            ->map(fn($item) => $item->treePlanPrice->plan->type->value)
-            ->unique();
+        $hasTree = false;
+        $hasProduct = false;
+        $hasCampaign = false;
 
-        if ($types->count() === 1) {
-            return $types->first() === "sponsorship"
-                ? OrderTypeEnum::SPONSOR
-                : OrderTypeEnum::ADOPT;
+        $treePlanTypes = collect();
+
+        foreach ($cart->items as $item) {
+            if (method_exists($item, "isTree") && $item->isTree()) {
+                $hasTree = true;
+                // Collect plan type for tree items (sponsorship/adoption)
+                if ($item->treePlanPrice && $item->treePlanPrice->plan) {
+                    $treePlanTypes->push(
+                        $item->treePlanPrice->plan->type->value,
+                    );
+                }
+                continue;
+            }
+
+            if (method_exists($item, "isProduct") && $item->isProduct()) {
+                $hasProduct = true;
+                continue;
+            }
+
+            if (method_exists($item, "isCampaign") && $item->isCampaign()) {
+                $hasCampaign = true;
+                continue;
+            }
         }
 
-        // If mixed, default to sponsor
+        // Single-category carts
+        if ($hasCampaign && !$hasTree && !$hasProduct) {
+            return OrderTypeEnum::CAMPAIGN;
+        }
+
+        if ($hasProduct && !$hasTree && !$hasCampaign) {
+            return OrderTypeEnum::PRODUCT;
+        }
+
+        if ($hasTree && !$hasProduct && !$hasCampaign) {
+            $treePlanTypes = $treePlanTypes->unique();
+
+            if ($treePlanTypes->count() === 1) {
+                return $treePlanTypes->first() === "sponsorship"
+                    ? OrderTypeEnum::SPONSOR
+                    : OrderTypeEnum::ADOPT;
+            }
+
+            // Mixed tree plan types: default to sponsor
+            return OrderTypeEnum::SPONSOR;
+        }
+
+        // Mixed-category carts (trees/products/campaigns): default to sponsor
         return OrderTypeEnum::SPONSOR;
     }
 
