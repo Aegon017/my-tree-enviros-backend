@@ -208,6 +208,24 @@ final class OrderController extends Controller
             $sgstAmount = round($gstAmount / 2, 2);
             $totalAmount = $subtotal - $discountAmount + $gstAmount;
 
+            // Determine primary orderable (use first cart item) to satisfy non-null morph columns
+            $firstItem = $cart->items->first();
+            $primaryOrderableType = null;
+            $primaryOrderableId = null;
+
+            if ($firstItem) {
+                if (method_exists($firstItem, 'isTree') && $firstItem->isTree()) {
+                    $primaryOrderableType = TreeInstance::class;
+                    $primaryOrderableId = $firstItem->tree_instance_id;
+                } elseif (method_exists($firstItem, 'isProduct') && $firstItem->isProduct()) {
+                    $primaryOrderableType = $firstItem->cartable_type;
+                    $primaryOrderableId = $firstItem->cartable_id;
+                } elseif (method_exists($firstItem, 'isCampaign') && $firstItem->isCampaign()) {
+                    $primaryOrderableType = \App\Models\Campaign::class;
+                    $primaryOrderableId = $firstItem->cartable_id;
+                }
+            }
+
             // Create order
             $order = Order::create([
                 "order_number" => $this->generateOrderNumber(),
@@ -223,8 +241,8 @@ final class OrderController extends Controller
                 "coupon_id" => $validated["coupon_id"] ?? null,
                 "shipping_address_id" =>
                     $validated["shipping_address_id"] ?? null,
-                "orderable_type" => null,
-                "orderable_id" => null,
+                "orderable_type" => $primaryOrderableType,
+                "orderable_id" => $primaryOrderableId,
             ]);
 
             // Create order items from cart (trees, products, campaigns)
@@ -449,7 +467,7 @@ final class OrderController extends Controller
                 $sgstAmount = round($gstAmount / 2, 2);
                 $totalAmount = $subtotal - $discountAmount + $gstAmount;
 
-                // Create order
+                // Create order (set primary orderable to campaign)
                 $order = Order::create([
                     "order_number" => $this->generateOrderNumber(),
                     "user_id" => $user->id,
@@ -464,8 +482,8 @@ final class OrderController extends Controller
                     "coupon_id" => $validated["coupon_id"] ?? null,
                     "shipping_address_id" =>
                         $validated["shipping_address_id"] ?? null,
-                    "orderable_type" => null,
-                    "orderable_id" => null,
+                    "orderable_type" => \App\Models\Campaign::class,
+                    "orderable_id" => $campaign->id,
                 ]);
 
                 // Create order item (campaign)
@@ -504,7 +522,11 @@ final class OrderController extends Controller
                 $validated["tree_instance_id"],
             );
 
-            if ($treeInstance->status->value !== "available") {
+            if (!$treeInstance) {
+                return $this->error("Tree instance not found", 404);
+            }
+
+            if ($treeInstance->status !== TreeStatusEnum::AVAILABLE) {
                 return $this->error("This tree is not available", 422);
             }
 
@@ -538,7 +560,7 @@ final class OrderController extends Controller
             $sgstAmount = round($gstAmount / 2, 2);
             $totalAmount = $subtotal - $discountAmount + $gstAmount;
 
-            // Create order
+            // Create order (set primary orderable to the tree instance)
             $order = Order::create([
                 "order_number" => $this->generateOrderNumber(),
                 "user_id" => $user->id,
@@ -553,8 +575,8 @@ final class OrderController extends Controller
                 "coupon_id" => $validated["coupon_id"] ?? null,
                 "shipping_address_id" =>
                     $validated["shipping_address_id"] ?? null,
-                "orderable_type" => null,
-                "orderable_id" => null,
+                "orderable_type" => TreeInstance::class,
+                "orderable_id" => $treeInstance->id,
             ]);
 
             // Calculate start and end dates

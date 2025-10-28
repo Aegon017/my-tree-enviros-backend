@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Enums\OrderStatusEnum;
-use App\Enums\TreeTypeEnum;
+use App\Enums\OrderTypeEnum;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use App\Models\User;
 
 final class OrderForm
 {
@@ -19,10 +20,16 @@ final class OrderForm
                 TextInput::make('order_number')
                     ->disabled(),
                 Select::make('user_id')
-                    ->relationship('user', 'name')
+                    ->options(function () {
+                        return User::query()
+                            ->get()
+                            ->mapWithKeys(fn($u) => [$u->id => $u->name ?? $u->email ?? ('User #' . $u->id)])
+                            ->toArray();
+                    })
+                    ->searchable()
                     ->required(),
                 Select::make('type')
-                    ->options(TreeTypeEnum::class)
+                    ->options(OrderTypeEnum::class)
                     ->required(),
                 Select::make('status')
                     ->options(OrderStatusEnum::class)
