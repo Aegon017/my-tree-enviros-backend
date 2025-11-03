@@ -53,18 +53,10 @@ final class ProductForm
                                     ->required(),
                                 TextInput::make('nick_name')
                                     ->required(),
-                                TextInput::make('base_price')
-                                    ->required(),
-                                TextInput::make('discount_price')
-                                    ->required(),
                             ]),
                         Textarea::make('short_description')->required(),
                         RichEditor::make('description')->required(),
-                    ])->columnSpan(8),
-                    Section::make('Media')->schema([
-                        SpatieMediaLibraryFileUpload::make('thumbnail')->collection('thumbnails'),
-                        SpatieMediaLibraryFileUpload::make('image')->collection('images')->multiple(),
-                    ])->columnSpan(4),
+                    ])->columnSpanFull(),
 
                 ])->columns(12)->columnSpanFull(),
             ]);

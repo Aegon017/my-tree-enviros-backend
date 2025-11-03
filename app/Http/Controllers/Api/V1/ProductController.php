@@ -109,7 +109,12 @@ final class ProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Product::query()
-            ->with(["productCategory", "inventory.productVariants"])
+            ->with([
+                "productCategory",
+                "inventory.productVariants.variant.color",
+                "inventory.productVariants.variant.size",
+                "inventory.productVariants.variant.planter"
+            ])
             ->where("is_active", true);
 
         // Search by name, botanical name, or nick name
@@ -223,7 +228,9 @@ final class ProductController extends Controller
     {
         $product = Product::with([
             "productCategory",
-            "inventory.productVariants",
+            "inventory.productVariants" => function ($query) {
+                $query->with('variant.color', 'variant.size', 'variant.planter');
+            },
         ])
             ->where("is_active", true)
             ->find($id);
@@ -298,7 +305,12 @@ final class ProductController extends Controller
         Request $request,
         string $categoryId,
     ): JsonResponse {
-        $query = Product::with(["productCategory", "inventory.productVariants"])
+        $query = Product::with([
+            "productCategory",
+            "inventory.productVariants.variant.color",
+            "inventory.productVariants.variant.size",
+            "inventory.productVariants.variant.planter"
+        ])
             ->where("is_active", true)
             ->where("product_category_id", $categoryId);
 
@@ -379,7 +391,11 @@ final class ProductController extends Controller
      */
     public function variants(Request $request, string $id): JsonResponse
     {
-        $product = Product::with(["inventory.productVariants"])->find($id);
+        $product = Product::with([
+            "inventory.productVariants.variant.color",
+            "inventory.productVariants.variant.size",
+            "inventory.productVariants.variant.planter"
+        ])->find($id);
 
         if (!$product) {
             return $this->notFound("Product not found");
@@ -455,9 +471,14 @@ final class ProductController extends Controller
     {
         $limit = min($request->input("limit", 10), 20);
 
-        $products = Product::with(["productCategory", "inventory"])
+        $products = Product::with([
+            "productCategory",
+            "inventory.productVariants.variant.color",
+            "inventory.productVariants.variant.size",
+            "inventory.productVariants.variant.planter"
+        ])
             ->where("is_active", true)
-            ->whereHas("inventory", function ($q) {
+            ->whereHas("inventory.productVariants", function ($q) {
                 $q->where("is_instock", true);
             })
             ->inRandomOrder()

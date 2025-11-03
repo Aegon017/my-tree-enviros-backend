@@ -11,32 +11,35 @@ final class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Map media to local media route URLs so private storage can be streamed
-        $mainImage = $this->getFirstMedia("images");
-        $mainImageUrl = null;
-        if ($mainImage) {
-            $mainImageUrl = $mainImage->getFullUrl();
-        }
-
-        $thumbnail =
-            $this->getFirstMedia("thumbnails") ??
-            $this->getFirstMedia("images");
+        // Get images from inventory (global product images)
         $thumbnailUrl = null;
-        if ($thumbnail) {
-            $thumbnailUrl = $thumbnail->getFullUrl();
+        $imageUrls = [];
+
+        if ($this->inventory) {
+            // Get inventory thumbnail for product listing
+            $thumbnail = $this->inventory->getFirstMedia("thumbnail");
+            $thumbnailUrl = $thumbnail?->getFullUrl();
+
+            // Get inventory-level images (global product images)
+            $inventoryImages = $this->inventory->getMedia("images");
+            if ($inventoryImages->count() > 0) {
+                $imageUrls = $inventoryImages->map(fn($media) => $media->getFullUrl())->toArray();
+            }
         }
 
-        $imageUrls = $this->getMedia("images")
-            ->map(fn($media) => $media->getFullUrl())
-            ->toArray();
+        // Get stock quantity and status from first variant if available
+        $stockQuantity = 0;
+        $isInStock = false;
+        $price = 0;
+        $discountPrice = null;
 
-        // Calculate price from inventory if exists
-        $price = $this->base_price ?? 0;
-        $discountPrice = $this->discount_price ?? null;
-
-        // Get stock quantity and status
-        $stockQuantity = $this->inventory?->stock_quantity ?? 0;
-        $isInStock = $this->inventory?->is_instock ?? false;
+        if ($this->inventory && $this->inventory->productVariants->count() > 0) {
+            $firstVariant = $this->inventory->productVariants->first();
+            $stockQuantity = $firstVariant->stock_quantity ?? 0;
+            $isInStock = $firstVariant->is_instock ?? false;
+            $price = $firstVariant->base_price ?? 0;
+            $discountPrice = $firstVariant->discount_price ?? null;
+        }
 
         return [
             "id" => $this->id,
@@ -62,7 +65,6 @@ final class ProductResource extends JsonResource
             "discount_price" => $discountPrice ? (float) $discountPrice : null,
             "quantity" => $stockQuantity,
             "thumbnail_url" => $thumbnailUrl ?? "",
-            "main_image_url" => $mainImageUrl ?? "",
             "image_urls" => $imageUrls,
             "reviews" => [], // Reviews will be added later if needed
             "wishlist_tag" => $this->in_wishlist ?? false,
@@ -76,23 +78,48 @@ final class ProductResource extends JsonResource
             "review_count" => 0,
             // Additional fields from new structure
             "is_active" => $this->is_active,
-            "inventory" => $this->when(
-                $this->relationLoaded("inventory"),
-                function () {
-                    return [
-                        "id" => $this->inventory->id ?? null,
-                        "stock_quantity" =>
-                            $this->inventory->stock_quantity ?? 0,
-                        "is_instock" => $this->inventory->is_instock ?? false,
-                        "has_variants" =>
-                            $this->inventory?->productVariants()->count() > 0,
-                    ];
-                },
-            ),
+            "inventory" => [
+                "id" => $this->inventory->id ?? null,
+                "stock_quantity" => $stockQuantity,
+                "is_instock" => $isInStock,
+                "has_variants" => $this->inventory && $this->inventory->productVariants->count() > 0,
+            ],
             "variants" => ProductVariantResource::collection(
-                $this->whenLoaded("inventory.productVariants"),
+                $this->inventory->productVariants ?? collect(),
             ),
+            "default_variant" => $this->inventory && $this->inventory->productVariants->count() > 0
+                ? new ProductVariantResource($this->inventory->productVariants->first())
+                : null,
             "formatted_price" => $price ? "₹" . number_format($price, 2) : null,
+            "has_variants" => $this->inventory && $this->inventory->productVariants->count() > 0,
+            "variant_options" => $this->inventory && $this->inventory->productVariants->count() > 0 ? [
+                "colors" => $this->inventory->productVariants->filter(fn($v) => $v->variant && $v->variant->color)
+                    ->map(fn($v) => $v->variant->color)
+                    ->unique('id')
+                    ->values()
+                    ->map(fn($color) => [
+                        'id' => $color->id,
+                        'name' => $color->name,
+                        'code' => $color->code,
+                    ]),
+                "sizes" => $this->inventory->productVariants->filter(fn($v) => $v->variant && $v->variant->size)
+                    ->map(fn($v) => $v->variant->size)
+                    ->unique('id')
+                    ->values()
+                    ->map(fn($size) => [
+                        'id' => $size->id,
+                        'name' => $size->name,
+                    ]),
+                "planters" => $this->inventory->productVariants->filter(fn($v) => $v->variant && $v->variant->planter)
+                    ->map(fn($v) => $v->variant->planter)
+                    ->unique('id')
+                    ->values()
+                    ->map(fn($planter) => [
+                        'id' => $planter->id,
+                        'name' => $planter->name,
+                        'image_url' => $planter->getFirstMediaUrl('images') ?? '',
+                    ]),
+            ] : null,
         ];
     }
 }

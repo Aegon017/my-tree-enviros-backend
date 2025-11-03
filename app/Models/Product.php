@@ -7,12 +7,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
-final class Product extends Model implements HasMedia
+final class Product extends Model
 {
-    use InteractsWithMedia;
 
     protected $fillable = [
         "product_category_id",
@@ -20,8 +17,6 @@ final class Product extends Model implements HasMedia
         "slug",
         "botanical_name",
         "nick_name",
-        "base_price",
-        "discount_price",
         "short_description",
         "description",
         "is_active",
@@ -29,16 +24,9 @@ final class Product extends Model implements HasMedia
 
     protected $casts = [
         "product_category_id" => "integer",
-        "base_price" => "float",
-        "discount_price" => "float",
         "is_active" => "boolean",
     ];
 
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('thumbnails')->singleFile();
-        $this->addMediaCollection('images');
-    }
 
 
     public function productCategory(): BelongsTo

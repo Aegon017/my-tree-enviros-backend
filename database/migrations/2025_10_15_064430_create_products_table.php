@@ -17,8 +17,6 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('botanical_name');
             $table->string('nick_name');
-            $table->string('base_price');
-            $table->string('discount_price');
             $table->string('short_description');
             $table->text('description');
             $table->boolean('is_active')->default(true);

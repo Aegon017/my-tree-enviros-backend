@@ -6,10 +6,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-final class ProductVariant extends Model
+final class ProductVariant extends Model implements HasMedia
 {
+    use InteractsWithMedia;
     protected $fillable = ['inventory_id', 'variant_id', 'sku', 'base_price', 'discount_price', 'stock_quantity', 'is_instock'];
+
+    protected $appends = ['price'];
 
 
     protected $casts = [
@@ -29,5 +34,15 @@ final class ProductVariant extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(Variant::class);
+    }
+
+    public function getPriceAttribute(): float
+    {
+        return $this->discount_price ?? $this->base_price ?? 0;
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('images');
     }
 }

@@ -18,7 +18,7 @@ final class InventoriesTable
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make('product.thumbnail')->collection('thumbnails')->label('Image')->imageHeight(120),
+                SpatieMediaLibraryImageColumn::make('thumbnail')->collection('thumbnail')->label('Image')->imageHeight(120),
                 TextColumn::make('product.productCategory.name')
                     ->label('Category')
                     ->searchable(),

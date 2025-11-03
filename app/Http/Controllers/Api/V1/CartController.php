@@ -85,7 +85,23 @@ final class CartController extends Controller
     {
         $cart = $this->getOrCreateCart($request);
 
-        $cart->load(["items.cartable"]);
+        $cart->load([
+            "items.cartable" => function ($query) {
+                // For products, load the full product data with inventory and variants
+                if ($query->getModel() instanceof \App\Models\Product) {
+                    $query->with([
+                        'inventory.productVariants.variant.color',
+                        'inventory.productVariants.variant.size',
+                        'inventory.productVariants.variant.planter',
+                        'productCategory'
+                    ]);
+                }
+                // For product variants, load the product inventory data
+                elseif ($query->getModel() instanceof \App\Models\ProductVariant) {
+                    $query->with('inventory.product');
+                }
+            }
+        ]);
 
         // Clean up expired items if cart expired
         if ($cart->isExpired()) {
@@ -326,21 +342,15 @@ final class CartController extends Controller
             $price = $productVariant->price ?? 0;
             $sku = $productVariant->sku;
 
-            // Check inventory
-            if (
-                $productVariant->inventory &&
-                !$productVariant->inventory->is_instock
-            ) {
+            // Check variant stock status
+            if (!$productVariant->is_instock || $productVariant->stock_quantity <= 0) {
                 return $this->error("Product is out of stock", 422);
             }
 
-            if (
-                $productVariant->inventory &&
-                $productVariant->inventory->stock_quantity < $quantity
-            ) {
+            if ($productVariant->stock_quantity < $quantity) {
                 return $this->error(
                     "Insufficient stock. Only " .
-                        $productVariant->inventory->stock_quantity .
+                        $productVariant->stock_quantity .
                         " available",
                     422,
                 );
@@ -370,20 +380,19 @@ final class CartController extends Controller
             $sku = $product->sku ?? null;
 
             // Check inventory
-            if ($product->inventory && !$product->inventory->is_instock) {
-                return $this->error("Product is out of stock", 422);
-            }
+            if ($product->inventory) {
+                if (!$product->inventory->is_instock || $product->inventory->stock_quantity <= 0) {
+                    return $this->error("Product is out of stock", 422);
+                }
 
-            if (
-                $product->inventory &&
-                $product->inventory->stock_quantity < $quantity
-            ) {
-                return $this->error(
-                    "Insufficient stock. Only " .
-                        $product->inventory->stock_quantity .
-                        " available",
-                    422,
-                );
+                if ($product->inventory->stock_quantity < $quantity) {
+                    return $this->error(
+                        "Insufficient stock. Only " .
+                            $product->inventory->stock_quantity .
+                            " available",
+                        422,
+                    );
+                }
             }
 
             $options = [
@@ -578,17 +587,55 @@ final class CartController extends Controller
                 $product = $cartItem->cartable;
                 $inventory = $product->inventory;
 
-                if (
-                    array_key_exists("quantity", $validated) &&
-                    $inventory &&
-                    $inventory->stock_quantity < $validated["quantity"]
-                ) {
-                    return $this->error(
-                        "Insufficient stock. Only " .
-                            $inventory->stock_quantity .
-                            " available",
-                        422,
-                    );
+                // For product variants, check variant-level stock
+                if ($cartItem->cartable_type === ProductVariant::class) {
+                    $variant = $cartItem->cartable;
+                    if (
+                        array_key_exists("quantity", $validated) &&
+                        (!$variant->is_instock || $variant->stock_quantity <= 0)
+                    ) {
+                        return $this->error(
+                            "Product is out of stock",
+                            422,
+                        );
+                    }
+
+                    if (
+                        array_key_exists("quantity", $validated) &&
+                        $variant->stock_quantity < $validated["quantity"]
+                    ) {
+                        return $this->error(
+                            "Insufficient stock. Only " .
+                                $variant->stock_quantity .
+                                " available",
+                            422,
+                        );
+                    }
+                } else {
+                    // For regular products, check inventory-level stock
+                    if ($inventory) {
+                        if (
+                            array_key_exists("quantity", $validated) &&
+                            (!$inventory->is_instock || $inventory->stock_quantity <= 0)
+                        ) {
+                            return $this->error(
+                                "Product is out of stock",
+                                422,
+                            );
+                        }
+
+                        if (
+                            array_key_exists("quantity", $validated) &&
+                            $inventory->stock_quantity < $validated["quantity"]
+                        ) {
+                            return $this->error(
+                                "Insufficient stock. Only " .
+                                    $inventory->stock_quantity .
+                                    " available",
+                                422,
+                            );
+                        }
+                    }
                 }
             }
 
@@ -740,7 +787,20 @@ final class CartController extends Controller
         Cart $cart,
         string $message,
     ): JsonResponse {
-        $cart->load(["items.cartable"]);
+        $cart->load([
+            "items.cartable" => function ($query) {
+                $query->when($query->getModel() instanceof \App\Models\Product, function ($q) {
+                    $q->with([
+                        'inventory.productVariants.variant.color',
+                        'inventory.productVariants.variant.size',
+                        'inventory.productVariants.variant.planter',
+                        'productCategory'
+                    ]);
+                })->when($query->getModel() instanceof \App\Models\ProductVariant, function ($q) {
+                    $q->with('inventory.product');
+                });
+            }
+        ]);
 
         return $this->success(
             [

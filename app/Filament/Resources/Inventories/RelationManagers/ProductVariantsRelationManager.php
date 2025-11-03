@@ -11,6 +11,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -42,10 +43,18 @@ final class ProductVariantsRelationManager extends RelationManager
                     ->preload()
                     ->required(),
                 TextInput::make('sku')->required(),
-                TextInput::make('base_price')->required(),
-                TextInput::make('discount_price')->required(),
+                TextInput::make('base_price')->numeric()->required(),
+                TextInput::make('discount_price')->numeric(),
                 TextInput::make('stock_quantity')->numeric()->required(),
                 Toggle::make('is_instock')->label('In Stock')->default(true),
+                SpatieMediaLibraryFileUpload::make('images')
+                    ->collection('images')
+                    ->label('Variant Images')
+                    ->multiple()
+                    ->image()
+                    ->reorderable()
+                    ->imageEditor()
+                    ->helperText('Upload images specific to this variant. These will be displayed when this variant is selected.'),
             ]);
     }
 

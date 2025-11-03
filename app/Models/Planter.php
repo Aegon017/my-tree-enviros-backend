@@ -19,7 +19,7 @@ class Planter extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('image')->singleFile();
+        $this->addMediaCollection('images')->singleFile();
     }
 
     public function variants(): HasMany

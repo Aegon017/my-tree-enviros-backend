@@ -14,9 +14,7 @@ class PlanterForm
             ->components([
                 TextInput::make('name')
                     ->required(),
-                SpatieMediaLibraryFileUpload::make('image')
-                    ->collection('images')
-                    ->required(),
+                SpatieMediaLibraryFileUpload::make('image')->collection('images')->required(),
             ]);
     }
 }
