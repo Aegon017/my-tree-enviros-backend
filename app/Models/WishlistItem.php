@@ -57,9 +57,9 @@ final class WishlistItem extends Model
     {
         if ($this->isVariant() && $this->productVariant) {
             $product = $this->productVariant->inventory->product ?? null;
-            $variantInfo = trim("{$this->productVariant->color} {$this->productVariant->size}");
+            $variantInfo = mb_trim(sprintf('%s %s', $this->productVariant->color, $this->productVariant->size));
 
-            return $product ? "{$product->name} ({$variantInfo})" : "Product ({$variantInfo})";
+            return $product ? sprintf('%s (%s)', $product->name, $variantInfo) : sprintf('Product (%s)', $variantInfo);
         }
 
         return $this->product->name ?? 'Product';
@@ -72,6 +72,7 @@ final class WishlistItem extends Model
     {
         if ($this->isVariant() && $this->productVariant) {
             $product = $this->productVariant->inventory->product ?? null;
+
             return $product ? $product->getFirstMediaUrl('images') : null;
         }
 

@@ -9,6 +9,7 @@ use App\Notifications\GeneralNotification;
 use App\Notifications\ImageOnlyNotification;
 use App\Notifications\OrderStatusNotification;
 use App\Notifications\ProductPromotionNotification;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
@@ -16,17 +17,6 @@ final class NotificationService
 {
     /**
      * Send a general notification to a user.
-     *
-     * @param  User  $user
-     * @param  string|null  $title
-     * @param  string|null  $body
-     * @param  string|null  $image
-     * @param  string|null  $path
-     * @param  array  $data
-     * @param  array  $androidConfig
-     * @param  array  $iosConfig
-     * @param  array  $webConfig
-     * @return void
      */
     public function sendGeneralNotification(
         User $user,
@@ -57,22 +47,16 @@ final class NotificationService
                 'user_id' => $user->id,
                 'title' => $title,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send general notification', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
 
     /**
      * Send notification with title and message only.
-     *
-     * @param  User  $user
-     * @param  string  $title
-     * @param  string  $message
-     * @param  string|null  $path
-     * @return void
      */
     public function sendTitleAndMessage(
         User $user,
@@ -88,23 +72,16 @@ final class NotificationService
                 'user_id' => $user->id,
                 'title' => $title,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send title and message notification', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
 
     /**
      * Send notification with title, message, and image.
-     *
-     * @param  User  $user
-     * @param  string  $title
-     * @param  string  $message
-     * @param  string  $image
-     * @param  string|null  $path
-     * @return void
      */
     public function sendWithImage(
         User $user,
@@ -121,22 +98,16 @@ final class NotificationService
                 'user_id' => $user->id,
                 'title' => $title,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send notification with image', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
 
     /**
      * Send notification with title and image only.
-     *
-     * @param  User  $user
-     * @param  string  $title
-     * @param  string  $image
-     * @param  string|null  $path
-     * @return void
      */
     public function sendTitleAndImage(
         User $user,
@@ -152,22 +123,16 @@ final class NotificationService
                 'user_id' => $user->id,
                 'title' => $title,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send title and image notification', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
 
     /**
      * Send image-only notification.
-     *
-     * @param  User  $user
-     * @param  string  $image
-     * @param  string|null  $path
-     * @param  array  $additionalData
-     * @return void
      */
     public function sendImageOnly(
         User $user,
@@ -183,10 +148,10 @@ final class NotificationService
                 'user_id' => $user->id,
                 'image' => $image,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send image-only notification', [
                 'user_id' => $user->id,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
@@ -194,11 +159,7 @@ final class NotificationService
     /**
      * Send order status notification.
      *
-     * @param  User  $user
      * @param  \App\Models\Order  $order
-     * @param  string  $status
-     * @param  string|null  $orderImage
-     * @return void
      */
     public function sendOrderStatusNotification(
         User $user,
@@ -215,11 +176,11 @@ final class NotificationService
                 'order_id' => $order->id,
                 'status' => $status,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send order status notification', [
                 'user_id' => $user->id,
                 'order_id' => $order->id ?? null,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
@@ -227,11 +188,7 @@ final class NotificationService
     /**
      * Send product promotion notification.
      *
-     * @param  User  $user
      * @param  \App\Models\Product  $product
-     * @param  string  $promotionTitle
-     * @param  string  $promotionImage
-     * @return void
      */
     public function sendProductPromotionNotification(
         User $user,
@@ -247,25 +204,17 @@ final class NotificationService
                 'user_id' => $user->id,
                 'product_id' => $product->id,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send product promotion notification', [
                 'user_id' => $user->id,
                 'product_id' => $product->id ?? null,
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
 
     /**
      * Send notification to multiple users.
-     *
-     * @param  array  $userIds
-     * @param  string|null  $title
-     * @param  string|null  $body
-     * @param  string|null  $image
-     * @param  string|null  $path
-     * @param  array  $data
-     * @return void
      */
     public function sendToMultipleUsers(
         array $userIds,
@@ -292,22 +241,15 @@ final class NotificationService
                 'user_count' => $users->count(),
                 'title' => $title,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send notification to multiple users', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
 
     /**
      * Send notification to all users.
-     *
-     * @param  string|null  $title
-     * @param  string|null  $body
-     * @param  string|null  $image
-     * @param  string|null  $path
-     * @param  array  $data
-     * @return void
      */
     public function sendToAllUsers(
         ?string $title = null,
@@ -333,9 +275,9 @@ final class NotificationService
                 'user_count' => $users->count(),
                 'title' => $title,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send notification to all users', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }
@@ -344,12 +286,6 @@ final class NotificationService
      * Send notification based on custom query.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string|null  $title
-     * @param  string|null  $body
-     * @param  string|null  $image
-     * @param  string|null  $path
-     * @param  array  $data
-     * @return void
      */
     public function sendToCustomQuery(
         $query,
@@ -361,7 +297,7 @@ final class NotificationService
     ): void {
         try {
             // Process in chunks to avoid memory issues
-            $query->chunk(100, function ($users) use ($title, $body, $image, $path, $data) {
+            $query->chunk(100, function ($users) use ($title, $body, $image, $path, $data): void {
                 $notification = new GeneralNotification(
                     title: $title,
                     body: $body,
@@ -376,9 +312,9 @@ final class NotificationService
             Log::info('Notification sent to custom query users', [
                 'title' => $title,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Failed to send notification to custom query users', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ]);
         }
     }

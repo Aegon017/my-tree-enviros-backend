@@ -14,7 +14,7 @@ return [
      | Default: `\MichaelRubel\Couponables\Models\Coupon::class`
      */
 
-    'model' => \MichaelRubel\Couponables\Models\Coupon::class,
+    'model' => MichaelRubel\Couponables\Models\Coupon::class,
 
     /*
     | Model table name.
@@ -30,7 +30,7 @@ return [
     | Default: `\MichaelRubel\Couponables\Models\Couponable::class`
     */
 
-    'pivot' => \MichaelRubel\Couponables\Models\Couponable::class,
+    'pivot' => MichaelRubel\Couponables\Models\Couponable::class,
 
     /*
     | Polymorphic pivot table name.
@@ -46,7 +46,7 @@ return [
     | Default: `\MichaelRubel\Couponables\Services\CouponService::class`
     */
 
-    'service' => \MichaelRubel\Couponables\Services\CouponService::class,
+    'service' => MichaelRubel\Couponables\Services\CouponService::class,
 
     /*
     | Rounding precision if you use calculations.

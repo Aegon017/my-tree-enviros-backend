@@ -13,6 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     type="object",
  *     title="Location",
  *     description="Location model",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="name", type="string", example="Hyderabad"),
  *     @OA\Property(property="parent_id", type="integer", nullable=true, example=null),
@@ -41,7 +42,7 @@ final class LocationResource extends JsonResource
             ),
             'parent' => $this->whenLoaded(
                 'parent',
-                fn () => new self($this->parent)
+                fn (): LocationResource => new self($this->parent)
             ),
             'children' => $this->whenLoaded(
                 'children',
@@ -49,7 +50,7 @@ final class LocationResource extends JsonResource
             ),
             'tree_count' => $this->when(
                 $request->boolean('with_tree_count'),
-                fn () => [
+                fn (): array => [
                     'total' => $this->treeInstances()->count(),
                     'available' => $this->treeInstances()
                         ->where('status', 'available')

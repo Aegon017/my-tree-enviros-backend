@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Blogs\Tables;
 
 use Filament\Actions\BulkActionGroup;
@@ -9,19 +11,19 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class BlogsTable
+final class BlogsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make("thumbnail")
-                    ->collection("thumbnails")
+                SpatieMediaLibraryImageColumn::make('thumbnail')
+                    ->collection('thumbnails')
                     ->imageHeight(120),
-                TextColumn::make("blogCategory.name")
-                    ->label("Category")
+                TextColumn::make('blogCategory.name')
+                    ->label('Category')
                     ->searchable(),
-                TextColumn::make("title")->searchable(),
+                TextColumn::make('title')->searchable(),
             ])
             ->filters([
                 //

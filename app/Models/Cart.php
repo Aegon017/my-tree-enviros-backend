@@ -31,9 +31,7 @@ final class Cart extends Model
 
     public function totalAmount(): float
     {
-        return $this->items->sum(function ($item) {
-            return $item->price * $item->quantity;
-        });
+        return $this->items->sum(fn ($item): int|float => $item->price * $item->quantity);
     }
 
     public function totalItems(): int

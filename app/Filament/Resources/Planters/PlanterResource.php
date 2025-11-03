@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Planters;
 
 use App\Filament\Resources\Planters\Pages\CreatePlanter;
@@ -15,10 +17,9 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class PlanterResource extends Resource
+final class PlanterResource extends Resource
 {
     protected static ?string $model = Planter::class;
-
 
     protected static UnitEnum|string|null $navigationGroup = 'E-commerce';
 

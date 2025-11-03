@@ -11,13 +11,13 @@ trait ResponseHelpers
 {
     protected function success(
         mixed $data = null,
-        string $message = "Success",
+        string $message = 'Success',
         int $status = Response::HTTP_OK,
     ): JsonResponse {
-        $response = ["success" => true, "message" => $message];
+        $response = ['success' => true, 'message' => $message];
 
         if ($data !== null) {
-            $response["data"] = $data;
+            $response['data'] = $data;
         }
 
         return response()->json($response, $status);
@@ -28,10 +28,10 @@ trait ResponseHelpers
         int $status = Response::HTTP_BAD_REQUEST,
         mixed $errors = null,
     ): JsonResponse {
-        $response = ["success" => false, "message" => $message];
+        $response = ['success' => false, 'message' => $message];
 
         if ($errors !== null) {
-            $response["errors"] = $errors;
+            $response['errors'] = $errors;
         }
 
         return response()->json($response, $status);
@@ -39,7 +39,7 @@ trait ResponseHelpers
 
     protected function created(
         mixed $data = null,
-        string $message = "Created successfully",
+        string $message = 'Created successfully',
     ): JsonResponse {
         return $this->success($data, $message, Response::HTTP_CREATED);
     }
@@ -50,32 +50,32 @@ trait ResponseHelpers
     }
 
     protected function notFound(
-        string $message = "Resource not found",
+        string $message = 'Resource not found',
     ): JsonResponse {
         return $this->error($message, Response::HTTP_NOT_FOUND);
     }
 
     protected function unauthorized(
-        string $message = "Unauthorized",
+        string $message = 'Unauthorized',
     ): JsonResponse {
         return $this->error($message, Response::HTTP_UNAUTHORIZED);
     }
 
     protected function tooManyRequests(
-        string $message = "Too many requests",
+        string $message = 'Too many requests',
         ?int $retryAfter = null,
     ): JsonResponse {
         $response = response()->json(
             [
-                "success" => false,
-                "message" => $message,
-                "retry_after" => $retryAfter,
+                'success' => false,
+                'message' => $message,
+                'retry_after' => $retryAfter,
             ],
             Response::HTTP_TOO_MANY_REQUESTS,
         );
 
         if ($retryAfter) {
-            $response->header("Retry-After", $retryAfter);
+            $response->header('Retry-After', $retryAfter);
         }
 
         return $response;

@@ -70,7 +70,7 @@ final class AdminPanelProvider extends PanelProvider
                 'E-commerce',
                 'Geo Management',
                 'Transactions',
-                'Filament Shield'
+                'Filament Shield',
             ]);
     }
 }

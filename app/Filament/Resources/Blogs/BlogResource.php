@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Blogs;
 
 use App\Filament\Resources\Blogs\Pages\CreateBlog;
@@ -15,7 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class BlogResource extends Resource
+final class BlogResource extends Resource
 {
     protected static ?string $model = Blog::class;
 

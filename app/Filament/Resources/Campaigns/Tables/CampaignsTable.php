@@ -19,100 +19,100 @@ final class CampaignsTable
     public static function schema(Table $table): Table
     {
         $typeColors = [
-            "feed" => "success",
-            "protect" => "warning",
-            "plant" => "info",
+            'feed' => 'success',
+            'protect' => 'warning',
+            'plant' => 'info',
         ];
 
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make("thumbnail_url")
-                    ->label("Thumbnail")
+                Tables\Columns\ImageColumn::make('thumbnail_url')
+                    ->label('Thumbnail')
                     ->circular()
                     ->getStateUsing(
-                        fn(Campaign $record) => $record->getFirstMediaUrl(
-                            "thumbnails",
+                        fn (Campaign $record): string => $record->getFirstMediaUrl(
+                            'thumbnails',
                         ),
                     )
                     ->defaultImageUrl(
-                        fn(Campaign $record) => $record->getFirstMediaUrl(
-                            "images",
+                        fn (Campaign $record) => $record->getFirstMediaUrl(
+                            'images',
                         ) ?:
                         null,
                     )
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make("name")
-                    ->label("Name")
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Name')
                     ->searchable()
                     ->sortable()
                     ->limit(40),
 
-                Tables\Columns\TextColumn::make("type")
-                    ->label("Type")
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
                     ->badge()
                     ->formatStateUsing(
-                        fn(Campaign $record) => $record->type?->label() ??
+                        fn (Campaign $record) => $record->type?->label() ??
                             Str::title((string) $record->type),
                     )
                     ->color(
-                        fn(Campaign $record) => $typeColors[
+                        fn (Campaign $record): string => $typeColors[
                             $record->type?->value
-                        ] ?? "gray",
+                        ] ?? 'gray',
                     )
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make("location.name")
-                    ->label("Location")
+                Tables\Columns\TextColumn::make('location.name')
+                    ->label('Location')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make("amount")
-                    ->label("Amount")
-                    ->money("INR", locale: "en_IN")
+                Tables\Columns\TextColumn::make('amount')
+                    ->label('Amount')
+                    ->money('INR', locale: 'en_IN')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make("start_date")
-                    ->label("Start")
+                Tables\Columns\TextColumn::make('start_date')
+                    ->label('Start')
                     ->date()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make("end_date")
-                    ->label("End")
+                Tables\Columns\TextColumn::make('end_date')
+                    ->label('End')
                     ->date()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\ToggleColumn::make("is_active")
-                    ->label("Active")
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('Active')
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make("type")
-                    ->label("Type")
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('Type')
                     ->options(
                         collect(CampaignTypeEnum::cases())
                             ->mapWithKeys(
-                                fn(CampaignTypeEnum $e) => [
+                                fn (CampaignTypeEnum $e): array => [
                                     $e->value => $e->label(),
                                 ],
                             )
                             ->all(),
                     ),
 
-                Tables\Filters\TernaryFilter::make("is_active")
-                    ->label("Active")
-                    ->trueLabel("Active")
-                    ->falseLabel("Inactive")
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active')
+                    ->trueLabel('Active')
+                    ->falseLabel('Inactive')
                     ->nullable(),
 
-                Tables\Filters\Filter::make("expired")
-                    ->label("Expired")
+                Tables\Filters\Filter::make('expired')
+                    ->label('Expired')
                     ->query(
-                        fn(Builder $query) => $query
-                            ->whereNotNull("end_date")
-                            ->whereDate("end_date", "<", now()),
+                        fn (Builder $query) => $query
+                            ->whereNotNull('end_date')
+                            ->whereDate('end_date', '<', now()),
                     ),
             ])
             ->recordActions([
@@ -124,7 +124,7 @@ final class CampaignsTable
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort("created_at", "desc")
+            ->defaultSort('created_at', 'desc')
             ->paginated([25, 50, 100]);
     }
 }

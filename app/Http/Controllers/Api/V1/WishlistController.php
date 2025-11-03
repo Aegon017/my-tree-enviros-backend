@@ -14,7 +14,6 @@ use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 /**
  * @OA\Tag(
@@ -27,34 +26,19 @@ final class WishlistController extends Controller
     use ResponseHelpers;
 
     /**
-     * Get or create user's wishlist
-     */
-    private function getOrCreateWishlist(Request $request): Wishlist
-    {
-        $user = $request->user();
-
-        $wishlist = Wishlist::where('user_id', $user->id)->first();
-
-        if (!$wishlist) {
-            $wishlist = Wishlist::create([
-                'user_id' => $user->id,
-            ]);
-        }
-
-        return $wishlist;
-    }
-
-    /**
      * @OA\Get(
      *     path="/api/v1/wishlist",
      *     summary="Get user's wishlist",
      *     description="Retrieve the authenticated user's wishlist with all items",
      *     tags={"Wishlist"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Success"),
      *             @OA\Property(
@@ -64,10 +48,13 @@ final class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
@@ -96,10 +83,13 @@ final class WishlistController extends Controller
      *     description="Add a product or product variant to the user's wishlist",
      *     tags={"Wishlist"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"product_id"},
+     *
      *             @OA\Property(
      *                 property="product_id",
      *                 type="integer",
@@ -114,10 +104,13 @@ final class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Item added to wishlist successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Item added to wishlist successfully"),
      *             @OA\Property(
@@ -127,18 +120,24 @@ final class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error or item already in wishlist",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="This item is already in your wishlist")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Product not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Product not found")
      *         )
@@ -152,7 +151,7 @@ final class WishlistController extends Controller
             'product_variant_id' => 'nullable|exists:product_variants,id',
         ]);
 
-        return DB::transaction(function () use ($request, $validated) {
+        return DB::transaction(function () use ($request, $validated): JsonResponse {
             $wishlist = $this->getOrCreateWishlist($request);
 
             // Verify product exists and is active
@@ -160,19 +159,19 @@ final class WishlistController extends Controller
                 ->where('is_active', true)
                 ->first();
 
-            if (!$product) {
+            if (! $product) {
                 return $this->notFound('Product not found or not available');
             }
 
             // If variant is specified, verify it belongs to the product
-            if (!empty($validated['product_variant_id'])) {
+            if (! empty($validated['product_variant_id'])) {
                 $variant = ProductVariant::where('id', $validated['product_variant_id'])
-                    ->whereHas('inventory', function ($q) use ($validated) {
+                    ->whereHas('inventory', function ($q) use ($validated): void {
                         $q->where('product_id', $validated['product_id']);
                     })
                     ->first();
 
-                if (!$variant) {
+                if (! $variant) {
                     return $this->error('Invalid product variant', 422);
                 }
             }
@@ -214,17 +213,22 @@ final class WishlistController extends Controller
      *     description="Remove a specific item from the user's wishlist",
      *     tags={"Wishlist"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Wishlist Item ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Item removed from wishlist",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Item removed from wishlist"),
      *             @OA\Property(
@@ -234,10 +238,13 @@ final class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Wishlist item not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Wishlist item not found")
      *         )
@@ -246,14 +253,14 @@ final class WishlistController extends Controller
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
-        return DB::transaction(function () use ($request, $id) {
+        return DB::transaction(function () use ($request, $id): JsonResponse {
             $wishlist = $this->getOrCreateWishlist($request);
 
             $wishlistItem = WishlistItem::where('wishlist_id', $wishlist->id)
                 ->where('id', $id)
                 ->first();
 
-            if (!$wishlistItem) {
+            if (! $wishlistItem) {
                 return $this->notFound('Wishlist item not found');
             }
 
@@ -279,10 +286,13 @@ final class WishlistController extends Controller
      *     description="Remove all items from the user's wishlist",
      *     tags={"Wishlist"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Wishlist cleared successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Wishlist cleared successfully"),
      *             @OA\Property(
@@ -296,7 +306,7 @@ final class WishlistController extends Controller
      */
     public function clear(Request $request): JsonResponse
     {
-        return DB::transaction(function () use ($request) {
+        return DB::transaction(function () use ($request): JsonResponse {
             $wishlist = $this->getOrCreateWishlist($request);
 
             $wishlist->clear();
@@ -314,16 +324,21 @@ final class WishlistController extends Controller
      *     description="Move a product from wishlist to shopping cart",
      *     tags={"Wishlist"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Wishlist Item ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=false,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(
      *                 property="quantity",
      *                 type="integer",
@@ -333,10 +348,13 @@ final class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Item moved to cart successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Item moved to cart successfully"),
      *             @OA\Property(
@@ -347,6 +365,7 @@ final class WishlistController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Wishlist item not found"
@@ -363,7 +382,7 @@ final class WishlistController extends Controller
             'quantity' => 'nullable|integer|min:1|max:100',
         ]);
 
-        return DB::transaction(function () use ($request, $id, $validated) {
+        return DB::transaction(function () use ($request, $id, $validated): JsonResponse {
             $wishlist = $this->getOrCreateWishlist($request);
 
             $wishlistItem = WishlistItem::with(['product.inventory', 'productVariant.inventory'])
@@ -371,12 +390,12 @@ final class WishlistController extends Controller
                 ->where('id', $id)
                 ->first();
 
-            if (!$wishlistItem) {
+            if (! $wishlistItem) {
                 return $this->notFound('Wishlist item not found');
             }
 
             // Check if product is in stock
-            if (!$wishlistItem->isInStock()) {
+            if (! $wishlistItem->isInStock()) {
                 return $this->error('Product is out of stock', 422);
             }
 
@@ -385,7 +404,7 @@ final class WishlistController extends Controller
             // Check if sufficient stock is available
             if ($wishlistItem->getStockQuantity() < $quantity) {
                 return $this->error(
-                    'Insufficient stock. Only ' . $wishlistItem->getStockQuantity() . ' available',
+                    'Insufficient stock. Only '.$wishlistItem->getStockQuantity().' available',
                     422
                 );
             }
@@ -463,24 +482,31 @@ final class WishlistController extends Controller
      *     description="Check if a specific product or variant is in the user's wishlist",
      *     tags={"Wishlist"},
      *     security={{"bearerAuth": {}}},
+     *
      *     @OA\Parameter(
      *         name="productId",
      *         in="path",
      *         description="Product ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="variant_id",
      *         in="query",
      *         description="Product Variant ID (optional)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Check result",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Success"),
      *             @OA\Property(
@@ -506,5 +532,23 @@ final class WishlistController extends Controller
             'product_id' => (int) $productId,
             'variant_id' => $variantId ? (int) $variantId : null,
         ]);
+    }
+
+    /**
+     * Get or create user's wishlist
+     */
+    private function getOrCreateWishlist(Request $request): Wishlist
+    {
+        $user = $request->user();
+
+        $wishlist = Wishlist::where('user_id', $user->id)->first();
+
+        if (! $wishlist) {
+            return Wishlist::create([
+                'user_id' => $user->id,
+            ]);
+        }
+
+        return $wishlist;
     }
 }

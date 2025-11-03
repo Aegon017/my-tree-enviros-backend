@@ -10,9 +10,9 @@ final class ImageOnlyNotification extends BaseFcmNotification
      * Create a new notification instance.
      */
     public function __construct(
-        protected string $imageUrl,
-        protected string $targetPath,
-        protected array $additionalData = []
+        string $imageUrl,
+        string $targetPath,
+        array $additionalData = []
     ) {
         $this->title = null; // No title
         $this->body = null; // No body
@@ -53,11 +53,11 @@ final class ImageOnlyNotification extends BaseFcmNotification
     public function toMail(object $notifiable): \Illuminate\Notifications\Messages\MailMessage
     {
         return (new \Illuminate\Notifications\Messages\MailMessage)
-            ->subject($this->emailSubject ?? config('app.name') . ' Notification')
+            ->subject($this->emailSubject ?? config('app.name').' Notification')
             ->greeting('Hello!')
             ->line('You have received a new image notification.')
-            ->line('![Notification Image](' . $this->image . ')')
+            ->line('![Notification Image]('.$this->image.')')
             ->action('View Details', url($this->path))
-            ->line('Thank you for using ' . config('app.name') . '!');
+            ->line('Thank you for using '.config('app.name').'!');
     }
 }

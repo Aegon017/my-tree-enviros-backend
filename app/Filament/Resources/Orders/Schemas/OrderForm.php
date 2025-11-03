@@ -6,10 +6,10 @@ namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Enums\OrderStatusEnum;
 use App\Enums\OrderTypeEnum;
+use App\Models\User;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
-use App\Models\User;
 
 final class OrderForm
 {
@@ -20,12 +20,10 @@ final class OrderForm
                 TextInput::make('order_number')
                     ->disabled(),
                 Select::make('user_id')
-                    ->options(function () {
-                        return User::query()
-                            ->get()
-                            ->mapWithKeys(fn($u) => [$u->id => $u->name ?? $u->email ?? ('User #' . $u->id)])
-                            ->toArray();
-                    })
+                    ->options(fn () => User::query()
+                        ->get()
+                        ->mapWithKeys(fn ($u): array => [$u->id => $u->name ?? $u->email ?? ('User #'.$u->id)])
+                        ->toArray())
                     ->searchable()
                     ->required(),
                 Select::make('type')

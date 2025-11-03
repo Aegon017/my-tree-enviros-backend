@@ -12,14 +12,14 @@ final class ProductPromotionNotification extends BaseFcmNotification
      * Create a new notification instance.
      */
     public function __construct(
-        protected Product $product,
-        protected string $promotionTitle,
-        protected string $promotionImage
+        Product $product,
+        string $promotionTitle,
+        string $promotionImage
     ) {
         $this->title = $promotionTitle;
         $this->body = null; // Only title and image
         $this->image = $promotionImage;
-        $this->path = '/products/' . $product->id;
+        $this->path = '/products/'.$product->id;
         $this->emailSubject = $promotionTitle;
 
         $this->data = [

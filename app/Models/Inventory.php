@@ -11,6 +11,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 final class Inventory extends Model implements HasMedia
 {
     use InteractsWithMedia;
+
     protected $fillable = [
         'product_id',
     ];
@@ -32,6 +33,5 @@ final class Inventory extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('thumbnail')->singleFile();
-        $this->addMediaCollection('images');
     }
 }

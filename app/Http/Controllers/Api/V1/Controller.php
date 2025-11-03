@@ -11,10 +11,12 @@ use App\Http\Controllers\Controller as BaseController;
  *     title="MyTree Enviros API",
  *     version="1.0.0",
  *     description="API documentation for MyTree Enviros - Tree Sponsorship, Adoption & E-commerce Platform",
+ *
  *     @OA\Contact(
  *         email="support@mytreeenviros.com",
  *         name="API Support"
  *     ),
+ *
  *     @OA\License(
  *         name="Proprietary",
  *         url="https://mytreeenviros.com/license"
@@ -25,7 +27,6 @@ use App\Http\Controllers\Controller as BaseController;
  *     url="http://localhost:8000",
  *     description="Local Development Server"
  * )
- *
  * @OA\Server(
  *     url="https://api.mytree.care",
  *     description="Production Server"
@@ -44,6 +45,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Product",
  *     description="E-commerce Product model",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="name", type="string", example="Organic Fertilizer"),
  *     @OA\Property(property="slug", type="string", example="organic-fertilizer"),
@@ -62,8 +64,10 @@ use App\Http\Controllers\Controller as BaseController;
  *     @OA\Property(
  *         property="images",
  *         type="array",
+ *
  *         @OA\Items(
  *             type="object",
+ *
  *             @OA\Property(property="id", type="integer", example=1),
  *             @OA\Property(property="url", type="string", example="https://example.com/images/product.jpg"),
  *             @OA\Property(property="thumb", type="string", example="https://example.com/images/product-thumb.jpg")
@@ -89,6 +93,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Product Variant",
  *     description="Product variant with color/size options",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="sku", type="string", example="FERT-001-RED-5KG"),
  *     @OA\Property(property="color", type="string", example="Red", nullable=true),
@@ -109,13 +114,16 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Wishlist",
  *     description="User's wishlist containing products",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="user_id", type="integer", example=1),
  *     @OA\Property(
  *         property="items",
  *         type="array",
+ *
  *         @OA\Items(ref="#/components/schemas/WishlistItem")
  *     ),
+ *
  *     @OA\Property(property="total_items", type="integer", example=5),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")
@@ -126,6 +134,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Wishlist Item",
  *     description="Item in user's wishlist",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="wishlist_id", type="integer", example=1),
  *     @OA\Property(property="product_id", type="integer", example=1),
@@ -148,13 +157,16 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Shopping Cart",
  *     description="User's shopping cart",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="user_id", type="integer", example=1),
  *     @OA\Property(
  *         property="items",
  *         type="array",
+ *
  *         @OA\Items(ref="#/components/schemas/CartItem")
  *     ),
+ *
  *     @OA\Property(property="total_items", type="integer", example=3),
  *     @OA\Property(property="total_amount", type="number", format="float", example=2500.00),
  *     @OA\Property(property="formatted_total", type="string", example="₹2,500.00"),
@@ -169,6 +181,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Cart Item",
  *     description="Item in shopping cart",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="cart_id", type="integer", example=1),
  *     @OA\Property(property="item_type", type="string", enum={"tree", "product", "campaign"}, example="product"),
@@ -193,6 +206,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     schema="Error",
  *     type="object",
  *     title="Error Response",
+ *
  *     @OA\Property(property="success", type="boolean", example=false),
  *     @OA\Property(property="message", type="string", example="Error message"),
  *     @OA\Property(
@@ -207,6 +221,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     schema="Success",
  *     type="object",
  *     title="Success Response",
+ *
  *     @OA\Property(property="success", type="boolean", example=true),
  *     @OA\Property(property="message", type="string", example="Success"),
  *     @OA\Property(property="data", type="object", additionalProperties=true)
@@ -217,6 +232,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Order",
  *     description="Order model for trees, products, and campaigns",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="order_number", type="string", example="ORD-ABC-20250101-1234"),
  *     @OA\Property(property="user_id", type="integer", example=1),
@@ -240,6 +256,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Order Item",
  *     description="Item in an order",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="order_id", type="integer", example=1),
  *     @OA\Property(property="item_type", type="string", enum={"tree", "product", "campaign"}, example="tree"),
@@ -262,6 +279,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Tree",
  *     description="Tree model for sponsorship and adoption",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="sku", type="string", example="TREE-0001"),
  *     @OA\Property(property="name", type="string", example="Oak Tree"),
@@ -282,6 +300,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="Tree Plan Price",
  *     description="Pricing for tree sponsorship/adoption plans",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="sku", type="string", example="TREE-0001-SPO-0001-0001"),
  *     @OA\Property(property="price", type="string", example="500.00"),
@@ -298,6 +317,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     type="object",
  *     title="User",
  *     description="User model",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="type", type="string", enum={"individual", "organization"}, example="individual"),
  *     @OA\Property(property="name", type="string", example="John Doe"),
@@ -309,7 +329,7 @@ use App\Http\Controllers\Controller as BaseController;
  *     @OA\Property(property="updated_at", type="string", format="date-time")
  * )
  */
-class Controller extends BaseController
+final class Controller extends BaseController
 {
     //
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserTypeEnum;
-use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,47 +17,35 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 use Spatie\Permission\Traits\HasRoles;
-use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 
-final class User extends Authenticatable implements
-    HasMedia,
-    FilamentUserContract
+final class User extends Authenticatable implements FilamentUserContract, HasMedia
 {
     use HasApiTokens;
+    use HasCoupons;
     use HasFactory;
     use HasOneTimePasswords;
     use HasRoles;
-    use Notifiable;
-    use HasCoupons;
     use InteractsWithMedia;
+    use Notifiable;
 
     protected $fillable = [
-        "name",
-        "email",
-        "country_code",
-        "phone",
-        "password",
+        'name',
+        'email',
+        'country_code',
+        'phone',
+        'password',
     ];
 
-    protected $hidden = ["password", "remember_token"];
+    protected $hidden = ['password', 'remember_token'];
 
     public function routeNotificationForSmsLogin(): string
     {
         return $this->phone;
     }
 
-    protected function casts(): array
-    {
-        return [
-            "type" => UserTypeEnum::class,
-            "email_verified_at" => "datetime",
-            "password" => "hashed",
-        ];
-    }
-
     public function canAccessPanel(Panel $panel): bool
     {
-        return str_ends_with($this->email, "@mytree.care");
+        return str_ends_with($this->email, '@mytree.care');
     }
 
     public function shippingAddresses(): HasMany
@@ -67,7 +55,7 @@ final class User extends Authenticatable implements
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection("avatars")->singleFile();
+        $this->addMediaCollection('avatars')->singleFile();
     }
 
     public function fcmTokens(): HasMany
@@ -83,5 +71,14 @@ final class User extends Authenticatable implements
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'type' => UserTypeEnum::class,
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 }

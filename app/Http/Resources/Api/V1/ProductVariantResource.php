@@ -18,45 +18,54 @@ final class ProductVariantResource extends JsonResource
             'sku' => $this->sku,
             'inventory_id' => $this->inventory_id,
             'variant_id' => $this->variant_id,
-            'variant' => $this->when($this->relationLoaded('variant'), function () use ($variant) {
-                return [
-                    'id' => $variant->id ?? null,
-                    'color' => $variant->color ? [
-                        'id' => $variant->color->id,
-                        'name' => $variant->color->name,
-                        'code' => $variant->color->code,
-                    ] : null,
-                    'size' => $variant->size ? [
-                        'id' => $variant->size->id,
-                        'name' => $variant->size->name,
-                    ] : null,
-                    'planter' => $variant->planter ? [
-                        'id' => $variant->planter->id,
-                        'name' => $variant->planter->name,
-                    ] : null,
-                ];
-            }),
-            'variant_name' => $this->when($this->relationLoaded('variant'), function () use ($variant) {
-                $parts = [];
-                if ($variant->color ?? null) $parts[] = $variant->color->name;
-                if ($variant->size ?? null) $parts[] = $variant->size->name;
-                if ($variant->planter ?? null) $parts[] = $variant->planter->name;
-                return trim(implode(' ', $parts));
-            }),
-            'product' => $this->when($this->relationLoaded('inventory.product'), function () {
-                return [
-                    'id' => $this->inventory->product->id ?? null,
-                    'name' => $this->inventory->product->name ?? null,
-                    'slug' => $this->inventory->product->slug ?? null,
-                ];
-            }),
+            'variant' => $this->when($this->relationLoaded('variant'), fn (): array => [
+                'id' => $variant?->id,
+                'color' => $variant?->color ? [
+                    'id' => $variant->color->id,
+                    'name' => $variant->color->name,
+                    'code' => $variant->color->code,
+                ] : null,
+                'size' => $variant?->size ? [
+                    'id' => $variant->size->id,
+                    'name' => $variant->size->name,
+                ] : null,
+                'planter' => $variant?->planter ? [
+                    'id' => $variant->planter->id,
+                    'name' => $variant->planter->name,
+                ] : null,
+            ]),
+            'variant_name' => $this->when(
+                $this->relationLoaded('variant') && $variant,
+                function () use ($variant): string {
+                    $parts = [];
+                    if ($variant?->color ?? null) {
+                        $parts[] = $variant->color->name;
+                    }
+
+                    if ($variant?->size ?? null) {
+                        $parts[] = $variant->size->name;
+                    }
+
+                    if ($variant?->planter ?? null) {
+                        $parts[] = $variant->planter->name;
+                    }
+
+                    return mb_trim(implode(' ', $parts));
+                },
+                ''
+            ),
+            'product' => $this->when($this->relationLoaded('inventory.product'), fn (): array => [
+                'id' => $this->inventory->product->id ?? null,
+                'name' => $this->inventory->product->name ?? null,
+                'slug' => $this->inventory->product->slug ?? null,
+            ]),
             'base_price' => (float) $this->base_price,
             'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
             'price' => (float) $this->price,
-            'formatted_price' => '₹' . number_format($this->price, 2),
+            'formatted_price' => '₹'.number_format($this->price, 2),
             'stock_quantity' => (int) $this->stock_quantity,
             'is_instock' => (bool) $this->is_instock,
-            'images' => $this->getMedia('images')->map(fn($media) => [
+            'images' => $this->getMedia('images')->map(fn ($media): array => [
                 'id' => $media->id,
                 'url' => $media->getUrl(),
             ])->toArray(),

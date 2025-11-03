@@ -13,6 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     type="object",
  *     title="Slider",
  *     description="Homepage slider model",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="title", type="string", nullable=true, example="Plant More Trees"),
  *     @OA\Property(property="description", type="string", nullable=true, example="Join our green mission and plant a tree today."),
@@ -41,7 +42,7 @@ final class SliderResource extends JsonResource
         // The model defines collection 'image' (single file).
         // Some admin forms might have used 'images' — gracefully fall back.
         $media =
-            $this->getFirstMedia("image") ?: $this->getFirstMedia("images");
+            $this->getFirstMedia('image') ?: $this->getFirstMedia('images');
 
         $mainImageUrl = null;
         if ($media) {
@@ -49,13 +50,13 @@ final class SliderResource extends JsonResource
         }
 
         return [
-            "id" => $this->id,
-            "title" => $this->title,
-            "description" => $this->description,
-            "is_active" => (bool) $this->is_active,
-            "main_image_url" => $mainImageUrl,
-            "created_at" => $this->created_at?->toISOString(),
-            "updated_at" => $this->updated_at?->toISOString(),
+            'id' => $this->id,
+            'title' => $this->title,
+            'description' => $this->description,
+            'is_active' => (bool) $this->is_active,
+            'main_image_url' => $mainImageUrl,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

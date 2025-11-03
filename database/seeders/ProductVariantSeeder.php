@@ -1,17 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Color;
-use App\Models\Size;
-use App\Models\Planter;
-use App\Models\Variant;
-use App\Models\Product;
 use App\Models\Inventory;
+use App\Models\Planter;
+use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Size;
+use App\Models\Variant;
 use Illuminate\Database\Seeder;
 
-class ProductVariantSeeder extends Seeder
+final class ProductVariantSeeder extends Seeder
 {
     public function run(): void
     {
@@ -130,7 +132,7 @@ class ProductVariantSeeder extends Seeder
             ProductVariant::firstOrCreate([
                 'inventory_id' => $inventory->id,
                 'variant_id' => $variant->id,
-                'sku' => 'NEM-' . strtoupper($variantData['color']->name[0]) . strtoupper($variantData['size']->name[0]) . strtoupper($variantData['planter']->name[0]) . rand(100, 999),
+                'sku' => 'NEM-'.mb_strtoupper($variantData['color']->name[0]).mb_strtoupper($variantData['size']->name[0]).mb_strtoupper($variantData['planter']->name[0]).rand(100, 999),
                 'base_price' => $variantData['base_price'],
                 'discount_price' => $variantData['discount_price'],
                 'stock_quantity' => $variantData['stock_quantity'],

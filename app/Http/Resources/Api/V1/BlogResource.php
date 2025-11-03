@@ -15,6 +15,7 @@ final class BlogResource extends JsonResource
      *   type="object",
      *   title="Blog",
      *   description="Blog post resource",
+     *
      *   @OA\Property(property="id", type="integer", example=1),
      *   @OA\Property(property="blog_category_id", type="integer", example=2),
      *   @OA\Property(
@@ -38,8 +39,10 @@ final class BlogResource extends JsonResource
      *   @OA\Property(
      *     property="images",
      *     type="array",
+     *
      *     @OA\Items(
      *       type="object",
+     *
      *       @OA\Property(property="id", type="integer", example=123),
      *       @OA\Property(
      *         property="image_url",
@@ -52,8 +55,10 @@ final class BlogResource extends JsonResource
      *   @OA\Property(
      *     property="image_urls",
      *     type="array",
+     *
      *     @OA\Items(type="string", format="uri")
      *   ),
+     *
      *   @OA\Property(property="created_at", type="string", format="date-time", example="2025-10-22T13:55:09.000000Z"),
      *   @OA\Property(property="updated_at", type="string", format="date-time", example="2025-10-22T13:55:09.000000Z")
      * )
@@ -61,36 +66,34 @@ final class BlogResource extends JsonResource
     public function toArray(Request $request): array
     {
         // Direct thumbnail URL (if exists)
-        $thumbnail = $this->getFirstMedia("thumbnails");
+        $thumbnail = $this->getFirstMedia('thumbnails');
         $thumbnailUrl = null;
         if ($thumbnail) {
             $thumbnailUrl = $thumbnail->getFullUrl();
         }
 
         // Direct image URLs for gallery
-        $image = $this->getFirstMedia("images");
+        $image = $this->getFirstMedia('images');
         $imageUrl = null;
         if ($image) {
             $imageUrl = $image->getFullUrl();
         }
 
         return [
-            "id" => $this->id,
-            "blog_category_id" => $this->blog_category_id,
-            "blog_category" => $this->whenLoaded("blogCategory", function () {
-                return [
-                    "id" => $this->blogCategory->id,
-                    "name" => $this->blogCategory->name,
-                ];
-            }),
-            "title" => $this->title,
-            "slug" => $this->slug,
-            "short_description" => $this->short_description,
-            "description" => $this->description,
-            "thumbnail_url" => $thumbnailUrl,
-            "image_url" => $imageUrl,
-            "created_at" => $this->created_at?->toISOString(),
-            "updated_at" => $this->updated_at?->toISOString(),
+            'id' => $this->id,
+            'blog_category_id' => $this->blog_category_id,
+            'blog_category' => $this->whenLoaded('blogCategory', fn (): array => [
+                'id' => $this->blogCategory->id,
+                'name' => $this->blogCategory->name,
+            ]),
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'short_description' => $this->short_description,
+            'description' => $this->description,
+            'thumbnail_url' => $thumbnailUrl,
+            'image_url' => $imageUrl,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

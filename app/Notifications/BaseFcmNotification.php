@@ -64,7 +64,7 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
      *
      * @return array<int, string>
      */
-    public function via(object $notifiable): array
+    final public function via(object $notifiable): array
     {
         $channels = [FcmChannel::class];
 
@@ -79,7 +79,7 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
     /**
      * Get the FCM representation of the notification.
      */
-    public function toFcm(object $notifiable): array
+    final public function toFcm(object $notifiable): array
     {
         $fcmData = [];
 
@@ -100,11 +100,11 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
             $fcmData['click_action'] = $this->path;
         }
 
-        if (! empty($this->data)) {
+        if ($this->data !== []) {
             $fcmData['data'] = $this->data;
         }
 
-        if (! empty($this->androidConfig)) {
+        if ($this->androidConfig !== []) {
             $fcmData['android'] = array_merge([
                 'sound' => config('firebase.fcm.default_sound', 'default'),
                 'channel_id' => 'default',
@@ -116,7 +116,7 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
             ];
         }
 
-        if (! empty($this->iosConfig)) {
+        if ($this->iosConfig !== []) {
             $fcmData['ios'] = array_merge([
                 'sound' => config('firebase.fcm.default_sound', 'default'),
                 'badge' => config('firebase.fcm.default_badge', 1),
@@ -128,7 +128,7 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
             ];
         }
 
-        if (! empty($this->webConfig)) {
+        if ($this->webConfig !== []) {
             $fcmData['web'] = $this->webConfig;
         }
 
@@ -138,10 +138,10 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    final public function toMail(object $notifiable): MailMessage
     {
         $mailMessage = (new MailMessage)
-            ->subject($this->emailSubject ?? $this->title ?? config('app.name') . ' Notification')
+            ->subject($this->emailSubject ?? $this->title ?? config('app.name').' Notification')
             ->greeting($this->title ? 'Hello!' : '');
 
         if ($this->title && $this->emailSubject !== $this->title) {
@@ -153,14 +153,14 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
         }
 
         if ($this->image) {
-            $mailMessage->line('![Image](' . $this->image . ')');
+            $mailMessage->line('![Image]('.$this->image.')');
         }
 
         if ($this->path) {
             $mailMessage->action('View Details', url($this->path));
         }
 
-        $mailMessage->line('Thank you for using ' . config('app.name') . '!');
+        $mailMessage->line('Thank you for using '.config('app.name').'!');
 
         return $mailMessage;
     }
@@ -168,81 +168,90 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
     /**
      * Set the notification title.
      */
-    public function setTitle(?string $title): self
+    final public function setTitle(?string $title): self
     {
         $this->title = $title;
+
         return $this;
     }
 
     /**
      * Set the notification body.
      */
-    public function setBody(?string $body): self
+    final public function setBody(?string $body): self
     {
         $this->body = $body;
+
         return $this;
     }
 
     /**
      * Set the notification image.
      */
-    public function setImage(?string $image): self
+    final public function setImage(?string $image): self
     {
         $this->image = $image;
+
         return $this;
     }
 
     /**
      * Set the notification path.
      */
-    public function setPath(?string $path): self
+    final public function setPath(?string $path): self
     {
         $this->path = $path;
+
         return $this;
     }
 
     /**
      * Set additional data.
      */
-    public function setData(array $data): self
+    final public function setData(array $data): self
     {
         $this->data = $data;
+
         return $this;
     }
 
     /**
      * Set Android configuration.
      */
-    public function setAndroidConfig(array $config): self
+    final public function setAndroidConfig(array $config): self
     {
         $this->androidConfig = $config;
+
         return $this;
     }
 
     /**
      * Set iOS configuration.
      */
-    public function setIosConfig(array $config): self
+    final public function setIosConfig(array $config): self
     {
         $this->iosConfig = $config;
+
         return $this;
     }
 
     /**
      * Set Web configuration.
      */
-    public function setWebConfig(array $config): self
+    final public function setWebConfig(array $config): self
     {
         $this->webConfig = $config;
+
         return $this;
     }
 
     /**
      * Set email subject.
      */
-    public function setEmailSubject(?string $subject): self
+    final public function setEmailSubject(?string $subject): self
     {
         $this->emailSubject = $subject;
+
         return $this;
     }
 
@@ -251,7 +260,7 @@ abstract class BaseFcmNotification extends Notification implements ShouldQueue
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    final public function toArray(object $notifiable): array
     {
         return [
             'title' => $this->title,

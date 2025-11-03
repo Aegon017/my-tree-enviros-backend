@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
  *     type="object",
  *     title="Campaign",
  *     description="Campaign model",
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="location_id", type="integer", example=10),
  *     @OA\Property(property="type", type="string", enum={"feed", "protect", "plant"}, nullable=true, example="feed"),
@@ -39,8 +40,10 @@ use Illuminate\Http\Request;
  *     @OA\Property(
  *         property="image_urls",
  *         type="array",
+ *
  *         @OA\Items(type="string", example="https://cdn.example.com/media/campaigns/1/gallery-1.jpg")
  *     ),
+ *
  *     @OA\Property(
  *         property="location",
  *         type="object",
@@ -66,52 +69,67 @@ final class CampaignController extends Controller
      *     summary="List campaigns",
      *     description="Get a paginated list of active campaigns with optional filters",
      *     tags={"Campaigns"},
+     *
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
      *         description="Filter by campaign type",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"feed", "protect", "plant"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="location_id",
      *         in="query",
      *         description="Filter by location ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search by campaign name or description",
      *         required=false,
+     *
      *         @OA\Schema(type="string", example="feed")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (max 50)",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15, maximum=50)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"created_at","name"}, default="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, default="desc")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Success"),
      *             @OA\Property(
@@ -120,8 +138,10 @@ final class CampaignController extends Controller
      *                 @OA\Property(
      *                     property="campaigns",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/Campaign")
      *                 ),
+     *
      *                 @OA\Property(
      *                     property="meta",
      *                     type="object",
@@ -161,9 +181,9 @@ final class CampaignController extends Controller
         // Search by name or description
         if ($request->filled('search')) {
             $search = $request->string('search')->toString();
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search): void {
+                $q->where('name', 'like', sprintf('%%%s%%', $search))
+                    ->orWhere('description', 'like', sprintf('%%%s%%', $search));
             });
         }
 
@@ -171,12 +191,14 @@ final class CampaignController extends Controller
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $allowedSortFields = ['created_at', 'name'];
-        if (!in_array($sortBy, $allowedSortFields, true)) {
+        if (! in_array($sortBy, $allowedSortFields, true)) {
             $sortBy = 'created_at';
         }
-        if (!in_array(strtolower((string) $sortOrder), ['asc', 'desc'], true)) {
+
+        if (! in_array(mb_strtolower((string) $sortOrder), ['asc', 'desc'], true)) {
             $sortOrder = 'desc';
         }
+
         $query->orderBy($sortBy, $sortOrder);
 
         // Pagination
@@ -204,17 +226,22 @@ final class CampaignController extends Controller
      *     summary="Get campaign details",
      *     description="Get detailed information about a specific campaign",
      *     tags={"Campaigns"},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Campaign ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Success"),
      *             @OA\Property(
@@ -224,10 +251,13 @@ final class CampaignController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Campaign not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Resource not found")
      *         )
@@ -240,7 +270,7 @@ final class CampaignController extends Controller
             ->active()
             ->find($id);
 
-        if (!$campaign) {
+        if (! $campaign) {
             return $this->notFound('Campaign not found');
         }
 

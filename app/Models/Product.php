@@ -10,24 +10,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class Product extends Model
 {
-
     protected $fillable = [
-        "product_category_id",
-        "name",
-        "slug",
-        "botanical_name",
-        "nick_name",
-        "short_description",
-        "description",
-        "is_active",
+        'product_category_id',
+        'name',
+        'slug',
+        'botanical_name',
+        'nick_name',
+        'short_description',
+        'description',
+        'is_active',
     ];
 
     protected $casts = [
-        "product_category_id" => "integer",
-        "is_active" => "boolean",
+        'product_category_id' => 'integer',
+        'is_active' => 'boolean',
     ];
-
-
 
     public function productCategory(): BelongsTo
     {

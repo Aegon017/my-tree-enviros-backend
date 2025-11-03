@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Sliders;
 
 use App\Filament\Resources\Sliders\Pages\CreateSlider;
@@ -14,7 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class SliderResource extends Resource
+final class SliderResource extends Resource
 {
     protected static ?string $model = Slider::class;
 

@@ -22,18 +22,24 @@ final class FcmTokenController extends Controller
      *     summary="Store or update FCM token",
      *     tags={"FCM Tokens"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"token", "device_type"},
+     *
      *             @OA\Property(property="token", type="string", example="dGhpcyBpcyBhIHRva2Vu..."),
      *             @OA\Property(property="device_type", type="string", enum={"android", "ios", "web"}, example="android")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="FCM token stored successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="FCM token stored successfully"),
      *             @OA\Property(
@@ -47,6 +53,7 @@ final class FcmTokenController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error"
@@ -107,15 +114,20 @@ final class FcmTokenController extends Controller
      *     summary="Get all FCM tokens for authenticated user",
      *     tags={"FCM Tokens"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="FCM tokens retrieved successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
      *                 type="array",
+     *
      *                 @OA\Items(
+     *
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="token", type="string"),
      *                     @OA\Property(property="device_type", type="string", example="android"),
@@ -125,6 +137,7 @@ final class FcmTokenController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -150,20 +163,26 @@ final class FcmTokenController extends Controller
      *     summary="Delete a specific FCM token",
      *     tags={"FCM Tokens"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="FCM token deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="FCM token deleted successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="FCM token not found"
@@ -205,21 +224,28 @@ final class FcmTokenController extends Controller
      *     summary="Delete FCM token by token string",
      *     tags={"FCM Tokens"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"token"},
+     *
      *             @OA\Property(property="token", type="string", example="dGhpcyBpcyBhIHRva2Vu...")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="FCM token deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="FCM token deleted successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="FCM token not found"
@@ -265,15 +291,19 @@ final class FcmTokenController extends Controller
      *     summary="Delete all FCM tokens for authenticated user",
      *     tags={"FCM Tokens"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="All FCM tokens deleted successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="All FCM tokens deleted successfully"),
      *             @OA\Property(property="deleted_count", type="integer", example=3)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
