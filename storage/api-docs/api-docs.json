@@ -4309,6 +4309,448 @@
                     }
                 ]
             }
+        },
+        "/api/v1/shipping-addresses": {
+            "get": {
+                "tags": [
+                    "Shipping Addresses"
+                ],
+                "summary": "List shipping addresses",
+                "description": "Get all shipping addresses for the authenticated user",
+                "operationId": "listShippingAddresses",
+                "responses": {
+                    "200": {
+                        "description": "Shipping addresses retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "addresses": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/ShippingAddress"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Shipping Addresses"
+                ],
+                "summary": "Create shipping address",
+                "description": "Create a new shipping address for the authenticated user",
+                "operationId": "createShippingAddress",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "phone",
+                                    "address",
+                                    "city",
+                                    "area",
+                                    "postal_code"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Full name for delivery",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number",
+                                        "type": "string",
+                                        "example": "+919876543210"
+                                    },
+                                    "address": {
+                                        "description": "Complete street address",
+                                        "type": "string",
+                                        "example": "123 Main Street, Building A"
+                                    },
+                                    "city": {
+                                        "description": "City name",
+                                        "type": "string",
+                                        "example": "Mumbai"
+                                    },
+                                    "area": {
+                                        "description": "Area/Locality",
+                                        "type": "string",
+                                        "example": "Andheri West"
+                                    },
+                                    "postal_code": {
+                                        "description": "Postal/ZIP code",
+                                        "type": "string",
+                                        "example": "400058"
+                                    },
+                                    "is_default": {
+                                        "description": "Set as default shipping address",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Shipping address created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping address created successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "address": {
+                                                    "$ref": "#/components/schemas/ShippingAddress"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/shipping-addresses/{id}": {
+            "get": {
+                "tags": [
+                    "Shipping Addresses"
+                ],
+                "summary": "Get shipping address",
+                "description": "Get a specific shipping address by ID",
+                "operationId": "getShippingAddress",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Shipping address ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shipping address retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "address": {
+                                                    "$ref": "#/components/schemas/ShippingAddress"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Shipping address not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Shipping Addresses"
+                ],
+                "summary": "Update shipping address",
+                "description": "Update a specific shipping address",
+                "operationId": "updateShippingAddress",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Shipping address ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "description": "Full name for delivery",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number",
+                                        "type": "string",
+                                        "example": "+919876543210"
+                                    },
+                                    "address": {
+                                        "description": "Complete street address",
+                                        "type": "string",
+                                        "example": "123 Main Street, Building A"
+                                    },
+                                    "city": {
+                                        "description": "City name",
+                                        "type": "string",
+                                        "example": "Mumbai"
+                                    },
+                                    "area": {
+                                        "description": "Area/Locality",
+                                        "type": "string",
+                                        "example": "Andheri West"
+                                    },
+                                    "postal_code": {
+                                        "description": "Postal/ZIP code",
+                                        "type": "string",
+                                        "example": "400058"
+                                    },
+                                    "is_default": {
+                                        "description": "Set as default shipping address",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Shipping address updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping address updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "address": {
+                                                    "$ref": "#/components/schemas/ShippingAddress"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Shipping address not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Shipping Addresses"
+                ],
+                "summary": "Delete shipping address",
+                "description": "Delete a specific shipping address",
+                "operationId": "deleteShippingAddress",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Shipping address ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Shipping address deleted successfully"
+                    },
+                    "404": {
+                        "description": "Shipping address not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/shipping-addresses/{id}/set-default": {
+            "post": {
+                "tags": [
+                    "Shipping Addresses"
+                ],
+                "summary": "Set default shipping address",
+                "description": "Set a specific shipping address as the default address",
+                "operationId": "setDefaultShippingAddress",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Shipping address ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Default shipping address updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Default shipping address updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "address": {
+                                                    "$ref": "#/components/schemas/ShippingAddress"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Shipping address not found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {

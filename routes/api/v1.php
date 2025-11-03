@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\TreeController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -132,6 +133,16 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
             'destroyByToken',
         ]);
         Route::delete('/all', [FcmTokenController::class, 'destroyAll']);
+    });
+
+    // Shipping Address Management
+    Route::prefix('shipping-addresses')->group(function (): void {
+        Route::get('/', [ShippingAddressController::class, 'index']);
+        Route::post('/', [ShippingAddressController::class, 'store']);
+        Route::get('/{id}', [ShippingAddressController::class, 'show']);
+        Route::put('/{id}', [ShippingAddressController::class, 'update']);
+        Route::delete('/{id}', [ShippingAddressController::class, 'destroy']);
+        Route::post('/{id}/set-default', [ShippingAddressController::class, 'setDefault']);
     });
 });
 
