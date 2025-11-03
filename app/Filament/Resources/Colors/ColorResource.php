@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Colors;
 
 use App\Filament\Resources\Colors\Pages\CreateColor;
@@ -15,10 +17,9 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class ColorResource extends Resource
+final class ColorResource extends Resource
 {
     protected static ?string $model = Color::class;
-
 
     protected static UnitEnum|string|null $navigationGroup = 'E-commerce';
 

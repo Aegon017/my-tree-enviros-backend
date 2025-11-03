@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Sizes;
 
 use App\Filament\Resources\Sizes\Pages\CreateSize;
@@ -15,10 +17,9 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class SizeResource extends Resource
+final class SizeResource extends Resource
 {
     protected static ?string $model = Size::class;
-
 
     protected static UnitEnum|string|null $navigationGroup = 'E-commerce';
 

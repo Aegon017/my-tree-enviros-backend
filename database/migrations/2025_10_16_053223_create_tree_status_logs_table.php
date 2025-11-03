@@ -13,6 +13,7 @@ return new class extends Migration
         Schema::create('tree_status_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tree_instance_id')->constrained()->cascadeOnDelete();
+            $table->text('notes')->nullable();
             $table->string('status');
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('order_id')->nullable()->constrained()->cascadeOnDelete();

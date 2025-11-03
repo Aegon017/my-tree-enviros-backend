@@ -18,7 +18,7 @@ final class ProductCategoryForm
             ->components([
                 TextInput::make('name')->required()
                     ->live(onBlur: true)
-                    ->afterStateUpdated(fn(Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
+                    ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
                 TextInput::make('slug')
                     ->unique(table: 'product_categories', column: 'slug')
                     ->readOnly()

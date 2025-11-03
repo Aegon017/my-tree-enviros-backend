@@ -1,15 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Variant extends Model
+final class Variant extends Model
 {
     protected $fillable = ['color_id', 'size_id', 'planter_id'];
-
 
     public function color(): BelongsTo
     {

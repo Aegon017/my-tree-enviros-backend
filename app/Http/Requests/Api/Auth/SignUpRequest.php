@@ -25,7 +25,7 @@ final class SignUpRequest extends FormRequest
                 'required',
                 'string',
                 new PhoneNumberRule($this->country_code),
-                Rule::unique('users')->where(fn($query) => $query->where('country_code', $this->country_code)),
+                Rule::unique('users')->where(fn ($query) => $query->where('country_code', $this->country_code)),
             ],
         ];
     }

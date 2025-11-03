@@ -6,8 +6,6 @@ namespace App\Models;
 
 use App\Enums\OrderStatusEnum;
 use App\Enums\OrderTypeEnum;
-use App\Enums\TreeTypeEnum;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;

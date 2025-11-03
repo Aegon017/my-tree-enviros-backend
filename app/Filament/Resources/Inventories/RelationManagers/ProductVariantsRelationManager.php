@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Inventories\RelationManagers;
 
 use App\Models\Variant;
-use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -30,19 +28,32 @@ final class ProductVariantsRelationManager extends RelationManager
         return $schema
             ->components([
                 Select::make('variant_id')
-                    ->label('Variant')
-                    ->options(
-                        Variant::with(['color', 'size', 'planter'])->get()->mapWithKeys(function ($variant) {
-                            return [
-                                $variant->id => "{$variant->color->name} - {$variant->size->name} - {$variant->planter->name}",
-                            ];
-                        })
-                    )
+                    ->label('Variant (Optional)')
+                    ->options(function (): array {
+                        $options = [];
+                        $options['base'] = 'Base Product (No Variant)';
+                        
+                        $variants = Variant::with(['color', 'size', 'planter'])->get();
+                        foreach ($variants as $variant) {
+                            $options[$variant->id] = sprintf('%s - %s - %s',
+                                $variant->color->name,
+                                $variant->size->name,
+                                $variant->planter->name
+                            );
+                        }
+                        
+                        return $options;
+                    })
+                    ->dehydrateStateUsing(function ($state) {
+                        return $state === 'base' ? null : $state;
+                    })
+                    ->afterStateHydrated(function ($component, $state) {
+                        $component->state($state === null ? 'base' : $state);
+                    })
                     ->searchable()
                     ->native(false)
-                    ->preload()
-                    ->required(),
-                TextInput::make('sku')->required(),
+                    ->preload(),
+                TextInput::make('sku')->disabled(),
                 TextInput::make('base_price')->numeric()->required(),
                 TextInput::make('discount_price')->numeric(),
                 TextInput::make('stock_quantity')->numeric()->required(),
@@ -53,8 +64,8 @@ final class ProductVariantsRelationManager extends RelationManager
                     ->multiple()
                     ->image()
                     ->reorderable()
-                    ->imageEditor()
-                    ->helperText('Upload images specific to this variant. These will be displayed when this variant is selected.'),
+                    ->helperText('Upload images specific to this variant. These will be displayed when this variant is selected.')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -71,10 +82,16 @@ final class ProductVariantsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('ProductVariant')
             ->columns([
-                TextColumn::make('variant.color.name')->label('Color'),
-                TextColumn::make('variant.size.name')->label('Size'),
-                TextColumn::make('variant.planter.name')->label('Planter'),
-                TextColumn::make('sku'),
+                TextColumn::make('variant.color.name')
+                    ->label('Color')
+                    ->formatStateUsing(fn (?string $state): string => $state ?? 'Base Product'),
+                TextColumn::make('variant.size.name')
+                    ->label('Size')
+                    ->formatStateUsing(fn (?string $state): string => $state ?? '-'),
+                TextColumn::make('variant.planter.name')
+                    ->label('Planter')
+                    ->formatStateUsing(fn (?string $state): string => $state ?? '-'),
+                TextColumn::make('sku')->label('SKU'),
                 TextColumn::make('base_price'),
                 TextColumn::make('discount_price'),
                 TextColumn::make('stock_quantity'),
@@ -87,6 +104,7 @@ final class ProductVariantsRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make()
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

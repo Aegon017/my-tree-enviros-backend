@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications\Channels;
 
 use App\Models\FcmToken;
+use Exception;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Exception\FirebaseException;
@@ -17,10 +18,6 @@ final class FcmChannel
 {
     /**
      * Send the given notification.
-     *
-     * @param  mixed  $notifiable
-     * @param  \Illuminate\Notifications\Notification  $notification
-     * @return void
      */
     public function send(mixed $notifiable, Notification $notification): void
     {
@@ -29,9 +26,10 @@ final class FcmChannel
 
         if (! $this->isValidFcmData($fcmData)) {
             Log::warning('Invalid FCM notification data', [
-                'notification_class' => get_class($notification),
+                'notification_class' => $notification::class,
                 'notifiable_id' => $notifiable->id ?? null,
             ]);
+
             return;
         }
 
@@ -42,19 +40,19 @@ final class FcmChannel
             Log::info('No FCM tokens found for user', [
                 'user_id' => $notifiable->id ?? null,
             ]);
+
             return;
         }
 
         // Send notification to each token
         foreach ($tokens as $fcmToken) {
-            $this->sendToToken($fcmToken->token, $fcmData, $notifiable);
+            $this->sendToToken($fcmToken->token, $fcmData);
         }
     }
 
     /**
      * Get FCM tokens for the notifiable entity.
      *
-     * @param  mixed  $notifiable
      * @return \Illuminate\Support\Collection
      */
     private function getFcmTokens(mixed $notifiable)
@@ -65,6 +63,7 @@ final class FcmChannel
 
         if (method_exists($notifiable, 'routeNotificationForFcm')) {
             $tokens = $notifiable->routeNotificationForFcm();
+
             return collect(is_array($tokens) ? $tokens : [$tokens]);
         }
 
@@ -73,13 +72,8 @@ final class FcmChannel
 
     /**
      * Send notification to a specific token.
-     *
-     * @param  string  $token
-     * @param  array  $fcmData
-     * @param  mixed  $notifiable
-     * @return void
      */
-    private function sendToToken(string $token, array $fcmData, mixed $notifiable): void
+    private function sendToToken(string $token, array $fcmData): void
     {
         try {
             $messaging = Firebase::messaging();
@@ -91,35 +85,31 @@ final class FcmChannel
             $messaging->send($message);
 
             Log::info('FCM notification sent successfully', [
-                'token' => substr($token, 0, 20) . '...',
+                'token' => mb_substr($token, 0, 20).'...',
                 'title' => $fcmData['title'] ?? null,
             ]);
 
         } catch (MessagingException $e) {
-            $this->handleMessagingException($e, $token, $notifiable);
+            $this->handleMessagingException($e, $token);
         } catch (FirebaseException $e) {
             Log::error('Firebase exception while sending FCM notification', [
                 'error' => $e->getMessage(),
-                'token' => substr($token, 0, 20) . '...',
+                'token' => mb_substr($token, 0, 20).'...',
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Exception while sending FCM notification', [
                 'error' => $e->getMessage(),
-                'token' => substr($token, 0, 20) . '...',
+                'token' => mb_substr($token, 0, 20).'...',
             ]);
         }
     }
 
     /**
      * Build the cloud message.
-     *
-     * @param  string  $token
-     * @param  array  $fcmData
-     * @return CloudMessage
      */
     private function buildMessage(string $token, array $fcmData): CloudMessage
     {
-        $config = [
+        [
             'priority' => config('firebase.fcm.priority', 'high'),
             'time_to_live' => config('firebase.fcm.ttl', 3600),
         ];
@@ -143,7 +133,7 @@ final class FcmChannel
         $messageBuilder = CloudMessage::withTarget('token', $token);
 
         // Add notification if we have title or body
-        if (! empty($notificationData)) {
+        if ($notificationData !== []) {
             $notification = FirebaseNotification::create(
                 $notificationData['title'] ?? '',
                 $notificationData['body'] ?? ''
@@ -222,9 +212,6 @@ final class FcmChannel
 
     /**
      * Validate FCM data structure.
-     *
-     * @param  mixed  $fcmData
-     * @return bool
      */
     private function isValidFcmData(mixed $fcmData): bool
     {
@@ -241,20 +228,15 @@ final class FcmChannel
 
     /**
      * Handle messaging exceptions (e.g., invalid tokens).
-     *
-     * @param  MessagingException  $e
-     * @param  string  $token
-     * @param  mixed  $notifiable
-     * @return void
      */
-    private function handleMessagingException(MessagingException $e, string $token, mixed $notifiable): void
+    private function handleMessagingException(MessagingException $e, string $token): void
     {
         $errorCode = method_exists($e, 'getCode') ? $e->getCode() : null;
 
         // Check if token is invalid or unregistered
         if ($this->isInvalidTokenError($e)) {
             Log::warning('Invalid or unregistered FCM token, removing from database', [
-                'token' => substr($token, 0, 20) . '...',
+                'token' => mb_substr($token, 0, 20).'...',
                 'error' => $e->getMessage(),
             ]);
 
@@ -264,16 +246,13 @@ final class FcmChannel
             Log::error('Messaging exception while sending FCM notification', [
                 'error' => $e->getMessage(),
                 'code' => $errorCode,
-                'token' => substr($token, 0, 20) . '...',
+                'token' => mb_substr($token, 0, 20).'...',
             ]);
         }
     }
 
     /**
      * Check if the exception indicates an invalid token.
-     *
-     * @param  MessagingException  $e
-     * @return bool
      */
     private function isInvalidTokenError(MessagingException $e): bool
     {

@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Planter;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class PlanterPolicy
+final class PlanterPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Planter');
     }
 
-    public function view(AuthUser $authUser, Planter $planter): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Planter');
     }
@@ -27,22 +26,22 @@ class PlanterPolicy
         return $authUser->can('Create:Planter');
     }
 
-    public function update(AuthUser $authUser, Planter $planter): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Planter');
     }
 
-    public function delete(AuthUser $authUser, Planter $planter): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Planter');
     }
 
-    public function restore(AuthUser $authUser, Planter $planter): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Planter');
     }
 
-    public function forceDelete(AuthUser $authUser, Planter $planter): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Planter');
     }
@@ -57,7 +56,7 @@ class PlanterPolicy
         return $authUser->can('RestoreAny:Planter');
     }
 
-    public function replicate(AuthUser $authUser, Planter $planter): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Planter');
     }
@@ -66,5 +65,4 @@ class PlanterPolicy
     {
         return $authUser->can('Reorder:Planter');
     }
-
 }

@@ -20,7 +20,7 @@ final class TreePricePlanResource extends JsonResource
             'duration' => $this->duration,
             'duration_type' => $this->duration_type->value,
             'duration_type_label' => $this->duration_type->label(),
-            'duration_display' => $this->duration . ' ' . ucfirst($this->duration_type->value),
+            'duration_display' => $this->duration.' '.ucfirst((string) $this->duration_type->value),
             'features' => $this->features ?? [],
             'is_active' => $this->is_active,
             'created_at' => $this->created_at,

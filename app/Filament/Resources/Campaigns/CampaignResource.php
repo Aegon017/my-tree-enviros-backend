@@ -10,24 +10,24 @@ use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use App\Filament\Resources\Campaigns\Tables\CampaignsTable;
 use App\Models\Campaign;
-use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
-use Filament\Tables\Table;
-use Filament\Support\Icons\Heroicon;
 use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
 use UnitEnum;
 
-class CampaignResource extends Resource
+final class CampaignResource extends Resource
 {
     protected static ?string $model = Campaign::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static UnitEnum|string|null $navigationGroup = "Campaigns";
+    protected static UnitEnum|string|null $navigationGroup = 'Campaigns';
 
-    protected static ?string $modelLabel = "Campaign";
+    protected static ?string $modelLabel = 'Campaign';
 
-    protected static ?string $pluralModelLabel = "Campaigns";
+    protected static ?string $pluralModelLabel = 'Campaigns';
 
     public static function form(Schema $schema): Schema
     {
@@ -42,16 +42,16 @@ class CampaignResource extends Resource
     public static function getRelations(): array
     {
         return [
-                // Add RelationManagers here as needed
-            ];
+            // Add RelationManagers here as needed
+        ];
     }
 
     public static function getPages(): array
     {
         return [
-            "index" => ListCampaigns::route("/"),
-            "create" => CreateCampaign::route("/create"),
-            "edit" => EditCampaign::route("/{record}/edit"),
+            'index' => ListCampaigns::route('/'),
+            'create' => CreateCampaign::route('/create'),
+            'edit' => EditCampaign::route('/{record}/edit'),
         ];
     }
 }

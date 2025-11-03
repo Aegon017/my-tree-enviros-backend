@@ -8,7 +8,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -18,19 +17,15 @@ final class ProductsTable
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make("inventory.thumbnail")
-                    ->label("Thumbnail")
-                    ->collection("thumbnail")
-                    ->imageHeight(120),
-                TextColumn::make("productCategory.name")
-                    ->label("Category")
+                TextColumn::make('productCategory.name')
+                    ->label('Category')
                     ->searchable()
                     ->toggleable(true),
-                TextColumn::make("name")->searchable()->toggleable(true),
-                TextColumn::make("botanical_name")->toggleable(true),
-                TextColumn::make("nick_name")->toggleable(true),
-                IconColumn::make("is_active")
-                    ->label("Active")
+                TextColumn::make('name')->searchable()->toggleable(true),
+                TextColumn::make('botanical_name')->toggleable(true),
+                TextColumn::make('nick_name')->toggleable(true),
+                IconColumn::make('is_active')
+                    ->label('Active')
                     ->boolean()
                     ->toggleable(true),
             ])

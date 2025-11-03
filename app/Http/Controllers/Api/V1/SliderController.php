@@ -29,35 +29,45 @@ final class SliderController extends Controller
      *   tags={"Sliders"},
      *   summary="List sliders",
      *   description="Returns a list of sliders for the homepage. Active-only by default.",
+     *
      *   @OA\Parameter(
      *     name="active",
      *     in="query",
      *     required=false,
      *     description="Filter by active status (true/false). Defaults to true.",
+     *
      *     @OA\Schema(type="boolean")
      *   ),
+     *
      *   @OA\Parameter(
      *     name="limit",
      *     in="query",
      *     required=false,
      *     description="Limit the number of returned sliders (1-100).",
+     *
      *     @OA\Schema(type="integer", minimum=1, maximum=100)
      *   ),
+     *
      *   @OA\Parameter(
      *     name="order",
      *     in="query",
      *     required=false,
      *     description="Sort order by ID (asc or desc). Defaults to desc.",
+     *
      *     @OA\Schema(type="string", enum={"asc","desc"})
      *   ),
+     *
      *   @OA\Response(
      *     response=200,
      *     description="OK",
+     *
      *     @OA\JsonContent(
      *       type="object",
+     *
      *       @OA\Property(
      *         property="data",
      *         type="array",
+     *
      *         @OA\Items(ref="#/components/schemas/Slider")
      *       )
      *     )
@@ -76,8 +86,9 @@ final class SliderController extends Controller
         }
 
         // Sort order
-        $order = strtolower((string) $request->get('order', 'desc'));
+        $order = mb_strtolower((string) $request->get('order', 'desc'));
         $order = in_array($order, ['asc', 'desc'], true) ? $order : 'desc';
+
         $query->orderBy('id', $order);
 
         // Optional limit
@@ -98,21 +109,27 @@ final class SliderController extends Controller
      *   operationId="getSlider",
      *   tags={"Sliders"},
      *   summary="Get slider by ID",
+     *
      *   @OA\Parameter(
      *     name="id",
      *     in="path",
      *     required=true,
      *     description="Slider ID",
+     *
      *     @OA\Schema(type="integer")
      *   ),
+     *
      *   @OA\Response(
      *     response=200,
      *     description="OK",
+     *
      *     @OA\JsonContent(
      *       type="object",
+     *
      *       @OA\Property(property="data", ref="#/components/schemas/Slider")
      *     )
      *   ),
+     *
      *   @OA\Response(response=404, description="Not Found")
      * )
      */

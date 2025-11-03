@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Sliders\Schemas;
 
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -11,7 +13,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
-class SliderForm
+final class SliderForm
 {
     public static function configure(Schema $schema): Schema
     {

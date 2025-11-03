@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\PushNotifications;
 
 use App\Filament\Resources\PushNotifications\Pages\CreatePushNotification;
@@ -14,7 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class PushNotificationResource extends Resource
+final class PushNotificationResource extends Resource
 {
     protected static ?string $model = PushNotification::class;
 

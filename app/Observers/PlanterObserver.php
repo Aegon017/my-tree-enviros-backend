@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Observers;
 
 use App\Models\Color;
@@ -7,7 +9,7 @@ use App\Models\Planter;
 use App\Models\Size;
 use App\Models\Variant;
 
-class PlanterObserver
+final class PlanterObserver
 {
     public function created(Planter $planter): void
     {

@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
-class SendPushNotificationJob implements ShouldQueue
+final class SendPushNotificationJob implements ShouldQueue
 {
     use Queueable;
 

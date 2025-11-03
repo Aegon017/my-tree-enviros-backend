@@ -52,9 +52,9 @@ final class UserController extends Controller
         $validated = $request->validate([
             'type' => 'sometimes|in:individual,organization',
             'name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
+            'email' => 'nullable|email|unique:users,email,'.$user->id,
             'country_code' => 'sometimes|string|max:5',
-            'phone' => 'sometimes|string|unique:users,phone,' . $user->id,
+            'phone' => 'sometimes|string|unique:users,phone,'.$user->id,
         ]);
 
         $user->update($validated);

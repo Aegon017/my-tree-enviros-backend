@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Observers\PlanterObserver;
@@ -9,9 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-
 #[ObservedBy([PlanterObserver::class])]
-class Planter extends Model implements HasMedia
+final class Planter extends Model implements HasMedia
 {
     use InteractsWithMedia;
 

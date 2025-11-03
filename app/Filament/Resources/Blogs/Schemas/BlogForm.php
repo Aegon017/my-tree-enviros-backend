@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Blogs\Schemas;
 
 use App\Models\BlogCategory;
@@ -15,7 +17,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
-class BlogForm
+final class BlogForm
 {
     public static function configure(Schema $schema): Schema
     {
@@ -38,7 +40,7 @@ class BlogForm
                             ->schema([
                                 TextInput::make('title')->required()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
+                                    ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
                                 TextInput::make('slug')
                                     ->readOnly()
                                     ->required(),

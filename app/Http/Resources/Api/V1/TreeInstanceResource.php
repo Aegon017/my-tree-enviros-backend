@@ -30,15 +30,13 @@ final class TreeInstanceResource extends JsonResource
             ],
             'tree_id' => $this->tree_id,
             'location_id' => $this->location_id,
-            'media' => $this->whenLoaded('media', function () {
-                return $this->media->map(fn($media) => [
-                    'id' => $media->id,
-                    'type' => $media->type,
-                    'url' => $media->url,
-                    'caption' => $media->caption,
-                    'uploaded_at' => $media->created_at,
-                ]);
-            }),
+            'media' => $this->whenLoaded('media', fn () => $this->media->map(fn ($media): array => [
+                'id' => $media->id,
+                'type' => $media->type,
+                'url' => $media->url,
+                'caption' => $media->caption,
+                'uploaded_at' => $media->created_at,
+            ])),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

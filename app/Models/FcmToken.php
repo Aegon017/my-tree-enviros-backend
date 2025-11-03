@@ -8,7 +8,7 @@ use App\Enums\DeviceTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class FcmToken extends Model
+final class FcmToken extends Model
 {
     protected $fillable = [
         'user_id',
@@ -28,7 +28,8 @@ class FcmToken extends Model
     /**
      * Scope a query to only include tokens of a given device type.
      */
-    public function scopeOfDeviceType($query, DeviceTypeEnum $deviceType)
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function ofDeviceType($query, DeviceTypeEnum $deviceType)
     {
         return $query->where('device_type', $deviceType);
     }
@@ -36,7 +37,8 @@ class FcmToken extends Model
     /**
      * Scope a query to only include active tokens (not expired).
      */
-    public function scopeActive($query)
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function active($query)
     {
         return $query->where('updated_at', '>=', now()->subDays(30));
     }

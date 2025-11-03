@@ -19,12 +19,8 @@ final class WishlistItemResource extends JsonResource
             'is_variant' => $this->isVariant(),
             'product_name' => $this->getProductName(),
             'product_image' => $this->getProductImage(),
-            'product' => $this->when($this->relationLoaded('product') && !$this->isVariant(), function () {
-                return new ProductResource($this->product);
-            }),
-            'product_variant' => $this->when($this->relationLoaded('productVariant') && $this->isVariant(), function () {
-                return new ProductVariantResource($this->productVariant);
-            }),
+            'product' => $this->when($this->relationLoaded('product') && ! $this->isVariant(), fn (): ProductResource => new ProductResource($this->product)),
+            'product_variant' => $this->when($this->relationLoaded('productVariant') && $this->isVariant(), fn (): ProductVariantResource => new ProductVariantResource($this->productVariant)),
             'stock' => [
                 'is_instock' => $this->isInStock(),
                 'quantity' => $this->getStockQuantity(),

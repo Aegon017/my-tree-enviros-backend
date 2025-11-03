@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Observers\SizeObserver;
@@ -8,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy([SizeObserver::class])]
-class Size extends Model
+final class Size extends Model
 {
     protected $fillable = ['name'];
 

@@ -12,15 +12,15 @@ final class OrderStatusNotification extends BaseFcmNotification
      * Create a new notification instance.
      */
     public function __construct(
-        protected Order $order,
-        protected string $status,
-        protected ?string $orderImage = null
+        private readonly Order $order,
+        private readonly string $status,
+        ?string $orderImage = null
     ) {
         $this->title = 'Order Status Updated';
         $this->body = $this->getStatusMessage();
         $this->image = $orderImage;
-        $this->path = '/orders/' . $order->id;
-        $this->emailSubject = 'Your Order #' . $order->id . ' Status Update';
+        $this->path = '/orders/'.$order->id;
+        $this->emailSubject = 'Your Order #'.$order->id.' Status Update';
 
         $this->data = [
             'order_id' => (string) $order->id,
@@ -55,14 +55,14 @@ final class OrderStatusNotification extends BaseFcmNotification
     private function getStatusMessage(): string
     {
         return match ($this->status) {
-            'pending' => 'Your order #' . $this->order->id . ' has been received and is being processed.',
-            'confirmed' => 'Great news! Your order #' . $this->order->id . ' has been confirmed.',
-            'processing' => 'Your order #' . $this->order->id . ' is being prepared for shipment.',
-            'shipped' => 'Your order #' . $this->order->id . ' has been shipped and is on its way!',
-            'delivered' => 'Your order #' . $this->order->id . ' has been delivered. Enjoy!',
-            'cancelled' => 'Your order #' . $this->order->id . ' has been cancelled.',
-            'refunded' => 'Your order #' . $this->order->id . ' has been refunded.',
-            default => 'Your order #' . $this->order->id . ' status has been updated to: ' . $this->status,
+            'pending' => 'Your order #'.$this->order->id.' has been received and is being processed.',
+            'confirmed' => 'Great news! Your order #'.$this->order->id.' has been confirmed.',
+            'processing' => 'Your order #'.$this->order->id.' is being prepared for shipment.',
+            'shipped' => 'Your order #'.$this->order->id.' has been shipped and is on its way!',
+            'delivered' => 'Your order #'.$this->order->id.' has been delivered. Enjoy!',
+            'cancelled' => 'Your order #'.$this->order->id.' has been cancelled.',
+            'refunded' => 'Your order #'.$this->order->id.' has been refunded.',
+            default => 'Your order #'.$this->order->id.' status has been updated to: '.$this->status,
         };
     }
 }
