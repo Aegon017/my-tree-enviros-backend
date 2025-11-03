@@ -15,10 +15,10 @@ return new class extends Migration
             $table->foreignId('inventory_id')->constrained()->cascadeOnDelete();
             $table->foreignId('variant_id')->constrained()->cascadeOnDelete();
             $table->string('sku')->unique();
-            $table->string('base_price');
-            $table->string('discount_price');
+            $table->decimal('base_price', 10, 2);
+            $table->decimal('discount_price', 10, 2)->nullable();
             $table->integer('stock_quantity');
-            $table->boolean('is_instock');
+            $table->boolean('is_instock')->default(true);
             $table->timestamps();
         });
     }

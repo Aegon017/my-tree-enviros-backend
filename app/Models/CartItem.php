@@ -114,9 +114,17 @@ final class CartItem extends Model
         if ($this->isProduct()) {
             $product = $this->cartable;
 
+            // For ProductVariant, get the correct product name from the inventory
+            $productName = 'Product';
+            if ($this->cartable_type === ProductVariant::class) {
+                $productName = $product->inventory->product->name ?? $this->options['product_name'] ?? 'Product';
+            } else {
+                $productName = $product->name ?? $this->options['product_name'] ?? 'Product';
+            }
+
             return [
                 'type' => 'product',
-                'name' => $product->product->name ?? $product->name ?? 'Product',
+                'name' => $productName,
                 'sku' => $product->sku ?? null,
                 'image' => $product->getFirstMediaUrl('images') ?? null,
                 'variant' => $this->options['variant'] ?? null,

@@ -18,8 +18,9 @@ final class ProductsTable
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make("thumbnail")
-                    ->collection("thumbnails")
+                SpatieMediaLibraryImageColumn::make("inventory.thumbnail")
+                    ->label("Thumbnail")
+                    ->collection("thumbnail")
                     ->imageHeight(120),
                 TextColumn::make("productCategory.name")
                     ->label("Category")

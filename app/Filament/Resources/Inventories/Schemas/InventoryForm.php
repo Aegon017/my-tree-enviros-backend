@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Inventories\Schemas;
 
 use App\Models\Product;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -25,6 +26,25 @@ final class InventoryForm
                     ->native(false)
                     ->preload()
                     ->required(),
+                Section::make('Media')->schema([
+                    SpatieMediaLibraryFileUpload::make('thumbnail')
+                        ->collection('thumbnail')
+                        ->label('Product Thumbnail (for listings)')
+                        ->image()
+                        ->imageEditor()
+                        ->imageEditorAspectRatios([
+                            '16:9',
+                            '4:3',
+                            '1:1',
+                        ]),
+                    SpatieMediaLibraryFileUpload::make('images')
+                        ->collection('images')
+                        ->label('Product Images (global images)')
+                        ->multiple()
+                        ->image()
+                        ->reorderable()
+                        ->imageEditor(),
+                ]),
             ]);
     }
 }
