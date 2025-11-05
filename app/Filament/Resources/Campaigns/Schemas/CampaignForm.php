@@ -11,98 +11,91 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Flex;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use Symfony\Component\Yaml\Inline;
 
 final class CampaignForm
 {
     public static function configure(Schema $schema): Schema
     {
-        $typeOptions = collect(CampaignTypeEnum::cases())
-            ->mapWithKeys(fn (CampaignTypeEnum $e): array => [$e->value => $e->label()])
-            ->all();
-
         return $schema->components([
-            Select::make('type')
-                ->label('Type')
-                ->options($typeOptions)
-                ->required()
-                ->native(false)
-                ->searchable()
-                ->preload(),
+            Grid::make()->schema([
+                Section::make('Details')->schema([
+                    Flex::make([
+                        Select::make('type')
+                            ->label('Type')
+                            ->options(CampaignTypeEnum::options())
+                            ->required()
+                            ->native(false)
+                            ->searchable(),
+                        Toggle::make('is_active')->label('Active')->default(true)->grow(false)->inline(false),
+                    ]),
+                    Flex::make([
+                        Select::make('location_id')
+                            ->label('Location')
+                            ->relationship('location', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        TextInput::make('name')
+                            ->label('Name')
+                            ->required()
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(
+                                fn(Set $set, ?string $state): mixed => $set(
+                                    'slug',
+                                    Str::slug($state ?? ''),
+                                ),
+                            ),
 
-            Select::make('location_id')
-                ->label('Location')
-                ->relationship('location', 'name')
-                ->searchable()
-                ->preload()
-                ->required(),
+                        ]),
+                        Flex::make([
+                            TextInput::make('slug')
+                                ->label('Slug')
+                                ->unique(table: 'campaigns', column: 'slug')
+                                ->readOnly()
+                                ->required(),
+                            TextInput::make('amount')
+                            ->label('Suggested Amount (INR)')
+                            ->numeric()
+                            ->step(0.01)
+                            ->required(),
+                    ]),
+                    Flex::make([
+                        DatePicker::make('start_date')
+                            ->label('Start Date')
+                            ->native(false)
+                            ->closeOnDateSelection(),
 
-            TextInput::make('name')
-                ->label('Name')
-                ->required()
-                ->maxLength(255)
-                ->live(onBlur: true)
-                ->afterStateUpdated(
-                    fn (Set $set, ?string $state): mixed => $set(
-                        'slug',
-                        Str::slug($state ?? ''),
-                    ),
-                ),
+                        DatePicker::make('end_date')
+                            ->label('End Date')
+                            ->native(false)
+                            ->closeOnDateSelection()
+                    ]),
 
-            TextInput::make('slug')
-                ->label('Slug')
-                ->unique(table: 'campaigns', column: 'slug')
-                ->required(),
+                    RichEditor::make('description')
+                        ->label('Description'),
+                ])->columnSpan(8),
 
-            TextInput::make('amount')
-                ->label('Suggested Amount (INR)')
-                ->numeric()
-                ->minValue(1)
-                ->step(0.01)
-                ->default(500)
-                ->required(),
+                Section::make('Media')->schema([
+                    SpatieMediaLibraryFileUpload::make('thumbnail')
+                        ->label('Thumbnail')
+                        ->collection('thumbnail')
+                        ->image(),
 
-            Toggle::make('is_active')->label('Active')->default(true),
-
-            DatePicker::make('start_date')
-                ->label('Start Date')
-                ->native(false)
-                ->closeOnDateSelection(),
-
-            DatePicker::make('end_date')
-                ->label('End Date')
-                ->native(false)
-                ->closeOnDateSelection(),
-
-            RichEditor::make('description')
-                ->label('Description')
-                ->toolbarButtons([
-                    'bold',
-                    'italic',
-                    'underline',
-                    'strike',
-                    'bulletList',
-                    'orderedList',
-                    'blockquote',
-                    'link',
-                    'h2',
-                    'h3',
-                    'codeBlock',
-                ]),
-
-            SpatieMediaLibraryFileUpload::make('thumbnail')
-                ->label('Thumbnail')
-                ->collection('thumbnails')
-                ->image(),
-
-            SpatieMediaLibraryFileUpload::make('images')
-                ->label('Gallery Images')
-                ->collection('images')
-                ->image()
-                ->multiple()
-                ->reorderable(),
+                    SpatieMediaLibraryFileUpload::make('images')
+                        ->label('Gallery Images')
+                        ->collection('images')
+                        ->image()
+                        ->multiple()
+                        ->reorderable(),
+                ])->columnSpan(4),
+            ])->columns(12)->columnSpanFull(),
         ]);
     }
 }

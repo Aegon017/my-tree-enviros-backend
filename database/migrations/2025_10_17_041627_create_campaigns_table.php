@@ -13,7 +13,6 @@ return new class extends Migration
         Schema::create('campaigns', function (Blueprint $table) {
             $table->id();
             $table->foreignId('location_id')->constrained()->cascadeOnDelete();
-            $table->string('type');
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
