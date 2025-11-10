@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\FcmTokenController;
 use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\ProductCategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
@@ -60,6 +61,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
     Route::apiResource('users', UserController::class);
+
     Route::prefix('cart')->group(function (): void {
         Route::get('/', [CartController::class, 'index']);
         Route::post('/items', [CartController::class, 'store']);
@@ -67,6 +69,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/items/{id}', [CartController::class, 'destroy']);
         Route::delete('/', [CartController::class, 'clear']);
     });
+
     Route::prefix('orders')->group(function (): void {
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store']);
@@ -74,43 +77,37 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('/{id}', [OrderController::class, 'show']);
         Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
     });
+
     Route::get('my-trees', [OrderController::class, 'myTrees']);
+
     Route::prefix('orders/{orderId}/payment')->group(function (): void {
-        Route::post('/initiate', [
-            PaymentController::class,
-            'initiateRazorpay',
-        ]);
+        Route::post('/initiate', [PaymentController::class, 'initiateRazorpay']);
         Route::post('/verify', [PaymentController::class, 'verifyRazorpay']);
         Route::get('/status', [PaymentController::class, 'status']);
     });
+
     Route::prefix('products')->group(function (): void {
-        Route::get('/category/{categoryId}', [
-            ProductController::class,
-            'byCategory',
-        ]);
+        Route::get('/category/{categoryId}', [ProductController::class, 'byCategory']);
         Route::get('/{id}/variants', [ProductController::class, 'variants']);
     });
+
     Route::prefix('wishlist')->group(function (): void {
         Route::get('/', [WishlistController::class, 'index']);
         Route::post('/items', [WishlistController::class, 'store']);
         Route::delete('/items/{id}', [WishlistController::class, 'destroy']);
         Route::delete('/', [WishlistController::class, 'clear']);
-        Route::post('/items/{id}/move-to-cart', [
-            WishlistController::class,
-            'moveToCart',
-        ]);
+        Route::post('/items/{id}/move-to-cart', [WishlistController::class, 'moveToCart']);
         Route::get('/check/{productId}', [WishlistController::class, 'check']);
     });
+
     Route::prefix('fcm-tokens')->group(function (): void {
         Route::get('/', [FcmTokenController::class, 'index']);
         Route::post('/', [FcmTokenController::class, 'store']);
         Route::delete('/{id}', [FcmTokenController::class, 'destroy']);
-        Route::post('/delete-by-token', [
-            FcmTokenController::class,
-            'destroyByToken',
-        ]);
+        Route::post('/delete-by-token', [FcmTokenController::class, 'destroyByToken']);
         Route::delete('/all', [FcmTokenController::class, 'destroyAll']);
     });
+
     Route::prefix('shipping-addresses')->group(function (): void {
         Route::get('/', [ShippingAddressController::class, 'index']);
         Route::post('/', [ShippingAddressController::class, 'store']);
@@ -125,4 +122,8 @@ Route::prefix('products')->group(function (): void {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/featured', [ProductController::class, 'featured']);
     Route::get('/{id}', [ProductController::class, 'show']);
+});
+
+Route::prefix('product-categories')->group(function (): void {
+    Route::get('/', [ProductCategoryController::class, 'index']);
 });

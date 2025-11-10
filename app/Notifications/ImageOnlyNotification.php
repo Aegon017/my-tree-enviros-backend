@@ -50,7 +50,7 @@ final class ImageOnlyNotification extends BaseFcmNotification
     /**
      * Override toMail to handle image-only notifications better.
      */
-    public function toMail(object $notifiable): \Illuminate\Notifications\Messages\MailMessage
+    public function vai(object $notifiable): \Illuminate\Notifications\Messages\MailMessage
     {
         return (new \Illuminate\Notifications\Messages\MailMessage)
             ->subject($this->emailSubject ?? config('app.name').' Notification')

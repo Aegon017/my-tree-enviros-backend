@@ -11,6 +11,7 @@ use App\Http\Requests\Api\Auth\SignInRequest;
 use App\Http\Requests\Api\Auth\SignUpRequest;
 use App\Http\Requests\Api\Auth\VerifyOtpRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\User;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -157,7 +158,7 @@ final class AuthController extends Controller
             $request->phone,
         );
 
-        if (! $user instanceof \App\Models\User) {
+        if (! $user instanceof User) {
             return $this->notFound('User not found');
         }
 
@@ -233,7 +234,7 @@ final class AuthController extends Controller
             $request->phone,
         );
 
-        if (! $user instanceof \App\Models\User) {
+        if (! $user instanceof User) {
             return $this->notFound('User not found');
         }
 
@@ -310,7 +311,7 @@ final class AuthController extends Controller
             $request->phone,
         );
 
-        if (! $user instanceof \App\Models\User) {
+        if (! $user instanceof User) {
             return $this->notFound('User not found');
         }
 
