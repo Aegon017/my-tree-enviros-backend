@@ -44,7 +44,7 @@ final class ProductController extends Controller
 
     public function featured(Request $request): JsonResponse
     {
-        return $this->success(['products' => $this->service->featured($request)]);
+        return $this->success($this->service->featured($request));
     }
 
     public function byCategory(Request $request, string $categoryId): JsonResponse
