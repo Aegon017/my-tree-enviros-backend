@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('nick_name');
             $table->string('short_description');
             $table->text('description');
+            $table->decimal('selling_price', 10, 2)->nullable()->after('description');
+            $table->decimal('original_price', 10, 2)->nullable()->after('selling_price');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

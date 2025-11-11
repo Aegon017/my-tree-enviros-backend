@@ -9,9 +9,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 final class ProductResource extends JsonResource
 {
-    /**
-     * @return array
-     */
     public function toArray(Request $request): array
     {
         $inventory = $this->inventory;
@@ -20,13 +17,13 @@ final class ProductResource extends JsonResource
 
         $variants = $inventory?->productVariants ?? collect();
         $firstVariant = $variants->first();
-
-        $price = (float) ($firstVariant->base_price ?? 0);
-        $discountPrice = $firstVariant?->discount_price !== null ? (float) $firstVariant->discount_price : null;
         $stockQuantity = (int) ($firstVariant->stock_quantity ?? 0);
         $isInStock = (bool) ($firstVariant->is_instock ?? false);
 
-        $nonBaseVariants = $variants->filter(fn($v) => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter));
+        $nonBaseVariants = $variants->filter(
+            fn($v) => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter)
+        );
+
         $hasVariants = $nonBaseVariants->isNotEmpty();
         $defaultVariant = $hasVariants ? $nonBaseVariants->first() : null;
 
@@ -58,6 +55,7 @@ final class ProductResource extends JsonResource
             'status' => $this->is_active ? 1 : 0,
             'trash' => 0,
             'category_id' => $this->product_category_id ?? null,
+
             'category' => [
                 'id' => $this->productCategory->id ?? null,
                 'name' => $this->productCategory->name ?? 'Uncategorized',
@@ -65,31 +63,33 @@ final class ProductResource extends JsonResource
                 'icon' => '',
                 'status' => 1,
             ],
+
             'description' => $this->description ?? '',
             'short_description' => $this->short_description ?? '',
-            'price' => $price,
-            'discount_price' => $discountPrice,
+
+            'selling_price' => $this->selling_price,
+            'original_price' => $this->original_price,
+
             'quantity' => $stockQuantity,
             'thumbnail_url' => $thumbnailUrl,
             'image_urls' => $imageUrls,
             'reviews' => [],
-            'wishlist_tag' => $this->in_wishlist ?? false,
+            'in_wishlist' => $this->in_wishlist,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            'created_by' => 0,
-            'updated_by' => 0,
             'rating' => 0,
             'review_count' => 0,
             'is_active' => $this->is_active,
+
             'inventory' => [
                 'id' => $inventory->id ?? null,
                 'stock_quantity' => $stockQuantity,
                 'is_instock' => $isInStock,
                 'has_variants' => $hasVariants,
             ],
+
             'variants' => ProductVariantResource::collection($variants),
             'default_variant' => $defaultVariant ? new ProductVariantResource($defaultVariant) : null,
-            'formatted_price' => $price ? '₹' . number_format($price, 2) : null,
             'has_variants' => $hasVariants,
             'default_variant_id' => $defaultVariant?->id,
             'variant_options' => $variantOptions,

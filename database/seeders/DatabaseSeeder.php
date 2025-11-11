@@ -13,13 +13,5 @@ final class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      */
-    public function run(): void
-    {
-        $this->call([
-            CategorySeeder::class,
-            VariantMasterSeeder::class,
-            VariantSeeder::class,
-            ProductSeeder::class,
-        ]);
-    }
+    public function run(): void {}
 }

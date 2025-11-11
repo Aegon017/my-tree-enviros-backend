@@ -22,11 +22,17 @@ final class ProductController extends Controller
         return $this->success($this->service->paginate($request));
     }
 
-    public function show(Request $request, string $id): JsonResponse
+    public function show(Request $request, string $identifier): JsonResponse
     {
-        $product = $this->service->find($request, $id);
-        if (! $product) return $this->notFound('Product not found');
-        return $this->success(['product' => new ProductResource($product)]);
+        $product = $this->service->findByIdOrSlug($identifier);
+
+        if (! $product) {
+            return $this->notFound('Product not found');
+        }
+
+        return $this->success([
+            'product' => new ProductResource($product),
+        ]);
     }
 
     public function variants(Request $request, string $id): JsonResponse

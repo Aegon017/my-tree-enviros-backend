@@ -10,7 +10,16 @@ class ProductRepository
     public function baseQuery(): Builder
     {
         return Product::query()
-            ->select(['products.id', 'products.name', 'products.slug', 'products.short_description', 'products.product_category_id', 'products.created_at'])
+            ->select([
+                'products.id',
+                'products.name',
+                'products.slug',
+                'products.short_description',
+                'products.product_category_id',
+                'products.created_at',
+                'products.selling_price',
+                'products.original_price',
+            ])
             ->where('products.is_active', true)
             ->with([
                 'productCategory:id,name,slug',

@@ -7,11 +7,10 @@ use App\Filters\ProductFilters\{
     SearchFilter,
     CategoryFilter,
     InStockFilter,
-    PriceMinFilter,
-    PriceMaxFilter,
     SortFilter
 };
 use App\Http\Resources\Api\V1\{ProductCollection, ProductResource, ProductVariantResource};
+use App\Models\Product;
 use App\Models\Wishlist;
 
 class ProductService
@@ -27,8 +26,6 @@ class ProductService
                 'search' => SearchFilter::class,
                 'category_id' => CategoryFilter::class,
                 'in_stock' => InStockFilter::class,
-                'min_price' => PriceMinFilter::class,
-                'max_price' => PriceMaxFilter::class,
             ] as $key => $filter
         ) {
             if ($request->filled($key)) $filter::apply($query, $request->$key);
@@ -100,7 +97,12 @@ class ProductService
     private function wishlist($user, $products)
     {
         if (! $user || $products->isEmpty()) return;
-        $ids = Wishlist::where('user_id', $user->id)->join('wishlist_items', 'wishlists.id', '=', 'wishlist_items.wishlist_id')->pluck('wishlist_items.product_id')->toArray();
+
+        $ids = Wishlist::where('user_id', $user->id)
+            ->join('wishlist_items', 'wishlists.id', '=', 'wishlist_items.wishlist_id')
+            ->pluck('wishlist_items.product_id')
+            ->toArray();
+
         $products->each(fn($p) => $p->in_wishlist = in_array($p->id, $ids));
     }
 
@@ -109,5 +111,13 @@ class ProductService
         if (! $user || $variants->isEmpty()) return;
         $ids = Wishlist::where('user_id', $user->id)->join('wishlist_items', 'wishlists.id', '=', 'wishlist_items.wishlist_id')->pluck('wishlist_items.product_variant_id')->toArray();
         $variants->each(fn($v) => $v->in_wishlist = in_array($v->id, $ids));
+    }
+
+    public function findByIdOrSlug(string $identifier)
+    {
+        return Product::query()
+            ->when(is_numeric($identifier), fn($q) => $q->where('id', $identifier))
+            ->orWhere('slug', $identifier)
+            ->first();
     }
 }

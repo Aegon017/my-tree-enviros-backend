@@ -121,7 +121,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
 Route::prefix('products')->group(function (): void {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/featured', [ProductController::class, 'featured']);
-    Route::get('/{id}', [ProductController::class, 'show']);
+    Route::get('/{identifier}', [ProductController::class, 'show']);
 });
 
 Route::prefix('product-categories')->group(function (): void {
