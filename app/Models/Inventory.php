@@ -12,14 +12,6 @@ final class Inventory extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
-    protected $fillable = [
-        'product_id',
-    ];
-
-    protected $casts = [
-        'product_id' => 'integer',
-    ];
-
     public function product()
     {
         return $this->belongsTo(Product::class);

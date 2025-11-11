@@ -2,75 +2,75 @@
 
 namespace App\Services;
 
-use App\Models\Product;
-use App\Models\ProductVariant;
+use App\Http\Resources\Api\V1\WishlistResource;
+use App\Models\User;
 use App\Repositories\WishlistRepository;
 use Illuminate\Support\Facades\DB;
 
 class WishlistService
 {
-    public function __construct(
-        private WishlistRepository $wishlistRepository
-    ) {}
+    private $lastRemovedItem;
+    public function __construct(private WishlistRepository $repo) {}
 
-    public function get($user)
+    public function get(User $user)
     {
-        $wishlist = $this->wishlistRepository->getUserWishlist($user->id);
-        $wishlist->load(['items.product.inventory', 'items.productVariant.inventory.product']);
-        return $wishlist;
+        $wishlist = $this->repo->getUserWishlist($user->id);
+
+        return [
+            'wishlist' => new WishlistResource($wishlist),
+        ];
     }
 
-    public function add($user, array $data)
+    public function add(User $user, array $data)
     {
-        $wishlist = $this->wishlistRepository->getUserWishlist($user->id);
+        $wishlist = $this->repo->getUserWishlist($user->id);
 
-        $product = Product::where('id', $data['product_id'])
-            ->where('is_active', true)
-            ->first();
-
-        if (! $product) return ['error' => true, 'message' => 'Product unavailable'];
-
-        if (! empty($data['product_variant_id'])) {
-            $variant = ProductVariant::where('id', $data['product_variant_id'])
-                ->whereHas('inventory', fn($q) => $q->where('product_id', $data['product_id']))
-                ->first();
-
-            if (! $variant) return ['error' => true, 'message' => 'Invalid product variant'];
+        if ($this->repo->exists($wishlist, $data['product_id'], $data['product_variant_id'] ?? null)) {
+            return ['success' => false, 'message' => 'Already in wishlist'];
         }
 
-        $existing = $this->wishlistRepository->findExistingItem($wishlist, $data['product_id'], $data['product_variant_id'] ?? null);
-
-        if ($existing) return ['error' => true, 'message' => 'Already in wishlist'];
-
-        DB::transaction(fn() => $this->wishlistRepository->addItem($wishlist, $data['product_id'], $data['product_variant_id'] ?? null));
+        DB::transaction(fn() => $this->repo->addItem($wishlist, $data));
 
         return $this->get($user);
     }
 
-    public function remove($user, int $itemId)
+    public function remove(User $user, int $itemId)
     {
-        $wishlist = $this->wishlistRepository->getUserWishlist($user->id);
-        $item = $this->wishlistRepository->findItem($wishlist, $itemId);
+        $wishlist = $this->repo->getUserWishlist($user->id);
+        $item = $this->repo->findItem($wishlist, $itemId);
 
-        if (! $item) return false;
+        if (!$item) return ['success' => false, 'message' => 'Not found'];
 
-        DB::transaction(fn() => $this->wishlistRepository->deleteItem($item));
+        $this->lastRemovedItem = $item; // store removed item before deleting
+
+        DB::transaction(fn() => $this->repo->deleteItem($item));
 
         return $this->get($user);
     }
 
-    public function clear($user)
+    public function getLastRemovedItem()
     {
-        $wishlist = $this->wishlistRepository->getUserWishlist($user->id);
+        return $this->lastRemovedItem;
+    }
 
-        DB::transaction(fn() => $this->wishlistRepository->clear($wishlist));
-
+    public function clear(User $user)
+    {
+        $wishlist = $this->repo->getUserWishlist($user->id);
+        DB::transaction(fn() => $this->repo->clear($wishlist));
         return $this->get($user);
     }
 
-    public function check($user, int $productId, ?int $variantId)
+    public function check(User $user, int $productId, ?int $variantId)
     {
-        $wishlist = $this->wishlistRepository->getUserWishlist($user->id);
-        return $this->wishlistRepository->isProductInWishlist($wishlist, $productId, $variantId);
+        $wishlist = $this->repo->getUserWishlist($user->id);
+
+        return [
+            'success' => true,
+            'data' => [
+                'in_wishlist' => $this->repo->exists($wishlist, $productId, $variantId),
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+            ],
+        ];
     }
 }

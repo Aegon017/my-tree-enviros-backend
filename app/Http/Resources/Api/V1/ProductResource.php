@@ -21,7 +21,10 @@ final class ProductResource extends JsonResource
         );
 
         $hasVariants = $nonBaseVariants->isNotEmpty();
-        $defaultVariant = $hasVariants ? $nonBaseVariants->first() : null;
+
+        $defaultVariant = $hasVariants
+            ? $nonBaseVariants->first()
+            : $variants->first();
 
         $variantOptions = $hasVariants ? [
             'colors' => $nonBaseVariants->pluck('variant.color')->filter()->unique('id')->values()->map(fn($c) => [
@@ -74,11 +77,11 @@ final class ProductResource extends JsonResource
                 'id' => $inventory->id ?? null,
                 'stock_quantity' => $stockQuantity,
                 'is_instock' => $isInStock,
-                'has_variants' => $hasVariants,
+                'has_variants' => $variants->count() > 0,
             ],
             'variants' => ProductVariantResource::collection($variants),
             'default_variant' => $defaultVariant ? new ProductVariantResource($defaultVariant) : null,
-            'has_variants' => $hasVariants,
+            'has_variants' => $variants->count() > 0,
             'default_variant_id' => $defaultVariant?->id,
             'variant_options' => $variantOptions,
         ];

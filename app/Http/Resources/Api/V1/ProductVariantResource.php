@@ -57,7 +57,7 @@ final class ProductVariantResource extends JsonResource
             'formatted_price' => '₹' . number_format($this->price, 2),
             'stock_quantity' => (int) $this->stock_quantity,
             'is_instock' => (bool) $this->is_instock,
-            'images' => $this->getMedia('images')->map(fn($m) => [
+            'image_urls' => $this->getMedia('images')->map(fn($m) => [
                 'id' => $m->id,
                 'url' => $m->getUrl(),
             ])->toArray(),

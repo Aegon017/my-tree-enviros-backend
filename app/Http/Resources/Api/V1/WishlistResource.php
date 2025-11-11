@@ -13,11 +13,7 @@ final class WishlistResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'items' => WishlistItemResource::collection($this->whenLoaded('items')),
-            'total_items' => $this->totalItems(),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'items' => WishlistItemResource::collection($this->items),
         ];
     }
 }
