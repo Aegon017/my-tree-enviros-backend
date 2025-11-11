@@ -13,11 +13,9 @@ final class ProductCategory extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
-    protected $fillable = ['name', 'slug'];
-
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('image')->singleFile();
+        $this->addMediaCollection('images')->singleFile();
     }
 
     public function products(): HasMany

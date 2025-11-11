@@ -23,9 +23,7 @@ final class ProductCategoryForm
                     ->unique(table: 'product_categories', column: 'slug')
                     ->readOnly()
                     ->required(),
-                SpatieMediaLibraryFileUpload::make('image')
-                    ->collection('images')
-                    ->required(),
+                SpatieMediaLibraryFileUpload::make('image')->collection('images')->required(),
             ]);
     }
 }
