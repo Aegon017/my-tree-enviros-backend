@@ -59,6 +59,7 @@ final class ProductCategoryController extends Controller
                     'id' => $category->id,
                     'name' => $category->name,
                     'slug' => $category->slug,
+                    'image_url' => $category->getFirstMedia('images')?->getFullUrl()
                 ];
             });
 
