@@ -91,7 +91,7 @@ class ProductService
             ->get();
 
         $this->wishlist($request->user(), $products);
-        return ProductResource::collection($products);
+        return new ProductCollection($products);
     }
 
     private function wishlist($user, $products)
