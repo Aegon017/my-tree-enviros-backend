@@ -17,7 +17,6 @@ final class Campaign extends Model implements HasMedia
 
     protected $fillable = [
         'location_id',
-        'type',
         'name',
         'slug',
         'description',
@@ -28,7 +27,6 @@ final class Campaign extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'type' => CampaignTypeEnum::class,
         'amount' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
@@ -37,7 +35,7 @@ final class Campaign extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('thumbnails')->singleFile();
+        $this->addMediaCollection('thumbnail')->singleFile();
         $this->addMediaCollection('images');
     }
 

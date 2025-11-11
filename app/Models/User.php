@@ -73,6 +73,11 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
         return $this->hasMany(Order::class);
     }
 
+    public function wishlist()
+    {
+        return $this->hasOne(Wishlist::class);
+    }
+
     protected function casts(): array
     {
         return [

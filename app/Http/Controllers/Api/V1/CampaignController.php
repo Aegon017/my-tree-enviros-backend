@@ -163,22 +163,18 @@ final class CampaignController extends Controller
             ->with('location')
             ->active();
 
-        // Filter by type if provided
         if ($request->filled('type')) {
             $type = $request->string('type')->toString();
-            // Validate against enum
             $allowedTypes = array_map(fn (CampaignTypeEnum $e) => $e->value, CampaignTypeEnum::cases());
             if (in_array($type, $allowedTypes, true)) {
                 $query->where('type', $type);
             }
         }
 
-        // Filter by location
         if ($request->filled('location_id')) {
             $query->where('location_id', (int) $request->input('location_id'));
         }
 
-        // Search by name or description
         if ($request->filled('search')) {
             $search = $request->string('search')->toString();
             $query->where(function ($q) use ($search): void {
@@ -187,7 +183,6 @@ final class CampaignController extends Controller
             });
         }
 
-        // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $allowedSortFields = ['created_at', 'name'];
@@ -201,7 +196,6 @@ final class CampaignController extends Controller
 
         $query->orderBy($sortBy, $sortOrder);
 
-        // Pagination
         $perPage = (int) $request->input('per_page', 15);
         $perPage = max(1, min($perPage, 50));
 
