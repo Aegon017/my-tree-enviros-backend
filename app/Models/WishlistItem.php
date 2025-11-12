@@ -3,15 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class WishlistItem extends Model
 {
-    public function product()
+    public function wishlist(): BelongsTo
+    {
+        return $this->belongsTo(Wishlist::class);
+    }
+
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function productVariant()
+    public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
     }

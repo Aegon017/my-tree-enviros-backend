@@ -12,9 +12,14 @@ class WishlistRepository
         return Wishlist::firstOrCreate(['user_id' => $userId]);
     }
 
-    public function findItem(Wishlist $wishlist, int $itemId)
+    public function findItem(Wishlist $wishlist, int $id)
     {
-        return $wishlist->items()->where('id', $itemId)->first();
+        return $wishlist->items()
+            ->where(function ($q) use ($id) {
+                $q->where('id', $id)
+                    ->orWhere('product_variant_id', $id);
+            })
+            ->first();
     }
 
     public function exists(Wishlist $wishlist, int $productId, ?int $variantId)
@@ -33,6 +38,14 @@ class WishlistRepository
     public function deleteItem(WishlistItem $item)
     {
         return $item->delete();
+    }
+
+    public function findItemByProduct(Wishlist $wishlist, int $productId, ?int $variantId)
+    {
+        return $wishlist->items()
+            ->where('product_id', $productId)
+            ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId))
+            ->first();
     }
 
     public function clear(Wishlist $wishlist)

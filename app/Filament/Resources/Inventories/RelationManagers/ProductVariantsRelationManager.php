@@ -54,8 +54,8 @@ final class ProductVariantsRelationManager extends RelationManager
                     ->native(false)
                     ->preload(),
                 TextInput::make('sku')->disabled(),
-                TextInput::make('base_price')->numeric()->required(),
-                TextInput::make('discount_price')->numeric(),
+                TextInput::make('original_price')->numeric()->required(),
+                TextInput::make('selling_price')->numeric(),
                 TextInput::make('stock_quantity')->numeric()->required(),
                 Toggle::make('is_instock')->label('In Stock')->default(true),
                 SpatieMediaLibraryFileUpload::make('images')
@@ -92,8 +92,8 @@ final class ProductVariantsRelationManager extends RelationManager
                     ->label('Planter')
                     ->formatStateUsing(fn (?string $state): string => $state ?? '-'),
                 TextColumn::make('sku')->label('SKU'),
-                TextColumn::make('base_price'),
-                TextColumn::make('discount_price'),
+                TextColumn::make('original_price'),
+                TextColumn::make('selling_price'),
                 TextColumn::make('stock_quantity'),
             ])
             ->filters([

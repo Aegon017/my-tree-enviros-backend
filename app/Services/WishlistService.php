@@ -41,7 +41,7 @@ class WishlistService
 
         if (!$item) return ['success' => false, 'message' => 'Not found'];
 
-        $this->lastRemovedItem = $item; // store removed item before deleting
+        $this->lastRemovedItem = $item;
 
         DB::transaction(fn() => $this->repo->deleteItem($item));
 
@@ -58,19 +58,5 @@ class WishlistService
         $wishlist = $this->repo->getUserWishlist($user->id);
         DB::transaction(fn() => $this->repo->clear($wishlist));
         return $this->get($user);
-    }
-
-    public function check(User $user, int $productId, ?int $variantId)
-    {
-        $wishlist = $this->repo->getUserWishlist($user->id);
-
-        return [
-            'success' => true,
-            'data' => [
-                'in_wishlist' => $this->repo->exists($wishlist, $productId, $variantId),
-                'product_id' => $productId,
-                'variant_id' => $variantId,
-            ],
-        ];
     }
 }

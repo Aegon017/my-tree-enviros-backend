@@ -17,11 +17,11 @@ class ProductObserver
         }
 
         $variant = $variants
-            ->filter(fn($v) => (float) $v->base_price > 0)
+            ->filter(fn($v) => (float) $v->original_price > 0)
             ->sortBy(function ($v) {
-                return $v->discount_price && $v->discount_price > 0
-                    ? $v->discount_price
-                    : $v->base_price;
+                return $v->selling_price && $v->selling_price > 0
+                    ? $v->selling_price
+                    : $v->original_price;
             })
             ->first();
 
@@ -31,12 +31,12 @@ class ProductObserver
             return;
         }
 
-        $selling_price = $variant->discount_price && $variant->discount_price > 0
-            ? (float) $variant->discount_price
-            : (float) $variant->base_price;
+        $selling_price = $variant->selling_price && $variant->selling_price > 0
+            ? (float) $variant->selling_price
+            : (float) $variant->original_price;
 
-        $original_price = $variant->discount_price && $variant->discount_price > 0
-            ? (float) $variant->base_price
+        $original_price = $variant->selling_price && $variant->selling_price > 0
+            ? (float) $variant->original_price
             : null;
 
         $product->selling_price = $selling_price;

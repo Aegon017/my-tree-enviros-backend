@@ -24,7 +24,7 @@ final class ProductController extends Controller
 
     public function show(Request $request, string $identifier): JsonResponse
     {
-        $product = $this->service->findByIdOrSlug($identifier);
+        $product = $this->service->findByIdOrSlugWithWishlist($request, $identifier);
 
         if (! $product) {
             return $this->notFound('Product not found');

@@ -30,11 +30,7 @@ class WishlistController extends Controller
     {
         $res = $this->service->remove($request->user(), (int)$id);
 
-        if (! $res['success']) {
-            return $this->notFound('Not found');
-        }
-
-        return $this->success(['wishlist' => $res['wishlist']], 'Removed');
+        return $this->success($res);
     }
 
     public function clear(Request $request)
@@ -46,11 +42,9 @@ class WishlistController extends Controller
 
     public function moveToCart(Request $request, string $id)
     {
-        // Remove item from wishlist
         $res = $this->service->remove($request->user(), (int) $id);
 
-        // Add to cart
-        $wishlistItem = $this->service->getLastRemovedItem(); // we'll define this in service
+        $wishlistItem = $this->service->getLastRemovedItem();
 
         $cartController = new CartController();
         $cartRequest = new Request([
