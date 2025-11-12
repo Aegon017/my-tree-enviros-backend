@@ -25,7 +25,7 @@ class ProductRepository
                 'productCategory:id,name,slug',
                 'inventory:id,product_id',
                 'inventory.media',
-                'inventory.productVariants:id,inventory_id,variant_id,sku,base_price,discount_price,stock_quantity,is_instock',
+                'inventory.productVariants:id,inventory_id,variant_id,sku,original_price,selling_price,stock_quantity,is_instock',
                 'inventory.productVariants.variant:id,color_id,size_id,planter_id',
                 'inventory.productVariants.variant.color:id,name,code',
                 'inventory.productVariants.variant.size:id,name',

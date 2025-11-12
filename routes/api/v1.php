@@ -97,7 +97,6 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/items/{id}', [WishlistController::class, 'destroy']);
         Route::delete('/', [WishlistController::class, 'clear']);
         Route::post('/items/{id}/move-to-cart', [WishlistController::class, 'moveToCart']);
-        Route::get('/check/{productId}', [WishlistController::class, 'check']);
     });
 
     Route::prefix('fcm-tokens')->group(function (): void {

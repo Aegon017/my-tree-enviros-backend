@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
-use Illuminate\Database\Eloquent\Builder;
 
 class WishlistRepository
 {
@@ -13,28 +12,27 @@ class WishlistRepository
         return Wishlist::firstOrCreate(['user_id' => $userId]);
     }
 
-    public function findItem(Wishlist $wishlist, int $itemId)
+    public function findItem(Wishlist $wishlist, int $id)
     {
-        return WishlistItem::where('wishlist_id', $wishlist->id)
-            ->where('id', $itemId)
+        return $wishlist->items()
+            ->where(function ($q) use ($id) {
+                $q->where('id', $id)
+                    ->orWhere('product_variant_id', $id);
+            })
             ->first();
     }
 
-    public function findExistingItem(Wishlist $wishlist, int $productId, ?int $variantId)
+    public function exists(Wishlist $wishlist, int $productId, ?int $variantId)
     {
-        return WishlistItem::where('wishlist_id', $wishlist->id)
+        return $wishlist->items()
             ->where('product_id', $productId)
-            ->where('product_variant_id', $variantId)
-            ->first();
+            ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId))
+            ->exists();
     }
 
-    public function addItem(Wishlist $wishlist, int $productId, ?int $variantId)
+    public function addItem(Wishlist $wishlist, array $data)
     {
-        return WishlistItem::create([
-            'wishlist_id' => $wishlist->id,
-            'product_id' => $productId,
-            'product_variant_id' => $variantId,
-        ]);
+        return $wishlist->items()->create($data);
     }
 
     public function deleteItem(WishlistItem $item)
@@ -42,16 +40,16 @@ class WishlistRepository
         return $item->delete();
     }
 
+    public function findItemByProduct(Wishlist $wishlist, int $productId, ?int $variantId)
+    {
+        return $wishlist->items()
+            ->where('product_id', $productId)
+            ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId))
+            ->first();
+    }
+
     public function clear(Wishlist $wishlist)
     {
         return $wishlist->items()->delete();
-    }
-
-    public function isProductInWishlist(Wishlist $wishlist, int $productId, ?int $variantId)
-    {
-        return WishlistItem::where('wishlist_id', $wishlist->id)
-            ->where('product_id', $productId)
-            ->when($variantId, fn(Builder $q) => $q->where('product_variant_id', $variantId))
-            ->exists();
     }
 }

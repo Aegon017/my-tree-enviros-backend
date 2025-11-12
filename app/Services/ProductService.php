@@ -9,9 +9,15 @@ use App\Filters\ProductFilters\{
     InStockFilter,
     SortFilter
 };
-use App\Http\Resources\Api\V1\{ProductCollection, ProductResource, ProductVariantResource};
+use App\Http\Resources\Api\V1\{
+    ProductCollection,
+    ProductResource,
+    ProductVariantResource
+};
 use App\Models\Product;
+use App\Models\User;
 use App\Models\Wishlist;
+use Illuminate\Http\Request;
 
 class ProductService
 {
@@ -28,39 +34,35 @@ class ProductService
                 'in_stock' => InStockFilter::class,
             ] as $key => $filter
         ) {
-            if ($request->filled($key)) $filter::apply($query, $request->$key);
+            if ($request->filled($key)) {
+                $filter::apply($query, $request->$key);
+            }
         }
 
         $sortBy = $request->get('sort_by', 'name');
         $sortOrder = $request->get('sort_order', 'asc');
         SortFilter::apply($query, $sortBy, $sortOrder);
 
-        $products = $query->paginate(min((int)$request->get('per_page', 15), 50));
-        $this->wishlist($request->user(), $products->getCollection());
+        $products = $query->paginate(min((int) $request->get('per_page', 15), 50));
+        $this->attachVariantWishlistFlags($request->user(), $products->getCollection());
 
         return new ProductCollection($products);
-    }
-
-    public function find($request, $id)
-    {
-        $product = $this->repo->find($id);
-        if (! $product) return null;
-        $this->wishlist($request->user(), collect([$product]));
-        return $product;
     }
 
     public function variants($request, $id)
     {
         $product = $this->repo->find($id);
-        if (! $product) return null;
+        if (! $product) {
+            return null;
+        }
 
         $variants = $product->inventory?->productVariants ?? collect();
-        $this->wishlistVariants($request->user(), $variants);
+        $this->attachVariantWishlistFlags($request->user(), $variants);
 
         return [
-            'product_id' => $product->id,
+            'product_id'   => $product->id,
             'product_name' => $product->name,
-            'variants' => ProductVariantResource::collection($variants)
+            'variants'     => ProductVariantResource::collection($variants),
         ];
     }
 
@@ -70,14 +72,14 @@ class ProductService
             ->where('product_category_id', $categoryId)
             ->paginate(min($request->get('per_page', 15), 50));
 
-        $this->wishlist($request->user(), $products->getCollection());
+        $this->attachVariantWishlistFlags($request->user(), $products->getCollection());
 
         return [
             'products' => ProductResource::collection($products),
-            'meta' => [
+            'meta'     => [
                 'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'total' => $products->total()
+                'last_page'    => $products->lastPage(),
+                'total'        => $products->total(),
             ],
         ];
     }
@@ -90,34 +92,64 @@ class ProductService
             ->limit(min($request->get('limit', 10), 20))
             ->get();
 
-        $this->wishlist($request->user(), $products);
+        $this->attachVariantWishlistFlags($request->user(), $products);
+
         return new ProductCollection($products);
     }
 
-    private function wishlist($user, $products)
+    private function attachVariantWishlistFlags(User $user = null, $items): void
     {
-        if (! $user || $products->isEmpty()) return;
+        if (! $user || $items->isEmpty()) {
+            return;
+        }
 
-        $ids = Wishlist::where('user_id', $user->id)
+        $variantIds = Wishlist::query()
+            ->where('user_id', $user->id)
             ->join('wishlist_items', 'wishlists.id', '=', 'wishlist_items.wishlist_id')
-            ->pluck('wishlist_items.product_id')
+            ->pluck('wishlist_items.product_variant_id')
+            ->filter()
             ->toArray();
 
-        $products->each(fn($p) => $p->in_wishlist = in_array($p->id, $ids));
+        foreach ($items as $item) {
+            $variants = $item->inventory?->productVariants ?? collect();
+            if ($variants->isEmpty() && isset($item->variants)) {
+                $variants = collect($item->variants);
+            }
+
+            foreach ($variants as $variant) {
+                $variant->setAttribute('in_wishlist', in_array($variant->id, $variantIds));
+            }
+
+            if (isset($item->default_variant)) {
+                $item->default_variant->setAttribute('in_wishlist', in_array($item->default_variant->id, $variantIds));
+            }
+        }
     }
 
-    private function wishlistVariants($user, $variants)
-    {
-        if (! $user || $variants->isEmpty()) return;
-        $ids = Wishlist::where('user_id', $user->id)->join('wishlist_items', 'wishlists.id', '=', 'wishlist_items.wishlist_id')->pluck('wishlist_items.product_variant_id')->toArray();
-        $variants->each(fn($v) => $v->in_wishlist = in_array($v->id, $ids));
-    }
 
-    public function findByIdOrSlug(string $identifier)
+    public function findByIdOrSlugWithWishlist(Request $request, string $identifier)
     {
-        return Product::query()
+        $product = Product::query()
+            ->with([
+                'productCategory:id,name,slug',
+                'inventory:id,product_id',
+                'inventory.media',
+                'inventory.productVariants:id,inventory_id,variant_id,sku,original_price,selling_price,stock_quantity,is_instock',
+                'inventory.productVariants.variant:id,color_id,size_id,planter_id',
+                'inventory.productVariants.variant.color:id,name,code',
+                'inventory.productVariants.variant.size:id,name',
+                'inventory.productVariants.variant.planter:id,name',
+            ])
             ->when(is_numeric($identifier), fn($q) => $q->where('id', $identifier))
             ->orWhere('slug', $identifier)
             ->first();
+
+        if (! $product) {
+            return null;
+        }
+
+        $this->attachVariantWishlistFlags($request->user(), collect([$product]));
+
+        return $product;
     }
 }
