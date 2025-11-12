@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\WishlistRequest;
+use App\Http\Requests\Api\V1\WishlistRequest;
+use App\Services\CartService;
 use App\Services\WishlistService;
 use Illuminate\Http\Request;
 use App\Traits\ResponseHelpers;
@@ -42,25 +43,26 @@ class WishlistController extends Controller
 
     public function moveToCart(Request $request, string $id)
     {
-        $res = $this->service->remove($request->user(), (int) $id);
-
+        $user = $request->user();
+        $wishlistResponse = $this->service->remove($user, (int) $id);
         $wishlistItem = $this->service->getLastRemovedItem();
 
-        $cartController = new CartController();
-        $cartRequest = new Request([
+        if (! $wishlistItem) {
+            return $this->error('No item found to move', 404);
+        }
+
+        $cartData = [
             'item_type' => 'product',
             'product_id' => $wishlistItem->product_id,
             'product_variant_id' => $wishlistItem->product_variant_id,
-            'quantity' => 1
-        ]);
+            'quantity' => 1,
+        ];
 
-        $cartRequest->setUserResolver(fn() => $request->user());
-
-        $cartResponse = $cartController->store($cartRequest);
+        $cartResponse = app(CartService::class)->addToUserCart($user->id, $cartData);
 
         return $this->success([
-            'wishlist' => $res,
-            'cart' => $cartResponse->getData()->data->cart ?? null
+            'wishlist' => $wishlistResponse,
+            'cart' => $cartResponse->getData()->data->cart ?? null,
         ], 'Item moved to cart');
     }
 }

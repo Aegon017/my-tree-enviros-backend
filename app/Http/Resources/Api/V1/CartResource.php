@@ -13,15 +13,9 @@ final class CartResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
             'items' => CartItemResource::collection($this->whenLoaded('items')),
             'total_items' => $this->totalItems(),
             'total_amount' => $this->totalAmount(),
-            'formatted_total' => '₹'.number_format($this->totalAmount(), 2),
-            'expires_at' => $this->expires_at,
-            'is_expired' => $this->isExpired(),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
         ];
     }
 }
