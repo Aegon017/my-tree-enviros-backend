@@ -12,7 +12,7 @@ final class WishlistItemResource extends JsonResource
         return [
             'id' => $this->id,
             'product' => ProductResource::make($this->product),
-            'variant' =>  ProductVariantResource::make($this->variant)
+            'variant' => ProductVariantResource::make($this->whenLoaded('productVariant', $this->productVariant)),
         ];
     }
 }

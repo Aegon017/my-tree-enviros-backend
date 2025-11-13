@@ -9,7 +9,12 @@ class WishlistRepository
 {
     public function getUserWishlist(int $userId): Wishlist
     {
-        return Wishlist::firstOrCreate(['user_id' => $userId]);
+        return Wishlist::with([
+            'items.product.productCategory',
+            'items.productVariant.variant.color',
+            'items.productVariant.variant.size',
+            'items.productVariant.variant.planter',
+        ])->firstOrCreate(['user_id' => $userId]);
     }
 
     public function findItem(Wishlist $wishlist, int $id)

@@ -62,14 +62,14 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::apiResource('users', UserController::class);
 
-    Route::prefix('cart')->group(function (): void {
+    Route::prefix('cart')->middleware('auth:sanctum')->group(function (): void {
         Route::get('/', [CartController::class, 'index']);
         Route::post('/items', [CartController::class, 'store']);
         Route::put('/items/{id}', [CartController::class, 'update']);
         Route::delete('/items/{id}', [CartController::class, 'destroy']);
         Route::delete('/', [CartController::class, 'clear']);
     });
-
+    
     Route::prefix('orders')->group(function (): void {
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store']);

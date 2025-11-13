@@ -19,13 +19,9 @@ final class CartItemResource extends JsonResource
             'item_type' => $itemDetails['type'],
             'quantity' => $this->quantity,
             'price' => (float) $this->price,
-            'formatted_price' => '₹'.number_format((float) $this->price, 2),
             'subtotal' => $this->subtotal(),
-            'formatted_subtotal' => '₹'.number_format($this->subtotal(), 2),
             'item' => $this->formatItemDetails($itemDetails),
             'options' => $this->options,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
         ];
     }
 
@@ -54,7 +50,6 @@ final class CartItemResource extends JsonResource
                 ]);
 
             case 'product':
-                // Load the full product data from the cartable relationship
                 $productData = null;
                 if ($this->cartable) {
                     $productResource = new ProductResource($this->cartable);
@@ -66,13 +61,6 @@ final class CartItemResource extends JsonResource
                     'color' => $details['color'] ?? null,
                     'size' => $details['size'] ?? null,
                     'product' => $productData,
-                ]);
-
-            case 'campaign':
-                return array_merge($baseDetails, [
-                    'campaign_type' => $details['campaign_type'] ?? null,
-                    'location' => $details['location'] ?? null,
-                    'description' => $details['description'] ?? null,
                 ]);
 
             default:
