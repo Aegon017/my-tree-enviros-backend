@@ -170,7 +170,6 @@ use App\Http\Controllers\Controller as BaseController;
  *     @OA\Property(property="total_items", type="integer", example=3),
  *     @OA\Property(property="total_amount", type="number", format="float", example=2500.00),
  *     @OA\Property(property="formatted_total", type="string", example="₹2,500.00"),
- *     @OA\Property(property="expires_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="is_expired", type="boolean", example=false),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time")

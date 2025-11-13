@@ -3931,11 +3931,6 @@
                         "type": "string",
                         "example": "₹2,500.00"
                     },
-                    "expires_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "nullable": true
-                    },
                     "is_expired": {
                         "type": "boolean",
                         "example": false
