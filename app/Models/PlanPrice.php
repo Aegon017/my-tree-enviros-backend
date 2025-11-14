@@ -1,21 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-final class TreeLocation extends Model
+class PlanPrice extends Model
 {
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    public function location(): BelongsTo
+    public function plan(): BelongsTo
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(Plan::class);
     }
 
     public function tree(): BelongsTo

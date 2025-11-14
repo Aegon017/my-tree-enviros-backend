@@ -12,14 +12,10 @@ return new class extends Migration
     {
         Schema::create('tree_instances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tree_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('location_id')->constrained('locations')->cascadeOnDelete();
             $table->string('sku')->unique();
+            $table->foreignId('location_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('tree_id')->constrained()->cascadeOnDelete();
             $table->string('status');
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
-
-            $table->index(['status', 'location_id']);
             $table->timestamps();
         });
     }

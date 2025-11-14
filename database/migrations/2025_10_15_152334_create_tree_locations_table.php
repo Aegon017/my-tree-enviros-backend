@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('location_id')->constrained()->cascadeOnDelete();
             $table->boolean('is_active');
             $table->timestamps();
+
+            $table->unique(['location_id', 'tree_id']);
         });
     }
 };

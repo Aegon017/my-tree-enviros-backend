@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\AgeUnitEnum;
 use App\Models\Scopes\ActiveScope;
 use App\Traits\GeneratesSku;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,7 +16,6 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 #[ScopedBy([ActiveScope::class])]
 final class Tree extends Model implements HasMedia
 {
-    use GeneratesSku;
     use InteractsWithMedia;
 
     protected $casts = [
@@ -31,6 +29,11 @@ final class Tree extends Model implements HasMedia
         $this->addMediaCollection('images');
     }
 
+    public function treeLocations(): HasMany
+    {
+        return $this->hasMany(TreeLocation::class);
+    }
+
     public function instances(): HasMany
     {
         return $this->hasMany(TreeInstance::class);
@@ -38,16 +41,6 @@ final class Tree extends Model implements HasMedia
 
     public function planPrices(): HasMany
     {
-        return $this->hasMany(TreePlanPrice::class);
-    }
-
-    private static function skuPrefix(): string
-    {
-        return 'TREE-';
-    }
-
-    private static function skuPadding(): int
-    {
-        return 4;
+        return $this->hasMany(PlanPrice::class);
     }
 }

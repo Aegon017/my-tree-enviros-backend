@@ -1,23 +1,21 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Enums;
 
 use App\Traits\HasLabelOptions;
 
-enum TreeTypeEnum: string
+enum DurationUnitEnum: string
 {
     use HasLabelOptions;
 
-    case SPONSOR = 'sponsor';
-    case ADOPT = 'adopt';
+    case MONTH = 'month';
+    case YEAR = 'year';
 
     public function label(): string
     {
         return match ($this) {
-            self::SPONSOR => 'Sponsor',
-            self::ADOPT => 'Adopt'
+            self::MONTH => 'Month',
+            self::YEAR => 'Year'
         };
     }
 }

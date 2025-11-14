@@ -9,6 +9,7 @@ use App\Filament\Resources\Trees\Pages\EditTree;
 use App\Filament\Resources\Trees\Pages\ListTrees;
 use App\Filament\Resources\Trees\RelationManagers\InstancesRelationManager;
 use App\Filament\Resources\Trees\RelationManagers\PlanPricesRelationManager;
+use App\Filament\Resources\Trees\RelationManagers\TreeLocationsRelationManager;
 use App\Filament\Resources\Trees\Schemas\TreeForm;
 use App\Filament\Resources\Trees\Tables\TreesTable;
 use App\Models\Tree;
@@ -42,8 +43,8 @@ final class TreeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            InstancesRelationManager::class,
-            PlanPricesRelationManager::class,
+            TreeLocationsRelationManager::class,
+            PlanPricesRelationManager::class
         ];
     }
 

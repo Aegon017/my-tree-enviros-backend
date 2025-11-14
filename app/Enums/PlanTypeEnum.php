@@ -1,27 +1,21 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Enums;
 
 use App\Traits\HasLabelOptions;
 
-enum OrderTypeEnum: string
+enum PlanTypeEnum: string
 {
     use HasLabelOptions;
 
-    case PRODUCT = 'product';
     case SPONSOR = 'sponsor';
     case ADOPT = 'adopt';
-    case CAMPAIGN = 'campaign';
 
     public function label(): string
     {
         return match ($this) {
-            self::PRODUCT => 'Product',
             self::SPONSOR => 'Sponsor',
-            self::ADOPT => 'Adopt',
-            self::CAMPAIGN => 'Campaign',
+            self::ADOPT => 'Adopt'
         };
     }
 }

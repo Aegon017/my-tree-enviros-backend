@@ -10,20 +10,16 @@ enum TreeStatusEnum: string
 {
     use HasLabelOptions;
 
-    case AVAILABLE = 'available';
     case SPONSORED = 'sponsored';
-    case EXPIRED = 'expired';
+    case WAITING_ADOPTION = 'waiting_adoption';
     case ADOPTED = 'adopted';
-    case MAINTENANCE = 'maintenance';
 
     public function label(): string
     {
         return match ($this) {
-            self::AVAILABLE => 'Available',
             self::SPONSORED => 'Sponsored',
-            self::EXPIRED => 'Expired',
-            self::ADOPTED => 'Adopted',
-            self::MAINTENANCE => 'Maintenance',
+            self::WAITING_ADOPTION => 'Waiting Adoption',
+            self::ADOPTED => 'Adopted'
         };
     }
 }
