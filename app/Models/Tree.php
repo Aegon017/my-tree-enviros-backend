@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AgeUnitEnum;
+use App\Models\Scopes\ActiveScope;
 use App\Traits\GeneratesSku;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+#[ScopedBy([ActiveScope::class])]
 final class Tree extends Model implements HasMedia
 {
     use GeneratesSku;
@@ -36,12 +39,6 @@ final class Tree extends Model implements HasMedia
     public function planPrices(): HasMany
     {
         return $this->hasMany(TreePlanPrice::class);
-    }
-
-    #[Scope]
-    protected function active($query)
-    {
-        return $query->where('is_active', true);
     }
 
     private static function skuPrefix(): string

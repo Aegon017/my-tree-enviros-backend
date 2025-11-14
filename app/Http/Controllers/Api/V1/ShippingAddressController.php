@@ -37,6 +37,13 @@ final class ShippingAddressController extends Controller
             'city' => ['required', 'string', 'max:100'],
             'area' => ['required', 'string', 'max:100'],
             'postal_code' => ['required', 'string', 'max:8'],
+
+            // NEW FIELDS FOR SWIGGY FLOW
+            'latitude' => ['required', 'numeric'],
+            'longitude' => ['required', 'numeric'],
+            'post_office_name' => ['nullable', 'string', 'max:255'],
+            'post_office_branch_type' => ['nullable', 'string', 'max:100'],
+
             'is_default' => ['boolean'],
         ]);
 
@@ -46,7 +53,6 @@ final class ShippingAddressController extends Controller
             $address = new ShippingAddress($validated);
             $address->user_id = Auth::id();
 
-            // If this is set as default, unset other default addresses
             if ($validated['is_default'] ?? false) {
                 ShippingAddress::where('user_id', Auth::id())
                     ->where('is_default', true)
@@ -60,17 +66,15 @@ final class ShippingAddressController extends Controller
             return $this->created([
                 'address' => new ShippingAddressResource($address),
             ], 'Shipping address created successfully');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return $this->error('Failed to create shipping address: ' . $e->getMessage());
         }
     }
 
     public function show(ShippingAddress $shippingAddress): JsonResponse
     {
-        // Ensure user can only view their own addresses
         if ($shippingAddress->user_id !== Auth::id()) {
             return $this->unauthorized('You are not authorized to view this address');
         }
@@ -82,7 +86,6 @@ final class ShippingAddressController extends Controller
 
     public function update(Request $request, ShippingAddress $shippingAddress): JsonResponse
     {
-        // Ensure user can only update their own addresses
         if ($shippingAddress->user_id !== Auth::id()) {
             return $this->unauthorized('You are not authorized to update this address');
         }
@@ -94,13 +97,19 @@ final class ShippingAddressController extends Controller
             'city' => ['sometimes', 'required', 'string', 'max:100'],
             'area' => ['sometimes', 'required', 'string', 'max:100'],
             'postal_code' => ['sometimes', 'required', 'string', 'max:8'],
+
+            // NEW FIELDS
+            'latitude' => ['sometimes', 'required', 'numeric'],
+            'longitude' => ['sometimes', 'required', 'numeric'],
+            'post_office_name' => ['nullable', 'string', 'max:255'],
+            'post_office_branch_type' => ['nullable', 'string', 'max:100'],
+
             'is_default' => ['boolean'],
         ]);
 
         try {
             DB::beginTransaction();
 
-            // If this is set as default, unset other default addresses
             if (($validated['is_default'] ?? false) && !$shippingAddress->is_default) {
                 ShippingAddress::where('user_id', Auth::id())
                     ->where('is_default', true)
@@ -114,17 +123,15 @@ final class ShippingAddressController extends Controller
             return $this->success([
                 'address' => new ShippingAddressResource($shippingAddress->fresh()),
             ], 'Shipping address updated successfully');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return $this->error('Failed to update shipping address: ' . $e->getMessage());
         }
     }
 
     public function destroy(ShippingAddress $shippingAddress): JsonResponse
     {
-        // Ensure user can only delete their own addresses
         if ($shippingAddress->user_id !== Auth::id()) {
             return $this->unauthorized('You are not authorized to delete this address');
         }
@@ -137,17 +144,15 @@ final class ShippingAddressController extends Controller
             DB::commit();
 
             return $this->noContent();
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return $this->error('Failed to delete shipping address: ' . $e->getMessage());
         }
     }
 
     public function setDefault(ShippingAddress $shippingAddress): JsonResponse
     {
-        // Ensure user can only update their own addresses
         if ($shippingAddress->user_id !== Auth::id()) {
             return $this->unauthorized('You are not authorized to update this address');
         }
@@ -155,12 +160,10 @@ final class ShippingAddressController extends Controller
         try {
             DB::beginTransaction();
 
-            // Unset all other default addresses
             ShippingAddress::where('user_id', Auth::id())
                 ->where('is_default', true)
                 ->update(['is_default' => false]);
 
-            // Set this address as default
             $shippingAddress->update(['is_default' => true]);
 
             DB::commit();
@@ -168,10 +171,9 @@ final class ShippingAddressController extends Controller
             return $this->success([
                 'address' => new ShippingAddressResource($shippingAddress->fresh()),
             ], 'Default shipping address updated successfully');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return $this->error('Failed to update default shipping address: ' . $e->getMessage());
         }
     }

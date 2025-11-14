@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Scopes\ActiveScope;
 use App\Traits\GeneratesSku;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ScopedBy(ActiveScope::class)]
 final class TreePlanPrice extends Model
 {
     use GeneratesSku;
@@ -34,16 +37,10 @@ final class TreePlanPrice extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    #[Scope]
-    protected function active($query)
-    {
-        return $query->where('is_active', true);
-    }
-
     private static function skuPrefix($model = null): string
     {
         if ($model && $model->tree && $model->plan) {
-            return $model->tree->sku.'-'.$model->plan->sku.'-';
+            return $model->tree->sku . '-' . $model->plan->sku . '-';
         }
 
         return 'TPP-';

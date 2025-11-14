@@ -10,8 +10,10 @@ use App\Http\Controllers\Api\V1\FcmTokenController;
 use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PostOfficeController;
 use App\Http\Controllers\Api\V1\ProductCategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ReverseGeocodeController;
 use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\TreeController;
@@ -39,10 +41,22 @@ Route::prefix('/sliders')->group(function (): void {
 
 Route::prefix('/trees')->group(function (): void {
     Route::get('/', [TreeController::class, 'index']);
-    Route::get('/sponsorship', [TreeController::class, 'sponsorship']);
-    Route::get('/adoption', [TreeController::class, 'adoption']);
-    Route::get('/{id}', [TreeController::class, 'show']);
-    Route::get('/{id}/plans', [TreeController::class, 'plans']);
+    Route::get('/{identifier}', [TreeController::class, 'show']);
+});
+
+Route::prefix('address')->group(function () {
+    Route::get('reverse-geocode', [ReverseGeocodeController::class, 'show']);
+    Route::get('post-offices', [PostOfficeController::class, 'index']);
+});
+
+Route::prefix('products')->group(function (): void {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::get('/featured', [ProductController::class, 'featured']);
+    Route::get('/{identifier}', [ProductController::class, 'show']);
+});
+
+Route::prefix('product-categories')->group(function (): void {
+    Route::get('/', [ProductCategoryController::class, 'index']);
 });
 
 Route::prefix('/blogs')->group(function (): void {
@@ -69,7 +83,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/items/{id}', [CartController::class, 'destroy']);
         Route::delete('/', [CartController::class, 'clear']);
     });
-    
+
     Route::prefix('orders')->group(function (): void {
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store']);
@@ -115,14 +129,4 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/{id}', [ShippingAddressController::class, 'destroy']);
         Route::post('/{id}/set-default', [ShippingAddressController::class, 'setDefault']);
     });
-});
-
-Route::prefix('products')->group(function (): void {
-    Route::get('/', [ProductController::class, 'index']);
-    Route::get('/featured', [ProductController::class, 'featured']);
-    Route::get('/{identifier}', [ProductController::class, 'show']);
-});
-
-Route::prefix('product-categories')->group(function (): void {
-    Route::get('/', [ProductCategoryController::class, 'index']);
 });

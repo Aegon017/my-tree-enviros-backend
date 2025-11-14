@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Observers\LocationObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy([LocationObserver::class])]
 final class Location extends Model
 {
     protected $casts = [
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
         'is_active' => 'boolean',
     ];
 
@@ -31,7 +36,7 @@ final class Location extends Model
             ->with('allDescendants')
             ->get()
             ->flatMap(
-                fn ($child) => collect([$child])->merge(
+                fn($child) => collect([$child])->merge(
                     $child->allDescendants(),
                 ),
             );
