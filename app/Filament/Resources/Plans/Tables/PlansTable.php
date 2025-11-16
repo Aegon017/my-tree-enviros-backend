@@ -15,12 +15,29 @@ class PlansTable
     {
         return $table
             ->columns([
-                TextColumn::make('type')->badge()->searchable(),
-                TextColumn::make('duration')->numeric()->sortable(),
-                TextColumn::make('duration_unit')->badge()->searchable(),
-                IconColumn::make('is_active')->boolean(),
+                TextColumn::make('type')
+                    ->badge()
+                    ->searchable(),
+                TextColumn::make('duration')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('duration_unit')
+                    ->badge()
+                    ->searchable(),
+                IconColumn::make('is_active')
+                    ->boolean(),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([])
+            ->filters([
+                //
+            ])
             ->recordActions([
                 EditAction::make(),
             ])

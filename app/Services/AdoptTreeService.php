@@ -19,8 +19,8 @@ final class AdoptTreeService
         return $this->repo->getAdoptList($lat, $lng, $radius, $perPage);
     }
 
-    public function getAdoptDetails(int $instanceId): ?TreeInstance
+    public function getAdoptDetails(int|string $identifier): ?TreeInstance
     {
-        return $this->repo->getAdoptDetails($instanceId);
+        return $this->repo->getAdoptDetails($identifier);
     }
 }

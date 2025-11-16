@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\{Cart, CartItem, ProductVariant, TreeInstance, TreePlanPrice};
+use App\Http\Resources\Api\V1\CartResource;
+use App\Models\{Cart, Plan, PlanPrice, ProductVariant, TreeInstance, TreePlanPrice};
 use App\Repositories\CartRepository;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ final class CartService
     public function getCart(int $userId): JsonResponse
     {
         $cart = $this->repo->getOrCreate($userId);
-        return $this->success(['cart' => new \App\Http\Resources\Api\V1\CartResource($cart->load('items'))]);
+        return $this->success(['cart' => new CartResource($cart->load('items'))]);
     }
 
     public function addToUserCart(int $userId, array $data): JsonResponse
@@ -31,75 +32,84 @@ final class CartService
     private function addItem(Cart $cart, array $data): JsonResponse
     {
         return DB::transaction(function () use ($cart, $data) {
-            if ($data['item_type'] === 'product') {
-                return $this->addProductVariant($cart, $data);
-            }
-            if ($data['item_type'] === 'tree') {
-                return $this->addTree($cart, $data);
+            switch ($data['type']) {
+                case 'product':
+                    return $this->addProduct($cart, $data);
+
+                case 'sponsor':
+                    return $this->addSponsorTree($cart, $data);
+
+                case 'adopt':
+                    return $this->addAdoptTree($cart, $data);
             }
             return $this->error('Invalid item type');
         });
     }
 
-    private function addProductVariant(Cart $cart, array $data): JsonResponse
+    protected function addSponsorTree($cart, $data)
     {
-        $variant = ProductVariant::with(['inventory.product', 'variant.color', 'variant.size', 'variant.planter'])
-            ->find($data['product_variant_id']);
+        $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
 
-        if (!$variant) {
-            return $this->error('Invalid variant');
-        }
+        $amount = $planPrice->price;
+        $total  = $amount * $data['quantity'];
 
-        $existing = CartItem::where('cart_id', $cart->id)
-            ->where('product_variant_id', $variant->id)
-            ->first();
-
-        if ($existing) {
-            $existing->update(['quantity' => $existing->quantity + ($data['quantity'] ?? 1)]);
-        } else {
-            CartItem::create([
-                'cart_id' => $cart->id,
-                'product_variant_id' => $variant->id,
-                'quantity' => $data['quantity'] ?? 1,
-            ]);
-        }
-
-        return $this->success(['cart' => new \App\Http\Resources\Api\V1\CartResource($cart->fresh('items'))], 'Added');
-    }
-
-    private function addTree(Cart $cart, array $data): JsonResponse
-    {
-        $instance = TreeInstance::find($data['tree_instance_id']);
-        $plan = TreePlanPrice::with('plan')->find($data['tree_plan_price_id']);
-
-        if (!$instance || !$plan) {
-            return $this->error('Invalid tree item');
-        }
-
-        $exists = CartItem::where('cart_id', $cart->id)
-            ->where('tree_instance_id', $instance->id)
-            ->exists();
-
-        if ($exists) {
-            return $this->error('Tree already in cart');
-        }
-
-        CartItem::create([
-            'cart_id' => $cart->id,
-            'tree_instance_id' => $instance->id,
-            'tree_plan_price_id' => $plan->id,
-            'quantity' => 1,
-            'options' => [
-                'dedication' => [
-                    'name' => $data['name'] ?? null,
-                    'occasion' => $data['occasion'] ?? null,
-                    'message' => $data['message'] ?? null,
-                ],
-                'state_id' => $data['state_id'] ?? null,
-                'location_id' => $data['location_id'] ?? null,
-            ],
+        $item = $cart->items()->create([
+            'type'              => 'sponsor',
+            'tree_id'           => $data['tree_id'],
+            'plan_id'           => $data['plan_id'],
+            'plan_price_id'     => $data['plan_price_id'],
+            'quantity'          => $data['quantity'],
+            'amount'            => $amount,
+            'total_amount'      => $total,
         ]);
 
-        return $this->success(['cart' => new \App\Http\Resources\Api\V1\CartResource($cart->fresh('items'))], 'Added');
+        if (!empty($data['dedication'])) {
+            $item->dedication()->create($data['dedication']);
+        }
+
+        return $this->success(['item' => $item]);
+    }
+
+    protected function addAdoptTree($cart, $data)
+    {
+        $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
+
+        $amount = $planPrice->price;
+        $total  = $amount * $data['quantity'];
+
+        $item = $cart->items()->create([
+            'type'          => 'adopt',
+            'tree_id'       => $data['tree_id'],
+            'plan_id'       => $data['plan_id'],
+            'plan_price_id' => $data['plan_price_id'],
+            'quantity'      => $data['quantity'],
+            'amount'        => $amount,
+            'total_amount'  => $total,
+        ]);
+
+        if (!empty($data['dedication'])) {
+            $item->dedication()->create($data['dedication']);
+        }
+
+        return $this->success(['item' => $item]);
+    }
+
+
+    protected function addProduct(Cart $cart, array $data)
+    {
+        $variant = ProductVariant::findOrFail($data['product_variant_id']);
+
+        $amount = $variant->selling_price ?? $variant->original_price;
+        $total = $amount * $data['quantity'];
+
+        $item = $cart->items()->create([
+            'type'              => 'product',
+            'product_variant_id' => $variant->id,
+            'quantity'          => $data['quantity'],
+            'amount'            => $amount,
+            'total_amount'      => $total,
+        ]);
+
+        return response()->json(['added' => true, 'item' => $item]);
     }
 }

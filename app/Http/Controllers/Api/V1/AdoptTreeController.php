@@ -33,9 +33,9 @@ final class AdoptTreeController extends Controller
         return $this->success(new AdoptTreeCollection($data));
     }
 
-    public function show(int $id): JsonResponse
+    public function show(int|string $identifier): JsonResponse
     {
-        $instance = $this->service->getAdoptDetails($id);
+        $instance = $this->service->getAdoptDetails($identifier);
 
         if (!$instance) {
             return $this->notFound('Tree instance not found');

@@ -13,13 +13,16 @@ return new class extends Migration
         Schema::create('cart_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cart_id')->constrained()->cascadeOnDelete();
+            $table->string('type', 20);
             $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('tree_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('plan_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('plan_price_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('tree_instance_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('tree_plan_price_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedInteger('quantity');
+            $table->decimal('amount', 10, 2)->nullable();
+            $table->decimal('total_amount', 10, 2)->nullable();
             $table->timestamps();
-
-            $table->unique(['cart_id', 'tree_instance_id']);
         });
     }
 };

@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tree_instance_geo_tags', function (Blueprint $table) {
+        Schema::create('sponsor_record_tree_instances', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('sponsor_record_id')->constrained()->cascadeOnDelete();
             $table->foreignId('tree_instance_id')->constrained()->cascadeOnDelete();
-            $table->decimal('latitude', 10, 7);
-            $table->decimal('longitude', 10, 7);
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tree_instance_geo_tags');
+        Schema::dropIfExists('sponsor_record_tree_instances');
     }
 };

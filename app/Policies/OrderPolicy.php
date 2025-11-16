@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\Order;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
-final class OrderPolicy
+class OrderPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Order');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(AuthUser $authUser, Order $order): bool
     {
         return $authUser->can('View:Order');
     }
@@ -26,22 +27,22 @@ final class OrderPolicy
         return $authUser->can('Create:Order');
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, Order $order): bool
     {
         return $authUser->can('Update:Order');
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, Order $order): bool
     {
         return $authUser->can('Delete:Order');
     }
 
-    public function restore(AuthUser $authUser): bool
+    public function restore(AuthUser $authUser, Order $order): bool
     {
         return $authUser->can('Restore:Order');
     }
 
-    public function forceDelete(AuthUser $authUser): bool
+    public function forceDelete(AuthUser $authUser, Order $order): bool
     {
         return $authUser->can('ForceDelete:Order');
     }
@@ -56,7 +57,7 @@ final class OrderPolicy
         return $authUser->can('RestoreAny:Order');
     }
 
-    public function replicate(AuthUser $authUser): bool
+    public function replicate(AuthUser $authUser, Order $order): bool
     {
         return $authUser->can('Replicate:Order');
     }
@@ -65,4 +66,5 @@ final class OrderPolicy
     {
         return $authUser->can('Reorder:Order');
     }
+
 }

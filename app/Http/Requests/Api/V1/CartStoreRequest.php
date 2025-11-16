@@ -15,15 +15,18 @@ class CartStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'item_type' => ['required', Rule::in(['tree', 'product'])],
-            'tree_instance_id' => ['nullable', 'integer', 'exists:tree_instances,id', Rule::requiredIf($this->input('item_type') === 'tree')],
-            'tree_plan_price_id' => ['nullable', 'integer', 'exists:tree_plan_prices,id', Rule::requiredIf($this->input('item_type') === 'tree')],
-            'product_id' => ['nullable', 'integer', 'exists:products,id'],
-            'product_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
-            'quantity' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'name' => ['nullable', 'string', 'max:100'],
-            'occasion' => ['nullable', 'string', 'max:100'],
-            'message' => ['nullable', 'string', 'max:500'],
+            'type'              => 'required|string|in:product,sponsor,adopt',
+            'product_variant_id' => 'required_if:type,product|exists:product_variants,id',
+            'quantity'          => 'required_if:type,product|integer|min:1',
+            'tree_id'           => 'required_if:type,sponsor|exists:trees,id',
+            'plan_id'           => 'required_if:type,sponsor|exists:plans,id',
+            'plan_price_id'     => 'required_if:type,sponsor|exists:plan_prices,id',
+            'tree_instance_id'  => 'required_if:type,adopt|exists:tree_instances,id',
+            'adopt_plan_id'     => 'required_if:type,adopt|exists:plans,id',
+            'dedication'    => 'nullable|array',
+            'dedication.name'     => 'sometimes|string',
+            'dedication.occasion' => 'sometimes|string',
+            'dedication.message'  => 'sometimes|string',
         ];
     }
 

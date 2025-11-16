@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\TreeTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\TreeRequest;
 use App\Http\Resources\Api\V1\TreeCollection;
@@ -11,6 +12,7 @@ use App\Http\Resources\Api\V1\TreeResource;
 use App\Services\TreeService;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 final class TreeController extends Controller
 {
@@ -23,7 +25,7 @@ final class TreeController extends Controller
         $lat = (float) $request->user_lat;
         $lng = (float) $request->user_lng;
         $radius = (float) ($request->radius_km ?? 50);
-        $type = $request->type ?? 'all';
+        $type = $request->type;
         $perPage = min((int) ($request->per_page ?? 15), 50);
 
         $trees = $this->service->getTrees($lat, $lng, $radius, $type, $perPage);
@@ -31,10 +33,21 @@ final class TreeController extends Controller
         return $this->success(new TreeCollection($trees));
     }
 
-    public function show(string $identifier): JsonResponse
+    public function show(string $identifier, Request $request): JsonResponse
     {
-        $tree = $this->service->getByIdOrSlug($identifier);
+        $type = $request->type;
+        $tree = $this->service->getByIdOrSlug($identifier, $type);
 
-        return $this->success(['tree' => new TreeResource($tree)]);
+        return $this->success(['tree' => new TreeResource($tree->load([
+            'planPrices' => fn($q) =>
+            $q->whereHas(
+                'plan',
+                fn($p) =>
+                $p->where('type', $type)
+            )->with('plan'),
+            'treeInstances' => fn($q) =>
+            $q->where('status', 'adoptable')
+                ->with('location'),
+        ]))]);
     }
 }

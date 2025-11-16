@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\ReverseGeocodeController;
 use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\SponsorTreeController;
+use App\Http\Controllers\Api\V1\TreeController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -41,10 +42,8 @@ Route::prefix('/sliders')->group(function (): void {
 });
 
 Route::prefix('/trees')->group(function (): void {
-    Route::get('/sponsor', [SponsorTreeController::class, 'index']);
-    Route::get('/adopt', [AdoptTreeController::class, 'index']);
-    Route::get('/sponsor/{identifier}', [SponsorTreeController::class, 'show']);
-    Route::get('/adopt/{identifier}', [AdoptTreeController::class, 'show']);
+    Route::get('/', [TreeController::class, 'index']);
+    Route::get('/{identifier}', [TreeController::class, 'show']);
 });
 
 Route::prefix('address')->group(function () {

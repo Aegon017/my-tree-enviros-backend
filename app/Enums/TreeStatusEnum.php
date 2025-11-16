@@ -11,14 +11,16 @@ enum TreeStatusEnum: string
     use HasLabelOptions;
 
     case SPONSORED = 'sponsored';
-    case WAITING_ADOPTION = 'waiting_adoption';
+    case PLANTED = 'planted';
+    case ADOPTABLE = 'adoptable';
     case ADOPTED = 'adopted';
 
     public function label(): string
     {
         return match ($this) {
             self::SPONSORED => 'Sponsored',
-            self::WAITING_ADOPTION => 'Waiting Adoption',
+            self::PLANTED => 'Planted',
+            self::ADOPTABLE => 'Adoptable',
             self::ADOPTED => 'Adopted'
         };
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\TreeTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\SponsorTreeCollection;
 use App\Http\Resources\Api\V1\SponsorTreeResource;
@@ -34,6 +35,13 @@ class SponsorTreeController extends Controller
     {
         $tree = $this->service->getByIdOrSlug($identifier);
 
-        return $this->success(['tree' => new SponsorTreeResource($tree)]);
+        return $this->success(['tree' => new SponsorTreeResource($tree->load([
+            'planPrices' => fn($q) =>
+            $q->whereHas(
+                'plan',
+                fn($p) =>
+                $p->where('type', TreeTypeEnum::SPONSOR->value)
+            )->with('plan'),
+        ]))]);
     }
 }

@@ -15,10 +15,18 @@ class PlanForm
     {
         return $schema
             ->components([
-                Select::make('type')->options(PlanTypeEnum::class)->native(false)->required(),
-                TextInput::make('duration')->required()->numeric(),
-                Select::make('duration_unit')->options(DurationUnitEnum::class)->native(false)->required(),
-                Toggle::make('is_active')->default(true)->required(),
+                Select::make('type')
+                    ->options(PlanTypeEnum::class)
+                    ->required(),
+                TextInput::make('duration')
+                    ->required()
+                    ->numeric(),
+                Select::make('duration_unit')
+                    ->options(DurationUnitEnum::class)
+                    ->required(),
+                Toggle::make('is_active')
+                    ->default(true)
+                    ->required(),
             ]);
     }
 }

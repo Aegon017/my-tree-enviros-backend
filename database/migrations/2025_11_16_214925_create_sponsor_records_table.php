@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tree_ownership_histories', function (Blueprint $table) {
+        Schema::create('sponsor_records', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tree_instance_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('order_item_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('order_item_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('plan_id')->constrained()->cascadeOnDelete();
-            $table->string('type');
+            $table->foreignId('tree_id')->constrained();
+            $table->foreignId('plan_id')->constrained();
+            $table->unsignedInteger('quantity');
             $table->date('start_date');
             $table->date('end_date');
+            $table->string('status', 20)->default('active');
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tree_ownership_histories');
+        Schema::dropIfExists('sponsor_records');
     }
 };

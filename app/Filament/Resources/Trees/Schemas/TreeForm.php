@@ -39,11 +39,10 @@ final class TreeForm
                                 ->required(),
                         ]),
                         Flex::make([
-                            TextInput::make('age')
-                                ->required()
-                                ->numeric(),
+                            TextInput::make('default_age')->numeric(),
                             Select::make('age_unit')
                                 ->options(AgeUnitEnum::options())
+                                ->default(AgeUnitEnum::YEAR->value)
                                 ->native(false)
                                 ->required(),
                         ]),

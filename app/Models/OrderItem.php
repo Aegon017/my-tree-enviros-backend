@@ -10,24 +10,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 final class OrderItem extends Model
 {
-    protected $fillable = [
-        'order_id',
-        'orderable_type',
-        'orderable_id',
-        'tree_instance_id',
-        'tree_plan_price_id',
-        'quantity',
-        'price',
-        'discount_amount',
-        'gst_amount',
-        'cgst_amount',
-        'sgst_amount',
-        'options',
-        'start_date',
-        'end_date',
-        'is_renewal',
-    ];
-
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'decimal:2',
@@ -51,6 +33,11 @@ final class OrderItem extends Model
         return $this->morphTo();
     }
 
+    public function dedication()
+    {
+        return $this->morphOne(TreeDedication::class, 'dedicatable');
+    }
+
     /**
      * Legacy relationship - for tree items
      */
@@ -62,9 +49,9 @@ final class OrderItem extends Model
     /**
      * Legacy relationship - for tree plan pricing
      */
-    public function treePlanPrice(): BelongsTo
+    public function planPrice(): BelongsTo
     {
-        return $this->belongsTo(TreePlanPrice::class);
+        return $this->belongsTo(PlanPrice::class);
     }
 
     /**
@@ -85,53 +72,10 @@ final class OrderItem extends Model
             ->where('orderable_type', Product::class);
     }
 
-    /**
-     * Get campaign if this is a campaign order
-     */
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class, 'orderable_id')
             ->where('orderable_type', Campaign::class);
-    }
-
-    /**
-     * Check if this is a tree item (sponsor/adopt)
-     */
-    public function isTree(): bool
-    {
-        return $this->tree_instance_id !== null || $this->orderable_type === TreeInstance::class;
-    }
-
-    /**
-     * Check if this is a product item
-     */
-    public function isProduct(): bool
-    {
-        return in_array($this->orderable_type, [Product::class, ProductVariant::class]);
-    }
-
-    /**
-     * Check if this is a campaign item
-     */
-    public function isCampaign(): bool
-    {
-        return $this->orderable_type === Campaign::class;
-    }
-
-    /**
-     * Calculate subtotal for this item
-     */
-    public function subtotal(): float
-    {
-        return (float) ($this->price * $this->quantity);
-    }
-
-    /**
-     * Calculate total including taxes
-     */
-    public function total(): float
-    {
-        return $this->subtotal() + (float) $this->gst_amount - (float) $this->discount_amount;
     }
 
     /**

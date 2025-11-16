@@ -21,7 +21,8 @@ final class TreeResource extends JsonResource
             'description' => $this->description,
             'thumbnail_url' => $this->getFirstMedia('thumbnails')->getFullUrl(),
             'image_urls' => $this->getMedia('images')->map(fn($media) => $media->getFullUrl()),
-            'plan_prices' => TreePlanPriceResource::collection($this->whenLoaded('planPrices')),
+            'plan_prices' => PlanPriceResource::collection($this->whenLoaded('planPrices')),
+            'adoptable_count' => $this->adoptable_count ?? 0,
         ];
     }
 }

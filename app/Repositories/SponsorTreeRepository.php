@@ -3,8 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\TreeTypeEnum;
-use App\Models\Plan;
-use App\Models\PlanPrice;
 use App\Models\Tree;
 
 class SponsorTreeRepository
@@ -22,8 +20,7 @@ class SponsorTreeRepository
         )";
 
         $query = Tree::query()
-            ->with(['planPrices.plan'])
-            ->whereHas('treeLocations.location', function ($q) use ($haversine, $radius) {
+            ->whereHas('planPrices.location', function ($q) use ($haversine, $radius) {
                 $q->selectRaw("$haversine AS distance")
                     ->having('distance', '<=', $radius);
             })->whereHas('planPrices.plan', fn($q) => $q->where('type', TreeTypeEnum::SPONSOR->value));

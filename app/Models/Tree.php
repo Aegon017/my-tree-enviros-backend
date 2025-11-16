@@ -6,7 +6,6 @@ namespace App\Models;
 
 use App\Enums\AgeUnitEnum;
 use App\Models\Scopes\ActiveScope;
-use App\Traits\GeneratesSku;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,12 +28,7 @@ final class Tree extends Model implements HasMedia
         $this->addMediaCollection('images');
     }
 
-    public function treeLocations(): HasMany
-    {
-        return $this->hasMany(TreeLocation::class);
-    }
-
-    public function instances(): HasMany
+    public function treeInstances(): HasMany
     {
         return $this->hasMany(TreeInstance::class);
     }

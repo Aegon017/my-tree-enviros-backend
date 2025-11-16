@@ -18,7 +18,7 @@ class TreeRequest extends FormRequest
             'user_lng' => 'required|numeric',
             'radius_km' => 'sometimes|numeric|min:1',
             'per_page' => 'sometimes|integer|min:1|max:50',
-            'type' => 'sometimes|in:sponsor,adopt,all',
+            'type' => 'sometimes|in:sponsor,adopt',
         ];
     }
 }

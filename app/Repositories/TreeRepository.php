@@ -1,53 +1,71 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Repositories;
 
 use App\Models\Tree;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 final class TreeRepository
 {
-    public function findPaginatedTrees(float $lat, float $lng, float $radius, string $type, int $perPage): LengthAwarePaginator
-    {
+    public function findPaginatedTrees(
+        float $lat,
+        float $lng,
+        float $radius,
+        string $type,
+        int $perPage
+    ): LengthAwarePaginator {
+
         $haversine = "(
             6371 * acos(
                 cos(radians($lat)) *
-                cos(radians(latitude)) *
-                cos(radians(longitude) - radians($lng)) +
+                cos(radians(locations.latitude)) *
+                cos(radians(locations.longitude) - radians($lng)) +
                 sin(radians($lat)) *
-                sin(radians(latitude))
+                sin(radians(locations.latitude))
             )
         )";
 
         $query = Tree::query()
+            ->where('is_active', true)
             ->with(['planPrices.plan'])
             ->withCount([
-                'instances' => fn($q) => $q->where('status', 'available'),
+                'treeInstances as adoptable_count' => fn($q) =>
+                $q->where('status', 'adoptable')
             ])
-            ->whereHas('instances.location', function ($q) use ($haversine, $radius) {
-                $q->selectRaw("$haversine AS distance")
+            ->whereHas('treeInstances.location', function ($q) use ($haversine, $radius) {
+                $q->selectRaw("locations.*, $haversine as distance")
                     ->having('distance', '<=', $radius);
-            });
-
-        if ($type !== 'all') {
-            $query->whereHas('planPrices.plan', fn($q) => $q->where('type', $type));
-        }
+            })->whereHas(
+                'planPrices.plan',
+                fn($q) =>
+                $q->where('type', $type)
+            );
 
         return $query->paginate($perPage);
     }
 
-    public function findTreeByIdOrSlug(string $identifier): ?Tree
+    public function findTreeByIdOrSlug(string $identifier, string $type): ?Tree
     {
         return Tree::query()
+            ->where('is_active', true)
             ->with([
-                'planPrices.plan',
-                'instances' => fn($q) => $q->where('status', 'available')->limit(5),
-                'instances.location',
+                'planPrices.plan' => fn($q) =>
+                $q->where('type', $type),
             ])
-            ->when(is_numeric($identifier), fn($q) => $q->where('id', $identifier))
-            ->orWhere('slug', $identifier)
+            ->with([
+                'treeInstances' => fn($q) =>
+                $q->where('status', 'adoptable')
+                    ->with('location')
+            ])
+            ->withCount([
+                'treeInstances as adoptable_count' => fn($q) =>
+                $q->where('status', 'adoptable')
+            ])
+            ->when(
+                is_numeric($identifier),
+                fn($q) => $q->where('id', $identifier),
+                fn($q) => $q->where('slug', $identifier)
+            )
             ->first();
     }
 }

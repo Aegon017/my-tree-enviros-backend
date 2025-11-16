@@ -3,17 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class CartItem extends Model
 {
-    protected $fillable = [
-        'cart_id',
-        'product_variant_id',
-        'tree_instance_id',
-        'tree_plan_price_id',
-        'quantity',
-    ];
-
     public function cart()
     {
         return $this->belongsTo(Cart::class);
@@ -29,18 +22,13 @@ class CartItem extends Model
         return $this->belongsTo(TreeInstance::class);
     }
 
-    public function treePlanPrice()
+    public function planPrice()
     {
-        return $this->belongsTo(TreePlanPrice::class);
+        return $this->belongsTo(PlanPrice::class);
     }
 
-    public function isProduct()
+    public function dedication(): MorphOne
     {
-        return ! is_null($this->product_variant_id);
-    }
-
-    public function isTree()
-    {
-        return ! is_null($this->tree_instance_id);
+        return $this->morphOne(TreeDedication::class, 'dedicatable');
     }
 }

@@ -19,11 +19,9 @@ class PlanResource extends Resource
 {
     protected static ?string $model = Plan::class;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Tree Management';
+    protected static string|UnitEnum|null $navigationGroup = 'Plans & Pricing';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
-    protected static ?string $recordTitleAttribute = 'Plan';
 
     public static function form(Schema $schema): Schema
     {

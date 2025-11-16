@@ -25,11 +25,10 @@ final class AdoptTreeRepository
         )";
 
         $query = Tree::query()
-            ->with(['planPrices.plan'])
             ->withCount([
-                'instances' => fn($q) => $q->where('status', TreeStatusEnum::WAITING_ADOPTION->value),
+                'treeInstances' => fn($q) => $q->where('status', TreeStatusEnum::ADOPTABLE->value),
             ])
-            ->whereHas('instances.location', function ($q) use ($haversine, $radius) {
+            ->whereHas('treeInstances.location', function ($q) use ($haversine, $radius) {
                 $q->selectRaw("$haversine AS distance")
                     ->having('distance', '<=', $radius);
             })->whereHas('planPrices.plan', fn($q) => $q->where('type', TreeTypeEnum::ADOPT->value));
@@ -37,16 +36,12 @@ final class AdoptTreeRepository
         return $query->paginate($perPage);
     }
 
-    public function getAdoptDetails(int $instanceId): ?TreeInstance
+    public function getAdoptDetails(int|string $identifier): ?TreeInstance
     {
-        return TreeInstance::with([
-            'tree',
-            'location',
-            'geotags',
-            'conditionUpdates' => fn($q) => $q->latest(),
-            'history.user',
-            'history.plan',
-            'statusLogs' => fn($q) => $q->latest(),
-        ])->find($instanceId);
+        return Tree::query()
+            ->with('planPrices.plan')
+            ->when(is_numeric($identifier), fn($q) => $q->where('id', $identifier))
+            ->orWhere('slug', $identifier)
+            ->first();
     }
 }

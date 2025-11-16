@@ -12,8 +12,8 @@ class PlanPrice extends Model
         return $this->belongsTo(Plan::class);
     }
 
-    public function tree(): BelongsTo
+    public function location(): BelongsTo
     {
-        return $this->belongsTo(Tree::class);
+        return $this->belongsTo(Location::class);
     }
 }

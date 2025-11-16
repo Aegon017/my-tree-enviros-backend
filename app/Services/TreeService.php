@@ -17,8 +17,8 @@ final class TreeService
         return $this->repository->findPaginatedTrees($lat, $lng, $radius, $type, $perPage);
     }
 
-    public function getByIdOrSlug(string $identifier): ?Tree
+    public function getByIdOrSlug(string $identifier, string $type): ?Tree
     {
-        return $this->repository->findTreeByIdOrSlug($identifier);
+        return $this->repository->findTreeByIdOrSlug($identifier, $type);
     }
 }
