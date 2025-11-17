@@ -17,6 +17,7 @@ final class TreeInstance extends Model
 
     protected $casts = [
         'status' => TreeStatusEnum::class,
+        'planted_at' => 'datetime'
     ];
 
     public function location(): BelongsTo
