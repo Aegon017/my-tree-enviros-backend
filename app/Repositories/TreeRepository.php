@@ -25,21 +25,30 @@ final class TreeRepository
             )
         )";
 
-        $query = Tree::query()
-            ->where('is_active', true)
-            ->with(['planPrices.plan'])
-            ->withCount([
-                'treeInstances as adoptable_count' => fn($q) =>
+        $query = Tree::query()->with(['planPrices.plan']);
+
+        if ($type === 'adopt') {
+            $query->whereHas('treeInstances', function ($q) use ($haversine, $radius, $type) {
                 $q->where('status', 'adoptable')
-            ])
-            ->whereHas('treeInstances.location', function ($q) use ($haversine, $radius) {
-                $q->selectRaw("locations.*, $haversine as distance")
-                    ->having('distance', '<=', $radius);
-            })->whereHas(
-                'planPrices.plan',
-                fn($q) =>
-                $q->where('type', $type)
-            );
+                    ->whereHas('location', function ($loc) use ($haversine, $radius) {
+                        $loc->selectRaw("locations.*, $haversine as distance")
+                            ->having('distance', '<=', $radius);
+                    });
+            })->whereHas('planPrices.plan', function ($p) use ($type) {
+                $p->where('type', $type);
+            });
+        } else {
+            $query->whereHas('planPrices', function ($q) use ($haversine, $radius, $type) {
+                $q->whereHas(
+                    'plan',
+                    fn($p) =>
+                    $p->where('type', $type)
+                )->whereHas('location', function ($loc) use ($haversine, $radius) {
+                    $loc->selectRaw("locations.*, $haversine as distance")
+                        ->having('distance', '<=', $radius);
+                });
+            });
+        }
 
         return $query->paginate($perPage);
     }

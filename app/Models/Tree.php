@@ -14,7 +14,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[ScopedBy([ActiveScope::class])]
 final class Tree extends Model implements HasMedia
-{
+{   
     use InteractsWithMedia;
 
     protected $casts = [

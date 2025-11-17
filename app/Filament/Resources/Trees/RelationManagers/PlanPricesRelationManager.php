@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Trees\RelationManagers;
 
+use App\Enums\TreeTypeEnum;
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -13,9 +14,12 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class PlanPricesRelationManager extends RelationManager
@@ -37,7 +41,7 @@ class PlanPricesRelationManager extends RelationManager
                 TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefix('INR'),
+                    ->prefixIcon('heroicon-s-currency-rupee')
             ]);
     }
 
@@ -46,40 +50,33 @@ class PlanPricesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                TextColumn::make('plan.id')
-                    ->searchable(),
-                TextColumn::make('location_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('price')
-                    ->money()
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('plan.duration'),
+                TextColumn::make('plan.duration_unit'),
+                TextColumn::make('location.name')->numeric()->sortable(),
+                TextColumn::make('price')->money('INR')->sortable(),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->headerActions([
                 CreateAction::make(),
-                AssociateAction::make(),
             ])
             ->recordActions([
                 EditAction::make(),
-                DissociateAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DissociateBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public function getTabs(): array
+    {
+        return [
+            'sponsor' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->whereHas('plan', fn($plan) => $plan->where('type', TreeTypeEnum::SPONSOR->value))),
+            'adopt' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->whereHas('plan', fn($plan) => $plan->where('type', TreeTypeEnum::ADOPT->value))),
+        ];
     }
 }

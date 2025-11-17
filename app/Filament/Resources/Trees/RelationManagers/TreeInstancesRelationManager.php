@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Trees\RelationManagers;
 
+use App\Enums\AgeUnitEnum;
 use App\Enums\TreeStatusEnum;
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
@@ -27,19 +28,12 @@ class TreeInstancesRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Select::make('location_id')
-                    ->relationship('location', 'name'),
-                Select::make('status')
-                    ->options(TreeStatusEnum::class)
-                    ->required(),
-                TextInput::make('age')
-                    ->numeric(),
-                TextInput::make('age_unit')
-                    ->required(),
-                TextInput::make('lat')
-                    ->numeric(),
-                TextInput::make('lng')
-                    ->numeric(),
+                Select::make('location_id')->native(false)->relationship('location', 'name'),
+                Select::make('status')->native(false)->options(TreeStatusEnum::class)->required(),
+                TextInput::make('age')->numeric(),
+                Select::make('age_unit')->options(AgeUnitEnum::class)->native(false)->required(),
+                TextInput::make('lat')->numeric(),
+                TextInput::make('lng')->numeric(),
                 DateTimePicker::make('planted_at'),
             ]);
     }
@@ -49,49 +43,24 @@ class TreeInstancesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                TextColumn::make('location.name')
-                    ->searchable(),
-                TextColumn::make('status')
-                    ->badge()
-                    ->searchable(),
-                TextColumn::make('age')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('age_unit')
-                    ->searchable(),
-                TextColumn::make('lat')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('lng')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('planted_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('location.name')->searchable(),
+                TextColumn::make('status')->badge()->searchable(),
+                TextColumn::make('age')->numeric()->sortable(),
+                TextColumn::make('age_unit')->searchable(),
+                TextColumn::make('lat')->numeric()->sortable(),
+                TextColumn::make('lng')->numeric()->sortable(),
+                TextColumn::make('planted_at')->dateTime()->sortable(),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->headerActions([
                 CreateAction::make(),
-                AssociateAction::make(),
             ])
             ->recordActions([
                 EditAction::make(),
-                DissociateAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DissociateBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

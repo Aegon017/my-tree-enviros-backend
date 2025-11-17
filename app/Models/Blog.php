@@ -13,14 +13,6 @@ final class Blog extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
-    protected $fillable = [
-        'blog_category_id',
-        'title',
-        'slug',
-        'short_description',
-        'description',
-    ];
-
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('thumbnails')->singleFile();

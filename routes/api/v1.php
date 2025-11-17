@@ -63,7 +63,7 @@ Route::prefix('product-categories')->group(function (): void {
 
 Route::prefix('/blogs')->group(function (): void {
     Route::get('/', [BlogController::class, 'index']);
-    Route::get('/{id}', [BlogController::class, 'show']);
+    Route::get('/{identifier}', [BlogController::class, 'show']);
 });
 
 Route::prefix('campaigns')->group(function (): void {
