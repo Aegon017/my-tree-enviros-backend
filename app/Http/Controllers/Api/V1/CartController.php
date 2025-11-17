@@ -24,18 +24,18 @@ final class CartController
         return $this->cartService->addToUserCart($request->user()->id, $request->validated());
     }
 
-    // public function update(CartUpdateRequest $request, string $id): JsonResponse
-    // {
-    //     return $this->cartService->updateUserCartItem($request->user()->id, (int) $id, $request->validated());
-    // }
+    public function update(CartUpdateRequest $request, string $id): JsonResponse
+    {
+        return $this->cartService->updateUserCartItem($request->user()->id, (int) $id, $request->validated());
+    }
 
-    // public function destroy(Request $request, string $id): JsonResponse
-    // {
-    //     return $this->cartService->removeUserCartItem($request->user()->id, (int) $id);
-    // }
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        return $this->cartService->removeUserCartItem($request->user()->id, (int) $id);
+    }
 
-    // public function clear(Request $request): JsonResponse
-    // {
-    //     return $this->cartService->clearUserCart($request->user()->id);
-    // }
+    public function clear(Request $request): JsonResponse
+    {
+        return $this->cartService->clearUserCart($request->user()->id);
+    }
 }

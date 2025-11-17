@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class CartItem extends Model
 {
+    public function tree(){
+        return $this->belongsTo(Tree::class);
+    }
     public function cart()
     {
         return $this->belongsTo(Cart::class);

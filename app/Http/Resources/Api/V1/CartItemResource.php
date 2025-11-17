@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
@@ -11,94 +9,63 @@ final class CartItemResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        if ($this->product_variant_id) {
-            return $this->formatProductVariant();
+        if ($this->type === 'product') {
+            return $this->formatProduct();
         }
 
-        if ($this->tree_instance_id) {
-            return $this->formatTreeItem();
-        }
-
-        return [];
+        return $this->formatTreeItem();
     }
 
-    private function formatProductVariant(): array
+    private function formatProduct(): array
     {
         $variant = $this->productVariant;
-        $inventory = $variant->inventory;
-        $product = $inventory->product;
-
-        $image = $variant->getFirstMediaUrl('images')
-            ?: $product->productCategory?->getFirstMediaUrl('images')
-            ?: null;
+        $product = $variant->inventory->product;
 
         return [
             'id' => $this->id,
-            'item_type' => 'product',
+            'type' => 'product',
             'quantity' => $this->quantity,
-            'price' => (float) ($variant->selling_price ?? $variant->original_price),
+            'price' => (float) $this->amount,
 
-            'image' => $image,
-            'productName' => $product->name,
+            'name' => $product->name,
+            'image_url' => $variant->getFirstMedia('images')->getFullUrl(),
 
-            'variantInfo' => [
+            'variant' => [
                 'sku' => $variant->sku,
-                'name' => trim(
-                    ($variant->variant->color->name ?? '') . ' ' .
-                        ($variant->variant->size->name ?? '') . ' ' .
-                        ($variant->variant->planter->name ?? '')
-                ),
-                'color' => $variant->variant->color->name ?? null,
-                'size' => $variant->variant->size->name ?? null,
-                'planter' => $variant->variant->planter->name ?? null,
-            ],
-
-            'stockInfo' => [
-                'quantity' => $variant->stock_quantity,
-                'isInStock' => (bool)$variant->is_instock,
-            ],
-
-            'item' => [
-                'product' => new ProductResource($product),
-                'variant' => new ProductVariantResource($variant),
+                'color' => $variant->variant?->color?->name,
+                'size' => $variant->variant?->size?->name,
+                'planter' => $variant->variant?->planter?->name,
             ],
         ];
     }
 
     private function formatTreeItem(): array
     {
-        $treeInstance = $this->treeInstance;
-        $plan = $this->treePlanPrice;
-        $tree = $treeInstance->tree;
+        $planPrice = $this->planPrice;
+        $tree = $this->tree;
+        $ded = $this->dedication;
 
         return [
             'id' => $this->id,
-            'item_type' => 'tree',
-            'quantity' => 1,
-            'duration' => $plan->plan->duration,
-            'price' => (float) $plan->price,
+            'type' => $this->type,
+            'quantity' => $this->quantity,
+            'duration' => $planPrice->plan->duration,
+            'price' => (float) $this->amount,
 
-            'productName' => $tree->name,
-            'image' => null,
-
-            'name' => $this->options['dedication']['name'] ?? null,
-            'occasion' => $this->options['dedication']['occasion'] ?? null,
-            'message' => $this->options['dedication']['message'] ?? null,
-
-            'item' => [
-                'tree' => [
-                    'id' => $tree->id,
-                    'name' => $tree->name,
-                    'plan' => [
-                        'name' => $plan->plan->name,
-                        'duration' => $plan->plan->duration,
-                    ],
-                ],
+            'tree' => [
+                'id' => $tree->id,
+                'name' => $tree->name,
             ],
 
-            'metadata' => [
-                'location_id' => $this->options['location_id'] ?? null,
-                'state_id' => $this->options['state_id'] ?? null,
+            'plan' => [
+                'id' => $planPrice->plan->id,
+                'duration' => $planPrice->plan->duration,
+            ],
+
+            'dedication' => [
+                'name' => $ded->name ?? null,
+                'occasion' => $ded->occasion ?? null,
+                'message' => $ded->message ?? null,
             ],
         ];
     }
