@@ -36,6 +36,7 @@ final class ProductForm
                                 ->required(),
                             Toggle::make('is_active')->required()
                                 ->Inline(false)
+                                ->default(true)
                                 ->grow(false),
                         ]),
                         Grid::make()
@@ -43,7 +44,7 @@ final class ProductForm
                             ->schema([
                                 TextInput::make('name')->required()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
+                                    ->afterStateUpdated(fn(Set $set, ?string $state): mixed => $set('slug', Str::slug($state))),
                                 TextInput::make('slug')
                                     ->unique(table: 'products', column: 'slug')
                                     ->readOnly()

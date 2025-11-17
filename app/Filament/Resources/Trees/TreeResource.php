@@ -44,8 +44,8 @@ final class TreeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            PlanPricesRelationManager::class,
-            TreeInstancesRelationManager::class
+            // PlanPricesRelationManager::class,
+            // TreeInstancesRelationManager::class
         ];
     }
 
