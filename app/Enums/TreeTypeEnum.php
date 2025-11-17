@@ -10,14 +10,14 @@ enum TreeTypeEnum: string
 {
     use HasLabelOptions;
 
-    case SPONSORSHIP = 'sponsorship';
-    case ADOPTION = 'adoption';
+    case SPONSOR = 'sponsor';
+    case ADOPT = 'adopt';
 
     public function label(): string
     {
         return match ($this) {
-            self::SPONSORSHIP => 'Sponsorship',
-            self::ADOPTION => 'Adoption'
+            self::SPONSOR => 'Sponsor',
+            self::ADOPT => 'Adopt'
         };
     }
 }

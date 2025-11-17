@@ -6,29 +6,27 @@ namespace App\Models;
 
 use App\Enums\TreeStatusEnum;
 use App\Traits\GeneratesSku;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 final class TreeInstance extends Model
 {
     use GeneratesSku;
 
     protected $casts = [
-        'latitude' => 'decimal:7',
-        'longitude' => 'decimal:7',
         'status' => TreeStatusEnum::class,
     ];
-
-    public function tree(): BelongsTo
-    {
-        return $this->belongsTo(Tree::class);
-    }
 
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function tree(): BelongsTo
+    {
+        return $this->belongsTo(Tree::class);
     }
 
     public function orderItems(): HasMany
@@ -36,29 +34,31 @@ final class TreeInstance extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    public function statusLogs(): HasMany
+    public function treeUpdates(): HasMany
     {
-        return $this->hasMany(TreeStatusLog::class);
+        return $this->hasMany(TreeUpdate::class);
     }
 
-    public function media(): HasMany
+    public function sponsorRecords(): HasMany
     {
-        return $this->hasMany(TreeMedia::class);
+        return $this->hasMany(SponsorRecord::class);
+    }
+
+    public function adoptRecords(): HasMany
+    {
+        return $this->hasMany(AdoptRecord::class);
     }
 
     protected static function skuPrefix($model = null): string
     {
-        return $model && $model->tree ? $model->tree->sku.'-' : 'TRI-';
+        $treeShort = $model->tree?->short_code ?? Str::upper(Str::substr($model->tree?->name ?? 'TREE', 0, 3));
+        $locationShort = $model->location?->short_code ?? Str::upper(Str::substr($model->location?->name ?? 'LOC', 0, 3));
+
+        return "TREE-{$treeShort}-{$locationShort}-";
     }
 
     protected static function skuPadding(): int
     {
         return 4;
-    }
-
-    #[Scope]
-    protected function available($query)
-    {
-        return $query->where('status', 'available');
     }
 }

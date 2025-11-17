@@ -12,12 +12,11 @@ return new class extends Migration
     {
         Schema::create('trees', function (Blueprint $table) {
             $table->id();
-            $table->string('sku')->unique();
             $table->string('name')->unique();
             $table->string('slug')->unique();
-            $table->unsignedSmallInteger('age');
+            $table->unsignedSmallInteger('default_age')->nullable();
             $table->string('age_unit', 8);
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->boolean('is_active');
             $table->timestamps();
         });

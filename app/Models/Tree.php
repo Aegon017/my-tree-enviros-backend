@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AgeUnitEnum;
-use App\Traits\GeneratesSku;
-use Illuminate\Database\Eloquent\Attributes\Scope;
+use App\Models\Scopes\ActiveScope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+#[ScopedBy([ActiveScope::class])]
 final class Tree extends Model implements HasMedia
 {
-    use GeneratesSku;
     use InteractsWithMedia;
 
     protected $casts = [
@@ -28,29 +28,13 @@ final class Tree extends Model implements HasMedia
         $this->addMediaCollection('images');
     }
 
-    public function instances(): HasMany
+    public function treeInstances(): HasMany
     {
         return $this->hasMany(TreeInstance::class);
     }
 
     public function planPrices(): HasMany
     {
-        return $this->hasMany(TreePlanPrice::class);
-    }
-
-    #[Scope]
-    protected function active($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    private static function skuPrefix(): string
-    {
-        return 'TREE-';
-    }
-
-    private static function skuPadding(): int
-    {
-        return 4;
+        return $this->hasMany(PlanPrice::class);
     }
 }

@@ -2,32 +2,19 @@
 
 namespace App\Http\Resources\Api\V1;
 
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Traits\HasPaginationMeta;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class ProductCollection extends ResourceCollection
 {
-    /**
-     * @return array
-     */
+    use HasPaginationMeta;
+
     public function toArray(Request $request): array
     {
-        $meta = [];
-        if ($this->resource instanceof LengthAwarePaginator) {
-            $meta = [
-                'current_page' => $this->currentPage(),
-                'last_page' => $this->lastPage(),
-                'per_page' => $this->perPage(),
-                'total' => $this->total(),
-                'from' => $this->firstItem(),
-                'to' => $this->lastItem(),
-            ];
-        }
-
         return [
             'products' => ProductListResource::collection($this->collection),
-            'meta' => $meta,
+            'meta' => $this->paginationMeta($this->resource),
         ];
     }
 }

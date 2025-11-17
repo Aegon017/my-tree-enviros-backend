@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
+use App\Models\Slider;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
-final class SliderPolicy
+class SliderPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Slider');
     }
 
-    public function view(AuthUser $authUser): bool
+    public function view(AuthUser $authUser, Slider $slider): bool
     {
         return $authUser->can('View:Slider');
     }
@@ -26,22 +27,22 @@ final class SliderPolicy
         return $authUser->can('Create:Slider');
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, Slider $slider): bool
     {
         return $authUser->can('Update:Slider');
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, Slider $slider): bool
     {
         return $authUser->can('Delete:Slider');
     }
 
-    public function restore(AuthUser $authUser): bool
+    public function restore(AuthUser $authUser, Slider $slider): bool
     {
         return $authUser->can('Restore:Slider');
     }
 
-    public function forceDelete(AuthUser $authUser): bool
+    public function forceDelete(AuthUser $authUser, Slider $slider): bool
     {
         return $authUser->can('ForceDelete:Slider');
     }
@@ -56,7 +57,7 @@ final class SliderPolicy
         return $authUser->can('RestoreAny:Slider');
     }
 
-    public function replicate(AuthUser $authUser): bool
+    public function replicate(AuthUser $authUser, Slider $slider): bool
     {
         return $authUser->can('Replicate:Slider');
     }
@@ -65,4 +66,5 @@ final class SliderPolicy
     {
         return $authUser->can('Reorder:Slider');
     }
+
 }

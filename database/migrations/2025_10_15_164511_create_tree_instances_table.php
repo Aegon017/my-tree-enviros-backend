@@ -12,14 +12,15 @@ return new class extends Migration
     {
         Schema::create('tree_instances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tree_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('location_id')->constrained('locations')->cascadeOnDelete();
             $table->string('sku')->unique();
-            $table->string('status');
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
-
-            $table->index(['status', 'location_id']);
+            $table->foreignId('tree_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('status', 20);
+            $table->unsignedSmallInteger('age')->nullable();
+            $table->string('age_unit', 8);
+            $table->decimal('lat', 10, 7)->nullable();
+            $table->decimal('lng', 10, 7)->nullable();
+            $table->timestamp('planted_at')->nullable();
             $table->timestamps();
         });
     }

@@ -13,13 +13,13 @@ final class TreeLocation extends Model
         'is_active' => 'boolean',
     ];
 
-    public function tree(): BelongsTo
-    {
-        return $this->belongsTo(Tree::class);
-    }
-
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function tree(): BelongsTo
+    {
+        return $this->belongsTo(Tree::class);
     }
 }

@@ -53,7 +53,6 @@ class WishlistController extends Controller
 
         $cartData = [
             'item_type' => 'product',
-            'product_id' => $wishlistItem->product_id,
             'product_variant_id' => $wishlistItem->product_variant_id,
             'quantity' => 1,
         ];

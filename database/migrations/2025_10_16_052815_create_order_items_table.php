@@ -13,16 +13,16 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('tree_instance_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('tree_plan_price_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->decimal('price', 10, 2);
-            $table->decimal('discount_amount', 10, 2)->default(0.00);
-            $table->decimal('gst_amount', 10, 2)->default(0.00);
-            $table->decimal('cgst_amount', 10, 2)->default(0.00);
-            $table->decimal('sgst_amount', 10, 2)->default(0.00);
-            $table->timestamp('start_date')->nullable();
-            $table->timestamp('end_date')->nullable();
-            $table->boolean('is_renewal');
+            $table->string('type', 20);
+            $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('tree_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('plan_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('plan_price_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedInteger('sponsor_quantity')->nullable();
+            $table->foreignId('tree_instance_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedInteger('quantity');
+            $table->decimal('amount', 10, 2)->nullable();
+            $table->decimal('total_amount', 10, 2)->nullable();
             $table->timestamps();
         });
     }

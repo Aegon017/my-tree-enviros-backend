@@ -71,6 +71,7 @@ final class AdminPanelProvider extends PanelProvider
                 'Geo Management',
                 'Transactions',
                 'Filament Shield',
-            ]);
+            ])
+            ->resourceCreatePageRedirect('index');
     }
 }

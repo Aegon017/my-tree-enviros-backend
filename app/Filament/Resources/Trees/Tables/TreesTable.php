@@ -20,7 +20,6 @@ final class TreesTable
         return $table
             ->columns([
                 SpatieMediaLibraryImageColumn::make('thumbnail')->collection('thumbnails')->imageHeight(120),
-                TextColumn::make('sku')->label('SKU')->searchable(),
                 TextColumn::make('name')->searchable(),
                 IconColumn::make('is_active')->boolean(),
             ])

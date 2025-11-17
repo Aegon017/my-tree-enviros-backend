@@ -4,61 +4,44 @@ namespace App\Repositories;
 
 use App\Models\Cart;
 use App\Models\CartItem;
-use App\Models\Product;
-use App\Models\ProductVariant;
 
 class CartRepository
 {
     public function getOrCreate(int $userId): Cart
     {
-        return Cart::firstOrCreate(
-            ['user_id' => $userId],
-            ['expires_at' => now()->addDays(7)]
-        );
+        return Cart::firstOrCreate(['user_id' => $userId]);
     }
 
-    public function getCartWithRelations(Cart $cart): Cart
+    public function getWithRelations(Cart $cart): Cart
     {
         return $cart->load([
-            'items.cartable' => function ($query) {
-                $model = $query->getModel();
-                if ($model instanceof Product) {
-                    $query->with([
-                        'inventory.productVariants.variant.color',
-                        'inventory.productVariants.variant.size',
-                        'inventory.productVariants.variant.planter',
-                        'productCategory',
-                    ]);
-                } elseif ($model instanceof ProductVariant) {
-                    $query->with('inventory.product');
-                }
-            },
+            'items.productVariant.inventory.product.productCategory',
+            'items.productVariant.variant.color',
+            'items.productVariant.variant.size',
+            'items.productVariant.variant.planter',
+            'items.treeInstance.tree',
+            'items.treePlanPrice.plan',
         ]);
     }
 
-    public function addItem(Cart $cart, array $attributes): CartItem
+    public function add(array $data): CartItem
     {
-        return CartItem::create([
-            'cart_id' => $cart->id,
-            'cartable_type' => $attributes['cartable_type'],
-            'cartable_id' => $attributes['cartable_id'],
-            'quantity' => $attributes['quantity'] ?? 1,
-            'price' => $attributes['price'] ?? 0,
-            'options' => $attributes['options'] ?? [],
-        ]);
+        return CartItem::create($data);
     }
 
-    public function findItem(Cart $cart, int $id): ?CartItem
+    public function findById(Cart $cart, int $id): ?CartItem
     {
         return $cart->items()->where('id', $id)->first();
     }
 
-    public function findExistingItem(Cart $cart, string $type, int $id): ?CartItem
+    public function findProductVariant(Cart $cart, int $variantId): ?CartItem
     {
-        return $cart->items()
-            ->where('cartable_type', $type)
-            ->where('cartable_id', $id)
-            ->first();
+        return $cart->items()->where('product_variant_id', $variantId)->first();
+    }
+
+    public function findTreeInstance(Cart $cart, int $instanceId): ?CartItem
+    {
+        return $cart->items()->where('tree_instance_id', $instanceId)->first();
     }
 
     public function clear(Cart $cart): void

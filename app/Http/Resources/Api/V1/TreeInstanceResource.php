@@ -11,34 +11,37 @@ final class TreeInstanceResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $latestCondition = $this->conditionUpdates->first();
+        $latestGeo = $this->geotags->first();
+
         return [
             'id' => $this->id,
             'sku' => $this->sku,
-            'status' => $this->status->value,
-            'status_label' => $this->status->label(),
-            'latitude' => $this->latitude,
-            'longitude' => $this->longitude,
-            'coordinates' => $this->latitude && $this->longitude ? [
-                'lat' => (float) $this->latitude,
-                'lng' => (float) $this->longitude,
-            ] : null,
-            'tree' => new TreeResource($this->whenLoaded('tree')),
-            'location' => [
-                'id' => $this->location->id ?? null,
-                'name' => $this->location->name ?? null,
-                'type' => $this->location->type ?? null,
-            ],
-            'tree_id' => $this->tree_id,
+            'status' => $this->status,
+            'species' => $this->whenLoaded('tree', fn() => $this->tree->species),
             'location_id' => $this->location_id,
-            'media' => $this->whenLoaded('media', fn () => $this->media->map(fn ($media): array => [
-                'id' => $media->id,
-                'type' => $media->type,
-                'url' => $media->url,
-                'caption' => $media->caption,
-                'uploaded_at' => $media->created_at,
+            'geotag' => $latestGeo ? [
+                'latitude' => (float) $latestGeo->latitude,
+                'longitude' => (float) $latestGeo->longitude,
+            ] : null,
+            'latest_condition' => $latestCondition ? [
+                'condition' => $latestCondition->condition,
+                'notes' => $latestCondition->notes,
+                'reported_at' => $latestCondition->reported_at?->toDateString(),
+                'media' => $latestCondition->getMedia('condition_images')->map(fn($m) => $m->getFullUrl()),
+            ] : null,
+            'history' => $this->whenLoaded('history', fn() => $this->history->map(fn($h) => [
+                'type' => $h->type,
+                'start_date' => $h->start_date->toDateString(),
+                'end_date' => $h->end_date->toDateString(),
+                'user' => $h->user?->only(['id', 'name']),
+                'plan' => $h->plan?->only(['id', 'duration', 'duration_unit']),
             ])),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'status_logs' => $this->whenLoaded('statusLogs', fn() => $this->statusLogs->map(fn($s) => [
+                'status' => $s->status,
+                'notes' => $s->notes,
+                'created_at' => $s->created_at->toDateTimeString(),
+            ])),
         ];
     }
 }

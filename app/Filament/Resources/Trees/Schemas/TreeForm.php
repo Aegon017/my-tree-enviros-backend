@@ -25,30 +25,24 @@ final class TreeForm
             ->components([
                 Grid::make()->schema([
                     Section::make('Details')->schema([
-                        Flex::make([
-                            TextInput::make('sku')
-                                ->label('SKU')
-                                ->disabled(),
-                            Toggle::make('is_active')
-                                ->required()
-                                ->Inline(false)
-                                ->grow(false),
-                        ]),
+                        Toggle::make('is_active')
+                            ->required()
+                            ->default(true)
+                            ->grow(false),
                         Flex::make([
                             TextInput::make('name')
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('slug', Str::slug($state)))
+                                ->afterStateUpdated(fn(Set $set, ?string $state): mixed => $set('slug', Str::slug($state)))
                                 ->required(),
                             TextInput::make('slug')
                                 ->readOnly()
                                 ->required(),
                         ]),
                         Flex::make([
-                            TextInput::make('age')
-                                ->required()
-                                ->numeric(),
+                            TextInput::make('default_age')->numeric(),
                             Select::make('age_unit')
                                 ->options(AgeUnitEnum::options())
+                                ->default(AgeUnitEnum::YEAR->value)
                                 ->native(false)
                                 ->required(),
                         ]),

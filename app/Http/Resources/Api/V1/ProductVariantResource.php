@@ -21,7 +21,7 @@ final class ProductVariantResource extends JsonResource
             'sku' => $this->sku,
             'variant' => $this->when($this->relationLoaded('variant'), fn(): array => [
                 'id' => $variant?->id,
-                'name' => $variant?->color?->name. ' ' . $variant?->size->name. ' ' . $variant?->planter->name,
+                'name' => $variant?->color?->name . ' ' . $variant?->size->name . ' ' . $variant?->planter->name,
                 'color' => $variant?->color ? [
                     'name' => $variant->color->name,
                     'code' => $variant->color->code,
@@ -31,6 +31,7 @@ final class ProductVariantResource extends JsonResource
                 ] : null,
                 'planter' => $variant?->planter ? [
                     'name' => $variant->planter->name,
+                    'image_url' => $variant->planter->getFirstMedia('images')->getFullUrl()
                 ] : null,
             ], null),
             'image_urls' => $this->getMedia('images')->map(fn($m) => ['url' => $m->getUrl()])->toArray(),
@@ -39,6 +40,7 @@ final class ProductVariantResource extends JsonResource
             'stock_quantity' => (int) $this->stock_quantity,
             'is_instock' => (bool) $this->is_instock,
             'in_wishlist' => (bool) $this->in_wishlist,
+            'in_cart' => (bool) $this->in_cart
         ];
     }
 }

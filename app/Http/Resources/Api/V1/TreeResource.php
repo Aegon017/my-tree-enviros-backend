@@ -11,23 +11,6 @@ final class TreeResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Build direct URLs for main image and thumbnail
-        $mainImage =
-            $this->getFirstMedia('images') ??
-            $this->getFirstMedia('thumbnails');
-        $mainImageUrl = null;
-        if ($mainImage) {
-            $mainImageUrl = $mainImage->getFullUrl();
-        }
-
-        $thumbnail =
-            $this->getFirstMedia('thumbnails') ??
-            $this->getFirstMedia('images');
-        $thumbnailUrl = null;
-        if ($thumbnail) {
-            $thumbnailUrl = $thumbnail->getFullUrl();
-        }
-
         return [
             'id' => $this->id,
             'sku' => $this->sku,
@@ -35,37 +18,11 @@ final class TreeResource extends JsonResource
             'slug' => $this->slug,
             'age' => $this->age,
             'age_unit' => $this->age_unit,
-            'age_display' => $this->age.' '.ucfirst((string) $this->age_unit->value),
             'description' => $this->description,
-            'is_active' => $this->is_active,
-            'main_image_url' => $mainImageUrl,
-            'thumbnail' => $thumbnailUrl,
-            'images' => $this->getMedia('images')->map(
-                fn ($media): array => [
-                    'id' => $media->id,
-                    'image_url' => $media->getFullUrl(),
-                ],
-            ),
-            'available_instances_count' => $this->whenCounted(
-                'instances',
-                fn () => $this->instances()
-                    ->where('status', 'available')
-                    ->count(),
-            ),
-            'plan_prices' => TreePlanPriceResource::collection(
-                $this->whenLoaded('planPrices'),
-            ),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-            'locations' => LocationResource::collection(
-                $this->whenLoaded(
-                    'instances',
-                    fn () => $this->instances
-                        ->pluck('location')
-                        ->filter()
-                        ->unique('id'),
-                ),
-            ),
+            'thumbnail_url' => $this->getFirstMedia('thumbnails')->getFullUrl(),
+            'image_urls' => $this->getMedia('images')->map(fn($media) => $media->getFullUrl()),
+            'plan_prices' => PlanPriceResource::collection($this->whenLoaded('planPrices')),
+            'adoptable_count' => $this->adoptable_count ?? 0,
         ];
     }
 }
