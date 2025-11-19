@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Api\V1\AdoptTreeController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BlogController;
 use App\Http\Controllers\Api\V1\CampaignController;
@@ -17,7 +16,6 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReverseGeocodeController;
 use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
-use App\Http\Controllers\Api\V1\SponsorTreeController;
 use App\Http\Controllers\Api\V1\TreeController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WishlistController;
@@ -75,10 +73,10 @@ Route::post('payments/webhook/razorpay', [PaymentController::class, 'webhook']);
 
 Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::get('me', [AuthController::class, 'me']);
-    Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('sign-out', [AuthController::class, 'signOut']);
     Route::apiResource('users', UserController::class);
 
-    Route::prefix('cart')->middleware('auth:sanctum')->group(function (): void {
+    Route::prefix('cart')->group(function (): void {
         Route::get('/', [CartController::class, 'index']);
         Route::post('/items', [CartController::class, 'store']);
         Route::put('/items/{id}', [CartController::class, 'update']);

@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\CartUpdateRequest;
 use App\Services\CartService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 final class CartController
 {
@@ -16,6 +17,7 @@ final class CartController
 
     public function index(Request $request): JsonResponse
     {
+        Log::info($request->user()->id);
         return $this->cartService->getCart($request->user()->id);
     }
 
