@@ -22,7 +22,12 @@ class CartUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quantity' => 'required|integer|min:1|max:100',
+            'quantity' => 'sometimes|integer|min:1|max:100',
+            'plan_price_id' => 'sometimes|exists:plan_prices,id',
+            'dedication' => 'sometimes|array',
+            'dedication.name' => 'sometimes|string',
+            'dedication.occasion' => 'sometimes|string',
+            'dedication.message' => 'sometimes|string',
         ];
     }
 }

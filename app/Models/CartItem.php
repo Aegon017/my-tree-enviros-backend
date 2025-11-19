@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class CartItem extends Model
 {
-    public function tree(){
+    public function tree()
+    {
         return $this->belongsTo(Tree::class);
     }
     public function cart()
@@ -18,11 +19,6 @@ class CartItem extends Model
     public function productVariant()
     {
         return $this->belongsTo(ProductVariant::class);
-    }
-
-    public function treeInstance()
-    {
-        return $this->belongsTo(TreeInstance::class);
     }
 
     public function planPrice()

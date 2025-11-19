@@ -21,14 +21,18 @@ final class CartItemResource extends JsonResource
         $variant = $this->productVariant;
         $product = $variant->inventory->product;
 
+        $firstMedia = $variant->getFirstMedia('images');
+        $imageUrl = $firstMedia ? $firstMedia->getFullUrl() : null;
+
         return [
             'id' => $this->id,
             'type' => 'product',
+            'product_variant_id' => $variant->id,
             'quantity' => $this->quantity,
             'price' => (float) $this->amount,
 
             'name' => $product->name,
-            'image_url' => $variant->getFirstMedia('images')->getFullUrl(),
+            'image_url' => $imageUrl,
 
             'variant' => [
                 'sku' => $variant->sku,
@@ -45,12 +49,40 @@ final class CartItemResource extends JsonResource
         $tree = $this->tree;
         $ded = $this->dedication;
 
+        $firstMedia = $tree->getFirstMedia('images');
+        $imageUrl = $firstMedia ? $firstMedia->getFullUrl() : null;
+
+        $availablePlans = $tree->planPrices
+            ->groupBy('plan_id')
+            ->map(function ($planPrices) {
+                $firstPlanPrice = $planPrices->first();
+                return [
+                    'id' => $firstPlanPrice->plan->id,
+                    'duration' => $firstPlanPrice->plan->duration,
+                    'duration_unit' => $firstPlanPrice->plan->duration_unit,
+                    'plan_prices' => $planPrices->map(function ($pp) {
+                        return [
+                            'id' => $pp->id,
+                            'price' => (float) $pp->price,
+                            'plan' => [
+                                'id' => $pp->plan->id,
+                                'duration' => $pp->plan->duration,
+                                'duration_unit' => $pp->plan->duration_unit,
+                            ],
+                        ];
+                    })->values()->toArray(),
+                ];
+            })->values()->toArray();
+
         return [
             'id' => $this->id,
             'type' => $this->type,
             'quantity' => $this->quantity,
             'duration' => $planPrice->plan->duration,
+            'duration_unit' => $planPrice->plan->duration_unit,
             'price' => (float) $this->amount,
+            'image_url' => $imageUrl,
+            'plan_price_id' => $planPrice->id,
 
             'tree' => [
                 'id' => $tree->id,
@@ -60,7 +92,10 @@ final class CartItemResource extends JsonResource
             'plan' => [
                 'id' => $planPrice->plan->id,
                 'duration' => $planPrice->plan->duration,
+                'duration_unit' => $planPrice->plan->duration_unit,
             ],
+
+            'available_plans' => $availablePlans,
 
             'dedication' => [
                 'name' => $ded->name ?? null,

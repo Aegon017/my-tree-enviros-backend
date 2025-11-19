@@ -39,11 +39,6 @@ class CartRepository
         return $cart->items()->where('product_variant_id', $variantId)->first();
     }
 
-    public function findTreeInstance(Cart $cart, int $instanceId): ?CartItem
-    {
-        return $cart->items()->where('tree_instance_id', $instanceId)->first();
-    }
-
     public function clear(Cart $cart): void
     {
         $cart->items()->delete();
