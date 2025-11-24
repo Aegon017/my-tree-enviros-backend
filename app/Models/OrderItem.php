@@ -12,15 +12,8 @@ final class OrderItem extends Model
 {
     protected $casts = [
         'quantity' => 'integer',
-        'price' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'gst_amount' => 'decimal:2',
-        'cgst_amount' => 'decimal:2',
-        'sgst_amount' => 'decimal:2',
-        'options' => 'json',
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-        'is_renewal' => 'boolean',
+        'amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
     ];
 
     public function order(): BelongsTo
@@ -28,54 +21,34 @@ final class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
-    public function orderable(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
     public function dedication()
     {
         return $this->morphOne(TreeDedication::class, 'dedicatable');
     }
 
-    /**
-     * Legacy relationship - for tree items
-     */
     public function treeInstance(): BelongsTo
     {
         return $this->belongsTo(TreeInstance::class);
     }
 
-    /**
-     * Legacy relationship - for tree plan pricing
-     */
+    public function tree(): BelongsTo
+    {
+        return $this->belongsTo(Tree::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
     public function planPrice(): BelongsTo
     {
         return $this->belongsTo(PlanPrice::class);
     }
 
-    /**
-     * Get product variant if this is a product order
-     */
     public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class, 'orderable_id')
-            ->where('orderable_type', ProductVariant::class);
-    }
-
-    /**
-     * Get product if this is a product order
-     */
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class, 'orderable_id')
-            ->where('orderable_type', Product::class);
-    }
-
-    public function campaign(): BelongsTo
-    {
-        return $this->belongsTo(Campaign::class, 'orderable_id')
-            ->where('orderable_type', Campaign::class);
+        return $this->belongsTo(ProductVariant::class);
     }
 
     /**

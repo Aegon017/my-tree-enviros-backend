@@ -17,7 +17,7 @@ final class OrderForm
     {
         return $schema
             ->components([
-                TextInput::make('order_number')
+                TextInput::make('reference_number')
                     ->disabled(),
                 Select::make('user_id')
                     ->options(fn () => User::query()

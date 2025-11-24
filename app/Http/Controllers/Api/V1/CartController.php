@@ -17,7 +17,6 @@ final class CartController
 
     public function index(Request $request): JsonResponse
     {
-        Log::info($request->user()->id);
         return $this->cartService->getCart($request->user()->id);
     }
 

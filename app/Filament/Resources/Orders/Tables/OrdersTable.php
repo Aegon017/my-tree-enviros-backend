@@ -16,7 +16,7 @@ final class OrdersTable
     {
         return $table
             ->columns([
-                TextColumn::make('order_number')
+                TextColumn::make('reference_number')
                     ->searchable(),
                 TextColumn::make('user.name')
                     ->searchable(),
