@@ -18,7 +18,6 @@ return new class extends Migration
             $table->foreignId('tree_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_price_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('tree_instance_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedInteger('quantity');
             $table->decimal('amount', 10, 2)->nullable();
             $table->decimal('total_amount', 10, 2)->nullable();

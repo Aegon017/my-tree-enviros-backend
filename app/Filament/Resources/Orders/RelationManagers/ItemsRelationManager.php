@@ -31,7 +31,7 @@ final class ItemsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('treeInstance.tree.name')
                     ->searchable(),
-                TextColumn::make('treePlanPrice.plan.name')
+                TextColumn::make('PlanPrice.plan.name')
                     ->searchable(),
                 TextColumn::make('price')
                     ->money()

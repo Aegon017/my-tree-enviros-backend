@@ -14,17 +14,17 @@ class StoreShippingAddressRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:128',
-            'phone' => 'required|string|max:32',
-            'address' => 'required|string|max:512',
-            'area' => 'nullable|string|max:128',
-            'city' => 'nullable|string|max:128',
-            'postal_code' => 'nullable|string|max:12',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'post_office_name' => 'nullable|string|max:255',
-            'post_office_branch_type' => 'nullable|string|max:64',
-            'is_default' => 'nullable|boolean',
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
+            'address' => ['required', 'string', 'max:500'],
+            'city' => ['required', 'string', 'max:100'],
+            'area' => ['required', 'string', 'max:100'],
+            'postal_code' => ['required', 'string', 'max:8'],
+            'latitude' => ['required', 'numeric'],
+            'longitude' => ['required', 'numeric'],
+            'post_office_name' => ['nullable', 'string', 'max:255'],
+            'post_office_branch_type' => ['nullable', 'string', 'max:100'],
+            'is_default' => ['boolean'],
         ];
     }
 }

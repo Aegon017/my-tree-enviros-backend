@@ -22,7 +22,16 @@ final class CartService
     public function getCart(int $userId): JsonResponse
     {
         $cart = $this->repo->getOrCreate($userId);
-        return $this->success(['cart' => new CartResource($cart->load('items.dedication'))]);
+
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication'
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
     }
 
     public function addToUserCart(int $userId, array $data): JsonResponse
@@ -72,7 +81,15 @@ final class CartService
             $item->dedication()->create($data['dedication']);
         }
 
-        return $this->success(['cart' => new CartResource($cart->load('items.dedication'))]);
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication'
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
     }
 
     protected function addAdoptTree(Cart $cart, array $data): JsonResponse
@@ -96,7 +113,15 @@ final class CartService
             $item->dedication()->create($data['dedication']);
         }
 
-        return $this->success(['cart' => new CartResource($cart->load('items.dedication'))]);
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication'
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
     }
 
     protected function addProduct(Cart $cart, array $data): JsonResponse
@@ -114,7 +139,15 @@ final class CartService
             'total_amount'       => $total,
         ]);
 
-        return $this->success(['cart' => new CartResource($cart->load('items.dedication'))]);
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication'
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
     }
 
     public function updateUserCartItem(int $userId, int $itemId, array $data): JsonResponse
@@ -127,14 +160,37 @@ final class CartService
             $item->quantity = $data['quantity'];
         }
 
+        if (isset($data['plan_price_id'])) {
+            $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
+
+            $item->plan_price_id = $planPrice->id;
+            $item->plan_id = $planPrice->plan_id;
+            $item->amount = (float) $planPrice->price;
+        }
+
         if ($item->plan_price_id) {
             $price = PlanPrice::find($item->plan_price_id)?->price ?? $item->amount;
             $item->total_amount = $price * $item->quantity;
+        } elseif ($item->product_variant_id) {
+            $variant = ProductVariant::find($item->product_variant_id);
+            if ($variant) {
+                $price = $variant->selling_price ?? $variant->original_price;
+                $item->amount = $price;
+                $item->total_amount = $price * $item->quantity;
+            }
         }
 
         $item->save();
 
-        return $this->success(['cart' => new CartResource($cart->load('items.dedication'))]);
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication'
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
     }
 
     public function removeUserCartItem(int $userId, int $itemId): JsonResponse
@@ -142,7 +198,15 @@ final class CartService
         $cart = $this->repo->getOrCreate($userId);
         $cart->items()->where('id', $itemId)->delete();
 
-        return $this->success(['cart' => new CartResource($cart->load('items.dedication'))]);
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication'
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
     }
 
     public function clearUserCart(int $userId): JsonResponse
@@ -150,6 +214,14 @@ final class CartService
         $cart = $this->repo->getOrCreate($userId);
         $cart->items()->delete();
 
-        return $this->success(['cart' => new CartResource($cart->load('items.dedication'))]);
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication'
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
     }
 }
