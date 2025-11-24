@@ -8,8 +8,11 @@ use App\Enums\OrderStatusEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\TreeStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Models\TreeRenewalSchedule;
+use App\Models\TreeStatusLog;
 use App\Traits\ResponseHelpers;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -17,78 +20,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Razorpay\Api\Api;
+use Razorpay\Api\Errors\SignatureVerificationError;
 
-/**
- * @OA\Tag(
- *     name="Payment",
- *     description="Payment processing and verification endpoints (Razorpay integration)"
- * )
- */
 final class PaymentController extends Controller
 {
     use ResponseHelpers;
 
-    /**
-     * @OA\Post(
-     *     path="/api/v1/orders/{orderId}/payment/initiate",
-     *     summary="Initiate payment",
-     *     description="Initiate Razorpay payment for an order",
-     *     tags={"Payment"},
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\Parameter(
-     *         name="orderId",
-     *         in="path",
-     *         description="Order ID",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *
-     *         @OA\JsonContent(
-     *             required={"payment_method"},
-     *
-     *             @OA\Property(property="payment_method", type="string", enum={"razorpay"}, example="razorpay", description="Payment method")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Payment initiated successfully",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Payment initiated successfully"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="razorpay_order_id", type="string", example="order_MYtreexyz123", description="Razorpay order ID"),
-     *                 @OA\Property(property="amount", type="number", format="float", example=590.00, description="Order amount"),
-     *                 @OA\Property(property="currency", type="string", example="INR", description="Currency code"),
-     *                 @OA\Property(property="order_number", type="string", example="ORD-ABC-20250101-1234", description="Order number"),
-     *                 @OA\Property(property="key", type="string", example="rzp_test_xxxxxxxxxx", description="Razorpay API key for frontend")
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=404,
-     *         description="Order not found"
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Order cannot be paid (already paid/cancelled)"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Failed to initiate payment"
-     *     )
-     * )
-     */
     public function initiateRazorpay(Request $request, string $orderId): JsonResponse
     {
         $request->validate([
@@ -99,124 +36,54 @@ final class PaymentController extends Controller
             ->where('user_id', $request->user()->id)
             ->find($orderId);
 
-        if (! $order) {
+        if (!$order) {
             return $this->notFound('Order not found');
         }
 
         if ($order->status !== OrderStatusEnum::PENDING) {
-            return $this->error('Order cannot be paid. Current status: '.$order->status->label(), 422);
+            return $this->error('Order cannot be paid. Current status: ' . $order->status->label(), 422);
+        }
+        // Handle free orders (amount <= 0)
+        if ($order->total <= 0) {
+            return $this->handleFreeOrder($order, $request->user()->id);
         }
 
         try {
-            // Initialize Razorpay API
-            $api = new Api(
-                config('services.razorpay.key'),
-                config('services.razorpay.secret')
-            );
+            $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
 
-            // Create Razorpay order
-            $amount = (int) round($order->total_amount * 100); // Convert to paise and ensure no decimal values
+            $amount = (int) round($order->total * 100); // Amount in paise
             $razorpayOrder = $api->order->create([
                 'receipt' => $order->reference_number,
-                'amount' => $amount, // Amount in paise
+                'amount' => $amount,
                 'currency' => $order->currency,
                 'notes' => [
                     'order_id' => $order->id,
                     'order_number' => $order->reference_number,
                     'user_id' => $order->user_id,
-                    'original_amount' => $order->total_amount,
                 ],
             ]);
 
-            // Store payment information
             OrderPayment::create([
                 'order_id' => $order->id,
-                'amount' => $order->total_amount,
+                'amount' => $order->total,
                 'payment_method' => PaymentMethodEnum::RAZORPAY->value,
                 'transaction_id' => $razorpayOrder->id,
                 'status' => 'initiated',
-                'paid_at' => null,
             ]);
 
             return $this->success([
                 'razorpay_order_id' => $razorpayOrder->id,
-                // Return amount in paise for the frontend/checkout (amount expected in smallest currency unit)
                 'amount' => $amount,
-                'amount_rupees' => $order->total_amount,
+                'amount_rupees' => $order->total,
                 'currency' => $order->currency,
-                    'order_number' => $order->reference_number,
                 'key' => config('services.razorpay.key'),
+                'order_number' => $order->reference_number,
             ], 'Payment initiated successfully');
-        } catch (Exception $exception) {
-            Log::error('Razorpay payment initiation failed', [
-                'order_id' => $order->id,
-                'error' => $exception->getMessage(),
-            ]);
-
-            return $this->error('Failed to initiate payment: '.$exception->getMessage(), 500);
+        } catch (Exception $e) {
+            return $this->error('Failed to initiate payment: ' . $e->getMessage(), 500);
         }
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/v1/orders/{orderId}/payment/verify",
-     *     summary="Verify payment",
-     *     description="Verify Razorpay payment signature and update order status",
-     *     tags={"Payment"},
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\Parameter(
-     *         name="orderId",
-     *         in="path",
-     *         description="Order ID",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *
-     *         @OA\JsonContent(
-     *             required={"razorpay_order_id", "razorpay_payment_id", "razorpay_signature"},
-     *
-     *             @OA\Property(property="razorpay_order_id", type="string", example="order_MYtreexyz123", description="Razorpay order ID"),
-     *             @OA\Property(property="razorpay_payment_id", type="string", example="pay_MYtreeabc456", description="Razorpay payment ID"),
-     *             @OA\Property(property="razorpay_signature", type="string", example="signature_hash_here", description="Razorpay signature")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Payment verified successfully",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Payment verified successfully"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="order", ref="#/components/schemas/Order"),
-     *                 @OA\Property(property="payment_id", type="string", example="pay_MYtreeabc456")
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=404,
-     *         description="Order not found"
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Payment verification failed. Invalid signature"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Payment verification failed"
-     *     )
-     * )
-     */
     public function verifyRazorpay(Request $request, string $orderId): JsonResponse
     {
         $validated = $request->validate([
@@ -231,7 +98,7 @@ final class PaymentController extends Controller
                 ->lockForUpdate()
                 ->find($orderId);
 
-            if (! $order) {
+            if (!$order) {
                 return $this->notFound('Order not found');
             }
 
@@ -240,13 +107,8 @@ final class PaymentController extends Controller
             }
 
             try {
-                // Initialize Razorpay API
-                $api = new Api(
-                    config('services.razorpay.key'),
-                    config('services.razorpay.secret')
-                );
+                $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
 
-                // Verify payment signature
                 $attributes = [
                     'razorpay_order_id' => $validated['razorpay_order_id'],
                     'razorpay_payment_id' => $validated['razorpay_payment_id'],
@@ -255,267 +117,47 @@ final class PaymentController extends Controller
 
                 $api->utility->verifyPaymentSignature($attributes);
 
-                // Fetch payment details
                 $payment = $api->payment->fetch($validated['razorpay_payment_id']);
-
-                // Update order status
-                $order->status = OrderStatusEnum::PAID;
-                $order->save();
-
-                // Update payment record
-                $orderPayment = OrderPayment::where('order_id', $order->id)
-                    ->where('transaction_id', $validated['razorpay_order_id'])
-                    ->first();
-
-                // Get payment amount from Razorpay payment details and convert from paise to rupees
                 $paidAmount = $payment->amount / 100;
 
-                if ($orderPayment) {
-                    $orderPayment->update([
-                        'transaction_id' => $validated['razorpay_payment_id'],
-                        'status' => 'success',
-                        'paid_at' => now(),
-                        'amount' => $paidAmount, // Update with actual paid amount
-                    ]);
-                } else {
-                    OrderPayment::create([
-                        'order_id' => $order->id,
-                        'amount' => $paidAmount,
-                        'payment_method' => PaymentMethodEnum::RAZORPAY->value,
-                        'transaction_id' => $validated['razorpay_payment_id'],
-                        'status' => 'success',
-                        'paid_at' => now(),
-                    ]);
-                }
-
-                // Update tree instance statuses
-                foreach ($order->items as $item) {
-                    $treeInstance = $item->treeInstance;
-                    $planType = $item->treePlanPrice->plan->type->value;
-
-                    if ($planType === 'sponsorship') {
-                        $treeInstance->status = TreeStatusEnum::SPONSORED;
-                    } elseif ($planType === 'adoption') {
-                        $treeInstance->status = TreeStatusEnum::ADOPTED;
-                    }
-
-                    $treeInstance->save();
-
-                    // Log status change
-                    \App\Models\TreeStatusLog::create([
-                        'tree_instance_id' => $treeInstance->id,
-                        'status' => $treeInstance->status->value,
-                        'user_id' => $request->user()->id,
-                        'notes' => sprintf('Status changed to %s after successful payment for order %s', $treeInstance->status->label(), $order->reference_number),
-                    ]);
-
-                    // Create renewal schedule if needed
-                    if ($planType === 'sponsorship') {
-                        $reminderDate = \Carbon\Carbon::parse($item->end_date)->subDays(30);
-
-                        \App\Models\TreeRenewalSchedule::create([
-                            'order_item_id' => $item->id,
-                            'reminder_date' => $reminderDate,
-                            'reminder_sent' => false,
-                        ]);
-                    }
-                }
-
-                Log::info('Payment verified successfully', [
-                    'order_id' => $order->id,
-                    'payment_id' => $validated['razorpay_payment_id'],
-                ]);
+                $this->completeOrder(
+                    $order,
+                    $validated['razorpay_payment_id'],
+                    $paidAmount,
+                    PaymentMethodEnum::RAZORPAY->value,
+                    $request->user()->id,
+                    $validated['razorpay_order_id']
+                );
 
                 return $this->success([
-                    'order' => new \App\Http\Resources\Api\V1\OrderResource($order->load(['items.treeInstance.tree', 'items.treePlanPrice.plan'])),
+                    'order' => new OrderResource($order->load(['items.treeInstance.tree', 'items.planPrice.plan'])),
                     'payment_id' => $validated['razorpay_payment_id'],
                 ], 'Payment verified successfully');
-            } catch (\Razorpay\Api\Errors\SignatureVerificationError $e) {
-                Log::error('Razorpay signature verification failed', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                ]);
-
-                // Update payment status to failed
-                OrderPayment::where('order_id', $order->id)
-                    ->where('transaction_id', $validated['razorpay_order_id'])
-                    ->update(['status' => 'failed']);
-
-                $order->status = OrderStatusEnum::FAILED;
-                $order->save();
+            } catch (SignatureVerificationError $e) {
+                $this->markPaymentFailed($order, $validated['razorpay_order_id']);
 
                 return $this->error('Payment verification failed. Invalid signature.', 422);
             } catch (Exception $e) {
-                Log::error('Payment verification failed', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
+                $this->markPaymentFailed($order, $validated['razorpay_order_id']);
 
-                $order->status = OrderStatusEnum::FAILED;
-                $order->save();
-
-                return $this->error('Payment verification failed: '.$e->getMessage(), 500);
+                return $this->error('Payment verification failed: ' . $e->getMessage(), 500);
             }
         });
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/v1/payments/webhook/razorpay",
-     *     summary="Razorpay webhook",
-     *     description="Webhook endpoint for Razorpay payment notifications (called by Razorpay servers)",
-     *     tags={"Payment"},
-     *
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Webhook payload from Razorpay",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="event", type="string", example="payment.captured", description="Webhook event type"),
-     *             @OA\Property(
-     *                 property="payload",
-     *                 type="object",
-     *                 description="Event payload data"
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Webhook processed successfully",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Webhook processed")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=401,
-     *         description="Invalid webhook signature"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Webhook processing failed"
-     *     )
-     * )
-     */
-    public function webhook(Request $request): JsonResponse
-    {
-        $webhookSecret = config('services.razorpay.webhook_secret');
-        $webhookSignature = $request->header('X-Razorpay-Signature');
-        $webhookBody = $request->getContent();
-
-        try {
-            // Verify webhook signature
-            $expectedSignature = hash_hmac('sha256', $webhookBody, (string) $webhookSecret);
-
-            if ($webhookSignature !== $expectedSignature) {
-                Log::warning('Invalid webhook signature');
-
-                return $this->error('Invalid signature', 401);
-            }
-
-            $payload = $request->all();
-            $event = $payload['event'] ?? null;
-
-            Log::info('Razorpay webhook received', [
-                'event' => $event,
-                'payload' => $payload,
-            ]);
-
-            // Handle different webhook events
-            match ($event) {
-                'payment.authorized', 'payment.captured' => $this->handlePaymentSuccess($payload),
-                'payment.failed' => $this->handlePaymentFailed($payload),
-                'order.paid' => $this->handleOrderPaid($payload),
-                default => Log::info('Unhandled webhook event', ['event' => $event]),
-            };
-
-            return $this->success(null, 'Webhook processed');
-        } catch (Exception $exception) {
-            Log::error('Webhook processing failed', [
-                'error' => $exception->getMessage(),
-                'trace' => $exception->getTraceAsString(),
-            ]);
-
-            return $this->error('Webhook processing failed', 500);
-        }
-    }
-
-    /**
-     * @OA\Get(
-     *     path="/api/v1/orders/{orderId}/payment/status",
-     *     summary="Get payment status",
-     *     description="Get the payment status for a specific order",
-     *     tags={"Payment"},
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\Parameter(
-     *         name="orderId",
-     *         in="path",
-     *         description="Order ID",
-     *         required=true,
-     *
-     *         @OA\Schema(type="integer")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful operation",
-     *
-     *         @OA\JsonContent(
-     *
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Success"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="order_id", type="integer", example=1),
-     *                 @OA\Property(property="order_number", type="string", example="ORD-ABC-20250101-1234"),
-     *                 @OA\Property(property="order_status", type="string", example="paid"),
-     *                 @OA\Property(property="order_status_label", type="string", example="Paid"),
-     *                 @OA\Property(
-     *                     property="payment",
-     *                     type="object",
-     *                     nullable=true,
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="amount", type="string", example="590.00"),
-     *                     @OA\Property(property="payment_method", type="string", example="razorpay"),
-     *                     @OA\Property(property="transaction_id", type="string", example="pay_MYtreeabc456"),
-     *                     @OA\Property(property="status", type="string", example="success"),
-     *                     @OA\Property(property="paid_at", type="string", format="date-time", example="2025-01-01T12:00:00.000000Z")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=404,
-     *         description="Order not found"
-     *     )
-     * )
-     */
     public function status(Request $request, string $orderId): JsonResponse
     {
-        $order = Order::with('items.treeInstance')
-            ->where('user_id', $request->user()->id)
-            ->find($orderId);
+        $order = Order::where('user_id', $request->user()->id)->find($orderId);
 
-        if (! $order) {
+        if (!$order) {
             return $this->notFound('Order not found');
         }
 
-        $payment = OrderPayment::where('order_id', $order->id)
-            ->latest()
-            ->first();
+        $payment = OrderPayment::where('order_id', $order->id)->latest()->first();
 
         return $this->success([
             'order_id' => $order->id,
-                'order_number' => $order->reference_number,
+            'order_number' => $order->reference_number,
             'order_status' => $order->status->value,
             'order_status_label' => $order->status->label(),
             'payment' => $payment ? [
@@ -529,102 +171,184 @@ final class PaymentController extends Controller
         ]);
     }
 
-    /**
-     * Handle successful payment webhook
-     */
-    private function handlePaymentSuccess(array $payload): void
+    public function webhook(Request $request): JsonResponse
     {
-        DB::transaction(function () use ($payload): void {
+        Log::info('Razorpay webhook received', [
+            'headers' => $request->headers->all(),
+            'body' => $request->getContent(),
+        ]);
+
+        $webhookSecret = config('services.razorpay.webhook_secret');
+        $webhookSignature = $request->header('X-Razorpay-Signature');
+        $webhookBody = $request->getContent();
+
+        if (!$webhookSecret) {
+            Log::error('Razorpay webhook secret not configured');
+            return $this->error('Webhook configuration error', 500);
+        }
+
+        if (!$webhookSignature) {
+            Log::error('Razorpay webhook signature missing');
+            return $this->error('Signature missing', 401);
+        }
+
+        try {
+            $expectedSignature = hash_hmac('sha256', $webhookBody, (string) $webhookSecret);
+
+            if ($webhookSignature !== $expectedSignature) {
+                Log::error('Razorpay webhook signature mismatch', [
+                    'expected' => $expectedSignature,
+                    'received' => $webhookSignature,
+                ]);
+                return $this->error('Invalid signature', 401);
+            }
+
+            $payload = $request->all();
+            $event = $payload['event'] ?? null;
+
+            Log::info('Razorpay webhook event processing', ['event' => $event, 'payload' => $payload]);
+
+            switch ($event) {
+                case 'payment.captured':
+                    $this->handlePaymentSuccessWebhook($payload);
+                    break;
+                case 'payment.failed':
+                    $this->handlePaymentFailedWebhook($payload);
+                    break;
+                default:
+                    Log::info('Razorpay webhook event not handled', ['event' => $event]);
+            }
+
+            return $this->success(null, 'Webhook processed');
+        } catch (Exception $e) {
+            Log::error('Razorpay webhook processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return $this->error('Webhook processing failed', 500);
+        }
+    }
+
+    private function handleFreeOrder(Order $order, int $userId): JsonResponse
+    {
+        try {
+            DB::transaction(function () use ($order, $userId) {
+                $this->completeOrder(
+                    $order,
+                    'FREE-' . uniqid(),
+                    0,
+                    PaymentMethodEnum::MANUAL->value,
+                    $userId
+                );
+            });
+
+            return $this->success([
+                'is_free' => true,
+                'order_id' => $order->id,
+                'amount' => 0,
+                'currency' => $order->currency,
+                'order_number' => $order->reference_number,
+            ], 'Order processed successfully (Free)');
+        } catch (Exception $e) {
+            return $this->error('Failed to process free order', 500);
+        }
+    }
+
+    private function completeOrder(
+        Order $order,
+        string $transactionId,
+        float $paidAmount,
+        string $paymentMethod,
+        int $userId,
+        ?string $initiationTransactionId = null
+    ): void {
+        $order->status = OrderStatusEnum::PAID;
+        $order->payment_method = $paymentMethod;
+        $order->paid_at = now();
+        $order->save();
+
+        $orderPayment = null;
+        if ($initiationTransactionId) {
+            $orderPayment = OrderPayment::where('order_id', $order->id)
+                ->where('transaction_id', $initiationTransactionId)
+                ->first();
+        }
+
+        if ($orderPayment) {
+            $orderPayment->update([
+                'transaction_id' => $transactionId,
+                'status' => 'success',
+                'paid_at' => now(),
+                'amount' => $paidAmount,
+            ]);
+        } else {
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'amount' => $paidAmount,
+                'payment_method' => $paymentMethod,
+                'transaction_id' => $transactionId,
+                'status' => 'success',
+                'paid_at' => now(),
+            ]);
+        }
+
+        foreach ($order->items as $item) {
+            if ($item->treeInstance) {
+                $treeInstance = $item->treeInstance;
+                $planType = $item->planPrice?->plan?->type?->value;
+
+                if ($planType === 'sponsorship') {
+                    $treeInstance->status = TreeStatusEnum::SPONSORED;
+                } elseif ($planType === 'adoption') {
+                    $treeInstance->status = TreeStatusEnum::ADOPTED;
+                }
+
+                $treeInstance->save();
+            }
+        }
+    }
+
+    private function markPaymentFailed(Order $order, string $transactionId): void
+    {
+        OrderPayment::where('order_id', $order->id)
+            ->where('transaction_id', $transactionId)
+            ->update(['status' => 'failed']);
+
+        $order->status = OrderStatusEnum::FAILED;
+        $order->save();
+    }
+
+    private function handlePaymentSuccessWebhook(array $payload): void
+    {
+        DB::transaction(function () use ($payload) {
             $paymentId = $payload['payload']['payment']['entity']['id'] ?? null;
             $orderId = $payload['payload']['payment']['entity']['order_id'] ?? null;
+            $amount = ($payload['payload']['payment']['entity']['amount'] ?? 0) / 100;
 
-            if (! $paymentId || ! $orderId) {
-                return;
-            }
+            if (!$paymentId || !$orderId) return;
 
             $orderPayment = OrderPayment::where('transaction_id', $orderId)->first();
-
-            if ($orderPayment) {
-                // Get payment amount from webhook payload and convert from paise to rupees
-                $paidAmount = ($payload['payload']['payment']['entity']['amount'] ?? 0) / 100;
-
-                $orderPayment->update([
-                    'transaction_id' => $paymentId,
-                    'status' => 'success',
-                    'paid_at' => now(),
-                    'amount' => $paidAmount,
-                ]);
-
-                $order = $orderPayment->order;
-                if ($order && $order->status === OrderStatusEnum::PENDING) {
-                    $order->status = OrderStatusEnum::PAID;
-                    $order->save();
-
-                    // Update tree statuses
-                    foreach ($order->items as $item) {
-                        $treeInstance = $item->treeInstance;
-                        $planType = $item->treePlanPrice->plan->type->value;
-
-                        if ($planType === 'sponsorship') {
-                            $treeInstance->status = TreeStatusEnum::SPONSORED;
-                        } elseif ($planType === 'adoption') {
-                            $treeInstance->status = TreeStatusEnum::ADOPTED;
-                        }
-
-                        $treeInstance->save();
-                    }
-                }
+            if ($orderPayment && $orderPayment->order) {
+                $this->completeOrder(
+                    $orderPayment->order,
+                    $paymentId,
+                    $amount,
+                    PaymentMethodEnum::RAZORPAY->value,
+                    $orderPayment->order->user_id,
+                    $orderId
+                );
             }
         });
     }
 
-    /**
-     * Handle failed payment webhook
-     */
-    private function handlePaymentFailed(array $payload): void
+    private function handlePaymentFailedWebhook(array $payload): void
     {
-        DB::transaction(function () use ($payload): void {
-            $orderId = $payload['payload']['payment']['entity']['order_id'] ?? null;
+        $orderId = $payload['payload']['payment']['entity']['order_id'] ?? null;
+        if (!$orderId) return;
 
-            if (! $orderId) {
-                return;
-            }
-
-            $orderPayment = OrderPayment::where('transaction_id', $orderId)->first();
-
-            if ($orderPayment) {
-                $orderPayment->update(['status' => 'failed']);
-
-                $order = $orderPayment->order;
-                if ($order && $order->status === OrderStatusEnum::PENDING) {
-                    $order->status = OrderStatusEnum::FAILED;
-                    $order->save();
-                }
-            }
-        });
-    }
-
-    /**
-     * Handle order paid webhook
-     */
-    private function handleOrderPaid(array $payload): void
-    {
-        DB::transaction(function () use ($payload): void {
-            $orderId = $payload['payload']['order']['entity']['id'] ?? null;
-
-            if (! $orderId) {
-                return;
-            }
-
-            $orderPayment = OrderPayment::where('transaction_id', $orderId)->first();
-
-            if ($orderPayment) {
-                $order = $orderPayment->order;
-                if ($order && $order->status === OrderStatusEnum::PENDING) {
-                    $order->status = OrderStatusEnum::PAID;
-                    $order->save();
-                }
-            }
-        });
+        $orderPayment = OrderPayment::where('transaction_id', $orderId)->first();
+        if ($orderPayment && $orderPayment->order) {
+            $this->markPaymentFailed($orderPayment->order, $orderId);
+        }
     }
 }
