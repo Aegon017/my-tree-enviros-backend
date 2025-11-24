@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('latitude', 10, 7);
             $table->decimal('longitude', 10, 7);
 
-            $table->string('post_office_name');
+            $table->string('post_office_name')->nullable();
             $table->string('post_office_branch_type')->nullable();
 
             $table->boolean('is_default');
