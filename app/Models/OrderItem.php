@@ -51,57 +51,65 @@ final class OrderItem extends Model
         return $this->belongsTo(ProductVariant::class);
     }
 
+    public function isTree(): bool
+    {
+        return in_array($this->type, ['sponsor', 'adopt', 'tree']);
+    }
+
+    public function isProduct(): bool
+    {
+        return $this->type === 'product';
+    }
+
+    public function isCampaign(): bool
+    {
+        return $this->type === 'campaign';
+    }
+
     /**
      * Get item details for display
      */
     public function getItemDetails(): array
     {
-        // For tree items (backward compatibility)
+        // For tree items
         if ($this->isTree()) {
-            $tree = $this->treeInstance ?? $this->orderable;
-            $planPrice = $this->treePlanPrice;
+            $tree = $this->tree;
+            $plan = $this->plan;
 
             return [
                 'type' => 'tree',
                 'item_type' => 'tree',
-                'name' => $tree->tree->name ?? 'Tree',
-                'sku' => $tree->sku,
-                'image' => $tree->tree->getFirstMediaUrl('thumbnails') ?? null,
-                'plan_name' => $planPrice?->plan->name ?? $this->options['plan_name'] ?? null,
-                'plan_type' => $planPrice?->plan->type->value ?? $this->options['plan_type'] ?? null,
-                'duration' => $planPrice?->plan->duration_display ?? $this->options['duration_display'] ?? null,
-                'location' => $tree->location->name ?? null,
+                'name' => $tree->name ?? 'Tree',
+                'image' => $tree->image_url ?? null, // Assuming image_url exists or use media
+                'plan_name' => $plan->name ?? null,
+                'plan_type' => $this->type,
+                'location' => $this->treeInstance->location->name ?? null,
             ];
         }
 
         // For product items
         if ($this->isProduct()) {
-            $product = $this->orderable;
+            $variant = $this->productVariant;
+            $product = $variant->product ?? null;
 
             return [
                 'type' => 'product',
                 'item_type' => 'product',
-                'name' => $product->product->name ?? $product->name ?? 'Product',
-                'sku' => $product->sku ?? null,
-                'image' => $product->product->getFirstMediaUrl('images') ?? null,
-                'variant' => $this->options['variant'] ?? null,
-                'color' => $product->color ?? null,
-                'size' => $product->size ?? null,
+                'name' => $product->name ?? 'Product',
+                'image' => $product->main_image_url ?? null,
+                'variant' => $variant ? [
+                    'color' => $variant->color,
+                    'size' => $variant->size,
+                ] : null,
             ];
         }
 
         // For campaign items
         if ($this->isCampaign()) {
-            $campaign = $this->orderable;
-
             return [
                 'type' => 'campaign',
                 'item_type' => 'campaign',
-                'name' => $campaign->name ?? 'Campaign',
-                'campaign_type' => $campaign->type->label() ?? null,
-                'image' => $campaign->getFirstMediaUrl('thumbnails') ?? null,
-                'location' => $campaign->location->name ?? null,
-                'description' => $campaign->description ?? null,
+                'name' => 'Campaign Donation',
             ];
         }
 
@@ -117,26 +125,6 @@ final class OrderItem extends Model
      */
     public function getOrderType(): string
     {
-        if ($this->isTree()) {
-            $planType = $this->treePlanPrice?->plan->type->value ?? $this->options['plan_type'] ?? null;
-
-            if ($planType === 'sponsorship') {
-                return 'sponsor';
-            }
-
-            if ($planType === 'adoption') {
-                return 'adopt';
-            }
-        }
-
-        if ($this->isProduct()) {
-            return 'product';
-        }
-
-        if ($this->isCampaign()) {
-            return 'campaign';
-        }
-
-        return 'unknown';
+        return $this->type ?? 'unknown';
     }
 }

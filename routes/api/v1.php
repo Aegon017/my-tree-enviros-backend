@@ -88,6 +88,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('/', [OrderController::class, 'index']);
         Route::post('/', [OrderController::class, 'store']);
         Route::post('/direct', [OrderController::class, 'storeDirect']);
+        Route::post('/validate-coupon', [OrderController::class, 'validateCoupon']);
         Route::get('/{id}', [OrderController::class, 'show']);
         Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
     });
