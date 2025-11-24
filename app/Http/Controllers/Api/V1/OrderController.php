@@ -104,7 +104,7 @@ final class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Order::query()
-            ->with(['items.treeInstance.tree', 'items.treePlanPrice.plan'])
+            ->with(['items.treeInstance.tree', 'items.planPrice.plan'])
             ->where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc');
 
@@ -193,7 +193,7 @@ final class OrderController extends Controller
             // Get user's cart
             $cart = Cart::with([
                 'items.treeInstance.tree',
-                'items.treePlanPrice.plan',
+                'items.planPrice.plan',
             ])
                 ->where('user_id', $user->id)
                 ->first();
@@ -268,7 +268,7 @@ final class OrderController extends Controller
             // Create order items from cart (trees, products, campaigns)
             foreach ($cart->items as $cartItem) {
                 if (method_exists($cartItem, 'isTree') && $cartItem->isTree()) {
-                    $plan = $cartItem->treePlanPrice->plan;
+                    $plan = $cartItem->planPrice->plan;
 
                     // Calculate start and end dates based on plan duration
                     $startDate = now();
@@ -372,7 +372,7 @@ final class OrderController extends Controller
             // Load order relationships
             $order->load([
                 'items.treeInstance.tree',
-                'items.treePlanPrice.plan',
+                'items.planPrice.plan',
             ]);
 
             return $this->created(
@@ -555,28 +555,28 @@ final class OrderController extends Controller
             }
 
             // Get tree plan price
-            $treePlanPrice = \App\Models\TreePlanPrice::with(['plan', 'tree'])
+            $planPrice = \App\Models\planPrice::with(['plan', 'tree'])
                 ->where('id', $validated['tree_plan_price_id'])
                 ->where('is_active', true)
                 ->first();
 
-            if (! $treePlanPrice) {
+            if (! $planPrice) {
                 return $this->error('This pricing plan is not available', 422);
             }
 
             // Verify the plan belongs to the tree
-            if ($treePlanPrice->tree_id !== $treeInstance->tree_id) {
+            if ($planPrice->tree_id !== $treeInstance->tree_id) {
                 return $this->error('Invalid tree and plan combination', 422);
             }
 
-            $plan = $treePlanPrice->plan;
+            $plan = $planPrice->plan;
             $orderType =
                 $plan->type->value === 'sponsorship'
                     ? OrderTypeEnum::SPONSOR
                     : OrderTypeEnum::ADOPT;
 
             // Calculate totals
-            $subtotal = (float) $treePlanPrice->price;
+            $subtotal = (float) $planPrice->price;
             $discountAmount = 0.0;
             $gstRate = 0.18; // 18% GST
             $gstAmount = round($subtotal * $gstRate, 2);
@@ -615,7 +615,7 @@ final class OrderController extends Controller
                 'order_id' => $order->id,
                 'tree_instance_id' => $validated['tree_instance_id'],
                 'tree_plan_price_id' => $validated['tree_plan_price_id'],
-                'price' => $treePlanPrice->price,
+                'price' => $planPrice->price,
                 'discount_amount' => 0.0,
                 'gst_amount' => $gstAmount,
                 'cgst_amount' => $cgstAmount,
@@ -641,7 +641,7 @@ final class OrderController extends Controller
             // Load order relationships
             $order->load([
                 'items.treeInstance.tree',
-                'items.treePlanPrice.plan',
+                'items.planPrice.plan',
             ]);
 
             return $this->created(
@@ -697,7 +697,7 @@ final class OrderController extends Controller
         $order = Order::with([
             'items.treeInstance.tree',
             'items.treeInstance.location',
-            'items.treePlanPrice.plan',
+            'items.planPrice.plan',
             'shippingAddress',
             'coupon',
         ])
@@ -785,7 +785,7 @@ final class OrderController extends Controller
             ->with([
                 'treeInstance.tree',
                 'treeInstance.location',
-                'treePlanPrice.plan',
+                'planPrice.plan',
                 'order',
             ])
             ->whereHas('order', function ($q) use ($request): void {
@@ -894,7 +894,7 @@ final class OrderController extends Controller
                     'order' => new OrderResource(
                         $order->load([
                             'items.treeInstance.tree',
-                            'items.treePlanPrice.plan',
+                            'items.planPrice.plan',
                         ]),
                     ),
                 ],
@@ -936,9 +936,9 @@ final class OrderController extends Controller
             if (method_exists($item, 'isTree') && $item->isTree()) {
                 $hasTree = true;
                 // Collect plan type for tree items (sponsorship/adoption)
-                if ($item->treePlanPrice && $item->treePlanPrice->plan) {
+                if ($item->planPrice && $item->planPrice->plan) {
                     $treePlanTypes->push(
-                        $item->treePlanPrice->plan->type->value,
+                        $item->planPrice->plan->type->value,
                     );
                 }
 
