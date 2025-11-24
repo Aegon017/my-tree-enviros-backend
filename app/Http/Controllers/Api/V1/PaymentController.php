@@ -117,12 +117,12 @@ final class PaymentController extends Controller
             // Create Razorpay order
             $amount = (int) round($order->total_amount * 100); // Convert to paise and ensure no decimal values
             $razorpayOrder = $api->order->create([
-                'receipt' => $order->order_number,
+                'receipt' => $order->reference_number,
                 'amount' => $amount, // Amount in paise
                 'currency' => $order->currency,
                 'notes' => [
                     'order_id' => $order->id,
-                    'order_number' => $order->order_number,
+                    'order_number' => $order->reference_number,
                     'user_id' => $order->user_id,
                     'original_amount' => $order->total_amount,
                 ],
@@ -144,7 +144,7 @@ final class PaymentController extends Controller
                 'amount' => $amount,
                 'amount_rupees' => $order->total_amount,
                 'currency' => $order->currency,
-                'order_number' => $order->order_number,
+                    'order_number' => $order->reference_number,
                 'key' => config('services.razorpay.key'),
             ], 'Payment initiated successfully');
         } catch (Exception $exception) {
@@ -306,7 +306,7 @@ final class PaymentController extends Controller
                         'tree_instance_id' => $treeInstance->id,
                         'status' => $treeInstance->status->value,
                         'user_id' => $request->user()->id,
-                        'notes' => sprintf('Status changed to %s after successful payment for order %s', $treeInstance->status->label(), $order->order_number),
+                        'notes' => sprintf('Status changed to %s after successful payment for order %s', $treeInstance->status->label(), $order->reference_number),
                     ]);
 
                     // Create renewal schedule if needed
@@ -515,7 +515,7 @@ final class PaymentController extends Controller
 
         return $this->success([
             'order_id' => $order->id,
-            'order_number' => $order->order_number,
+                'order_number' => $order->reference_number,
             'order_status' => $order->status->value,
             'order_status_label' => $order->status->label(),
             'payment' => $payment ? [

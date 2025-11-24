@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use App\Traits\HasLabelOptions;
 
-enum OrderItemTypeEnum: string
+enum OrderTypeEnum: string
 {
     use HasLabelOptions;
 

@@ -15,20 +15,19 @@ use MichaelRubel\Couponables\Models\Coupon;
 final class Order extends Model
 {
     protected $casts = [
-        'type' => OrderTypeEnum::class,
         'status' => OrderStatusEnum::class,
-        'total_amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'total' => 'decimal:2',
+        'gst_amount' => 'decimal:2',
+        'cgst_amount' => 'decimal:2',
+        'sgst_amount' => 'decimal:2',
         'paid_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function orderable(): MorphTo
-    {
-        return $this->morphTo();
     }
 
     public function coupon(): BelongsTo
@@ -49,15 +48,5 @@ final class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
-    }
-
-    public function canApplyCoupon(): bool
-    {
-        return in_array($this->type, OrderTypeEnum::options());
-    }
-
-    public function needsShipping(): bool
-    {
-        return $this->type === 'product';
     }
 }

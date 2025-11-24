@@ -19,4 +19,31 @@ final class Cart extends Model
     {
         return $this->hasMany(CartItem::class);
     }
+
+    /**
+     * Calculate total amount for the cart.
+     * Sums `total_amount` on items if available, otherwise falls back to amount * quantity.
+     */
+    public function totalAmount(): float
+    {
+        $this->loadMissing('items');
+
+        $total = 0.0;
+
+        foreach ($this->items as $item) {
+            $itemTotal = null;
+
+            if (isset($item->total_amount) && $item->total_amount !== null) {
+                $itemTotal = (float) $item->total_amount;
+            } elseif (isset($item->amount) && isset($item->quantity)) {
+                $itemTotal = (float) $item->amount * (int) $item->quantity;
+            } else {
+                $itemTotal = 0.0;
+            }
+
+            $total += $itemTotal;
+        }
+
+        return $total;
+    }
 }
