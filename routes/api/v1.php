@@ -52,11 +52,13 @@ Route::prefix('address')->group(function () {
 Route::prefix('products')->group(function (): void {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/featured', [ProductController::class, 'featured']);
-    Route::get('/{identifier}', [ProductController::class, 'show']);
-});
 
-Route::prefix('product-categories')->group(function (): void {
-    Route::get('/', [ProductCategoryController::class, 'index']);
+    Route::prefix('categories')->group(function () {
+        Route::get('/', [ProductCategoryController::class, 'index']);
+        Route::get('/{id}', [ProductController::class, 'byCategory']);
+    });
+
+    Route::get('/{identifier}', [ProductController::class, 'show']);
 });
 
 Route::prefix('/blogs')->group(function (): void {
