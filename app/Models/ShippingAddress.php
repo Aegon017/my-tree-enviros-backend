@@ -12,8 +12,8 @@ final class ShippingAddress extends Model
 {
     protected $casts = [
         'is_default' => 'boolean',
-        'latitude'   => 'decimal:7',
-        'longitude'  => 'decimal:7',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
     ];
 
     public function user(): BelongsTo

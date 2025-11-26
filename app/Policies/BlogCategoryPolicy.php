@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\BlogCategory;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class BlogCategoryPolicy
+final class BlogCategoryPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:BlogCategory');
     }
 
-    public function view(AuthUser $authUser, BlogCategory $blogCategory): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:BlogCategory');
     }
@@ -27,22 +26,22 @@ class BlogCategoryPolicy
         return $authUser->can('Create:BlogCategory');
     }
 
-    public function update(AuthUser $authUser, BlogCategory $blogCategory): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:BlogCategory');
     }
 
-    public function delete(AuthUser $authUser, BlogCategory $blogCategory): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:BlogCategory');
     }
 
-    public function restore(AuthUser $authUser, BlogCategory $blogCategory): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:BlogCategory');
     }
 
-    public function forceDelete(AuthUser $authUser, BlogCategory $blogCategory): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:BlogCategory');
     }
@@ -57,7 +56,7 @@ class BlogCategoryPolicy
         return $authUser->can('RestoreAny:BlogCategory');
     }
 
-    public function replicate(AuthUser $authUser, BlogCategory $blogCategory): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:BlogCategory');
     }
@@ -66,5 +65,4 @@ class BlogCategoryPolicy
     {
         return $authUser->can('Reorder:BlogCategory');
     }
-
 }

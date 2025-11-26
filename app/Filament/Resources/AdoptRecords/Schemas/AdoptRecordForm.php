@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\AdoptRecords\Schemas;
 
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
-class AdoptRecordForm
+final class AdoptRecordForm
 {
     public static function configure(Schema $schema): Schema
     {

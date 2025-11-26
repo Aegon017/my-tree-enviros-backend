@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
-class CartItem extends Model
+final class CartItem extends Model
 {
     public function tree()
     {
         return $this->belongsTo(Tree::class);
     }
+
     public function cart()
     {
         return $this->belongsTo(Cart::class);

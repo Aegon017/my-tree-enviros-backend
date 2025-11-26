@@ -44,7 +44,7 @@ Route::prefix('/trees')->group(function (): void {
     Route::get('/{identifier}', [TreeController::class, 'show']);
 });
 
-Route::prefix('address')->group(function () {
+Route::prefix('address')->group(function (): void {
     Route::get('reverse-geocode', [ReverseGeocodeController::class, 'show']);
     Route::get('post-offices', [PostOfficeController::class, 'index']);
 });
@@ -53,7 +53,7 @@ Route::prefix('products')->group(function (): void {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/featured', [ProductController::class, 'featured']);
 
-    Route::prefix('categories')->group(function () {
+    Route::prefix('categories')->group(function (): void {
         Route::get('/', [ProductCategoryController::class, 'index']);
         Route::get('/{id}', [ProductController::class, 'byCategory']);
     });
@@ -68,7 +68,7 @@ Route::prefix('/blogs')->group(function (): void {
 
 Route::prefix('campaigns')->group(function (): void {
     Route::get('/', [CampaignController::class, 'index']);
-    Route::get('/{id}', [CampaignController::class, 'show']);
+    Route::get('/{identifier}', [CampaignController::class, 'show']);
 });
 
 Route::post('payments/webhook/razorpay', [PaymentController::class, 'webhook']);

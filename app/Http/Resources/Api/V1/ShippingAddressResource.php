@@ -9,12 +9,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Shipping Address API Resource
- * 
+ *
  * @OA\Schema(
  *     title="Shipping Address",
  *     description="Shipping address resource representation",
  *     type="object",
  *     required={"id", "name", "phone", "address", "city", "area", "postal_code", "is_default", "created_at", "updated_at"},
+ *
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="user_id", type="integer", example=1),
  *     @OA\Property(property="name", type="string", example="John Doe"),

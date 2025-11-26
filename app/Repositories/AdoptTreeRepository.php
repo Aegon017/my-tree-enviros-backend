@@ -16,22 +16,22 @@ final class AdoptTreeRepository
     {
         $haversine = "(
             6371 * acos(
-                cos(radians($lat)) *
+                cos(radians({$lat})) *
                 cos(radians(latitude)) *
-                cos(radians(longitude) - radians($lng)) +
-                sin(radians($lat)) *
+                cos(radians(longitude) - radians({$lng})) +
+                sin(radians({$lat})) *
                 sin(radians(latitude))
             )
         )";
 
         $query = Tree::query()
             ->withCount([
-                'treeInstances' => fn($q) => $q->where('status', TreeStatusEnum::ADOPTABLE->value),
+                'treeInstances' => fn ($q) => $q->where('status', TreeStatusEnum::ADOPTABLE->value),
             ])
-            ->whereHas('treeInstances.location', function ($q) use ($haversine, $radius) {
-                $q->selectRaw("$haversine AS distance")
+            ->whereHas('treeInstances.location', function ($q) use ($haversine, $radius): void {
+                $q->selectRaw($haversine.' AS distance')
                     ->having('distance', '<=', $radius);
-            })->whereHas('planPrices.plan', fn($q) => $q->where('type', TreeTypeEnum::ADOPT->value));
+            })->whereHas('planPrices.plan', fn ($q) => $q->where('type', TreeTypeEnum::ADOPT->value));
 
         return $query->paginate($perPage);
     }
@@ -40,7 +40,7 @@ final class AdoptTreeRepository
     {
         return Tree::query()
             ->with('planPrices.plan')
-            ->when(is_numeric($identifier), fn($q) => $q->where('id', $identifier))
+            ->when(is_numeric($identifier), fn ($q) => $q->where('id', $identifier))
             ->orWhere('slug', $identifier)
             ->first();
     }

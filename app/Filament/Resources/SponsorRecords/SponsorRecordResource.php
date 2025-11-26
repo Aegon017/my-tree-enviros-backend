@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\SponsorRecords;
 
 use App\Filament\Resources\SponsorRecords\Pages\ListSponsorRecords;
@@ -13,7 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class SponsorRecordResource extends Resource
+final class SponsorRecordResource extends Resource
 {
     protected static ?string $model = SponsorRecord::class;
 

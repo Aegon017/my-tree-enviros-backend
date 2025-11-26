@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Observers;
 
-use App\Models\Location;
 use App\Jobs\GeocodeLocationJob;
+use App\Models\Location;
 
-class LocationObserver
+final class LocationObserver
 {
     public function created(Location $location): void
     {

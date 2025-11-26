@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\PushNotification;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class PushNotificationPolicy
+final class PushNotificationPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:PushNotification');
     }
 
-    public function view(AuthUser $authUser, PushNotification $pushNotification): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:PushNotification');
     }
@@ -27,22 +26,22 @@ class PushNotificationPolicy
         return $authUser->can('Create:PushNotification');
     }
 
-    public function update(AuthUser $authUser, PushNotification $pushNotification): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:PushNotification');
     }
 
-    public function delete(AuthUser $authUser, PushNotification $pushNotification): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:PushNotification');
     }
 
-    public function restore(AuthUser $authUser, PushNotification $pushNotification): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:PushNotification');
     }
 
-    public function forceDelete(AuthUser $authUser, PushNotification $pushNotification): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:PushNotification');
     }
@@ -57,7 +56,7 @@ class PushNotificationPolicy
         return $authUser->can('RestoreAny:PushNotification');
     }
 
-    public function replicate(AuthUser $authUser, PushNotification $pushNotification): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:PushNotification');
     }
@@ -66,5 +65,4 @@ class PushNotificationPolicy
     {
         return $authUser->can('Reorder:PushNotification');
     }
-
 }

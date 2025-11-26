@@ -1,17 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
-use App\Repositories\AuthRepository;
 use App\Models\User;
+use App\Repositories\AuthRepository;
 use Illuminate\Support\Facades\RateLimiter;
 
-final class AuthService
+final readonly class AuthService
 {
     private const TEST_PHONE = '9876543210';
+
     private const TEST_OTP = '123456';
 
-    public function __construct(private readonly AuthRepository $repo) {}
+    public function __construct(private AuthRepository $repo) {}
 
     public function register(array $data): User
     {
@@ -25,13 +28,13 @@ final class AuthService
 
     public function sendOtp(User $user): bool
     {
-        $key = "otp:{$user->id}";
+        $key = 'otp:'.$user->id;
 
         if (RateLimiter::tooManyAttempts($key, 3)) {
             return false;
         }
 
-        if ($user->phone === self::TEST_PHONE && !app()->isProduction()) {
+        if ($user->phone === self::TEST_PHONE && ! app()->isProduction()) {
             $this->repo->storeOtp($user, self::TEST_OTP, now()->addMinutes(5));
         } else {
             $this->repo->dispatchOtp($user);
@@ -44,7 +47,7 @@ final class AuthService
 
     public function verifyOtp(User $user, string $otp): bool
     {
-        $key = "verify:{$user->id}";
+        $key = 'verify:'.$user->id;
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             return false;
@@ -52,8 +55,9 @@ final class AuthService
 
         $valid = $this->repo->consumeOtp($user, $otp);
 
-        if (!$valid) {
+        if (! $valid) {
             RateLimiter::hit($key, 300);
+
             return false;
         }
 

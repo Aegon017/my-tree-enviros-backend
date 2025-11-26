@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\TreeTypeEnum;
@@ -11,7 +13,7 @@ use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class SponsorTreeController extends Controller
+final class SponsorTreeController extends Controller
 {
     use ResponseHelpers;
 
@@ -36,11 +38,9 @@ class SponsorTreeController extends Controller
         $tree = $this->service->getByIdOrSlug($identifier);
 
         return $this->success(['tree' => new SponsorTreeResource($tree->load([
-            'planPrices' => fn($q) =>
-            $q->whereHas(
+            'planPrices' => fn ($q) => $q->whereHas(
                 'plan',
-                fn($p) =>
-                $p->where('type', TreeTypeEnum::SPONSOR->value)
+                fn ($p) => $p->where('type', TreeTypeEnum::SPONSOR->value)
             )->with('plan'),
         ]))]);
     }

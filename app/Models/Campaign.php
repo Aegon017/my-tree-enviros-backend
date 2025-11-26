@@ -4,30 +4,24 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\CampaignTypeEnum;
+use App\Models\Scopes\ActiveScope;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+#[ScopedBy([ActiveScope::class])]
 final class Campaign extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
-    protected $fillable = [
-        'location_id',
-        'name',
-        'slug',
-        'description',
-        'amount',
-        'start_date',
-        'end_date',
-        'is_active',
-    ];
-
     protected $casts = [
-        'amount' => 'decimal:2',
+        'target_amount' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
         'is_active' => 'boolean',
@@ -35,7 +29,7 @@ final class Campaign extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('thumbnail')->singleFile();
+        $this->addMediaCollection('thumbnails')->singleFile();
         $this->addMediaCollection('images');
     }
 
@@ -44,9 +38,31 @@ final class Campaign extends Model implements HasMedia
         return $this->belongsTo(Location::class);
     }
 
-    #[Scope]
-    protected function active($query)
+    public function orderItems(): HasMany
     {
-        return $query->where('is_active', true);
+        return $this->hasMany(OrderItem::class);
+    }
+
+    protected function raisedAmount(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->orderItems()
+                ->whereHas('order', function ($query): void {
+                    $query->where('status', 'paid');
+                })
+                ->sum('total_amount'),
+        );
+    }
+
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query->where('is_active', true);
+    }
+
+    #[Scope]
+    protected function inactive(Builder $query): void
+    {
+        $query->where('is_active', false);
     }
 }

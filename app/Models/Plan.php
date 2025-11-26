@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\DurationUnitEnum;
@@ -7,7 +9,7 @@ use App\Enums\PlanTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Plan extends Model
+final class Plan extends Model
 {
     protected $casts = [
         'type' => PlanTypeEnum::class,

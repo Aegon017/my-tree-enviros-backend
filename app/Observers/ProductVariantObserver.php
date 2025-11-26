@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Observers;
 
 use App\Models\ProductVariant;
 
-class ProductVariantObserver
+final class ProductVariantObserver
 {
     public function created(ProductVariant $variant): void
     {

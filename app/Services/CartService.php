@@ -28,7 +28,7 @@ final class CartService
             'items.productVariant.inventory.product',
             'items.productVariant.media',
             'items.planPrice.plan',
-            'items.dedication'
+            'items.dedication',
         ]);
 
         return $this->success(['cart' => new CartResource($cart)]);
@@ -37,117 +37,8 @@ final class CartService
     public function addToUserCart(int $userId, array $data): JsonResponse
     {
         $cart = $this->repo->getOrCreate($userId);
+
         return $this->addItem($cart, $data);
-    }
-
-    private function addItem(Cart $cart, array $data): JsonResponse
-    {
-        return DB::transaction(function () use ($cart, $data) {
-
-            if ($data['type'] === 'product') {
-                return $this->addProduct($cart, $data);
-            }
-
-            if ($data['type'] === 'sponsor') {
-                return $this->addSponsorTree($cart, $data);
-            }
-
-            if ($data['type'] === 'adopt') {
-                return $this->addAdoptTree($cart, $data);
-            }
-
-            return $this->error('Invalid item type');
-        });
-    }
-
-    protected function addSponsorTree(Cart $cart, array $data): JsonResponse
-    {
-        $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
-
-        $amount = (float) $planPrice->price;
-        $total = $amount * $data['quantity'];
-
-        $item = $cart->items()->create([
-            'type'          => 'sponsor',
-            'tree_id'       => $data['tree_id'],
-            'plan_id'       => $planPrice->plan_id,
-            'plan_price_id' => $planPrice->id,
-            'quantity'      => $data['quantity'],
-            'amount'        => $amount,
-            'total_amount'  => $total,
-        ]);
-
-        if (!empty($data['dedication'])) {
-            $item->dedication()->create($data['dedication']);
-        }
-
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication'
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
-    }
-
-    protected function addAdoptTree(Cart $cart, array $data): JsonResponse
-    {
-        $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
-
-        $amount = (float) $planPrice->price;
-        $total = $amount * $data['quantity'];
-
-        $item = $cart->items()->create([
-            'type'          => 'adopt',
-            'tree_id'       => $data['tree_id'],
-            'plan_id'       => $planPrice->plan_id,
-            'plan_price_id' => $planPrice->id,
-            'quantity'      => $data['quantity'],
-            'amount'        => $amount,
-            'total_amount'  => $total,
-        ]);
-
-        if (!empty($data['dedication'])) {
-            $item->dedication()->create($data['dedication']);
-        }
-
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication'
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
-    }
-
-    protected function addProduct(Cart $cart, array $data): JsonResponse
-    {
-        $variant = ProductVariant::findOrFail($data['product_variant_id']);
-
-        $amount = $variant->selling_price ?? $variant->original_price;
-        $total = $amount * $data['quantity'];
-
-        $cart->items()->create([
-            'type'               => 'product',
-            'product_variant_id' => $variant->id,
-            'quantity'           => $data['quantity'],
-            'amount'             => $amount,
-            'total_amount'       => $total,
-        ]);
-
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication'
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
     }
 
     public function updateUserCartItem(int $userId, int $itemId, array $data): JsonResponse
@@ -187,7 +78,7 @@ final class CartService
             'items.productVariant.inventory.product',
             'items.productVariant.media',
             'items.planPrice.plan',
-            'items.dedication'
+            'items.dedication',
         ]);
 
         return $this->success(['cart' => new CartResource($cart)]);
@@ -203,7 +94,7 @@ final class CartService
             'items.productVariant.inventory.product',
             'items.productVariant.media',
             'items.planPrice.plan',
-            'items.dedication'
+            'items.dedication',
         ]);
 
         return $this->success(['cart' => new CartResource($cart)]);
@@ -219,9 +110,119 @@ final class CartService
             'items.productVariant.inventory.product',
             'items.productVariant.media',
             'items.planPrice.plan',
-            'items.dedication'
+            'items.dedication',
         ]);
 
         return $this->success(['cart' => new CartResource($cart)]);
+    }
+
+    private function addSponsorTree(Cart $cart, array $data): JsonResponse
+    {
+        $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
+
+        $amount = (float) $planPrice->price;
+        $total = $amount * $data['quantity'];
+
+        $item = $cart->items()->create([
+            'type' => 'sponsor',
+            'tree_id' => $data['tree_id'],
+            'plan_id' => $planPrice->plan_id,
+            'plan_price_id' => $planPrice->id,
+            'quantity' => $data['quantity'],
+            'amount' => $amount,
+            'total_amount' => $total,
+        ]);
+
+        if (! empty($data['dedication'])) {
+            $item->dedication()->create($data['dedication']);
+        }
+
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication',
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
+    }
+
+    private function addAdoptTree(Cart $cart, array $data): JsonResponse
+    {
+        $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
+
+        $amount = (float) $planPrice->price;
+        $total = $amount * $data['quantity'];
+
+        $item = $cart->items()->create([
+            'type' => 'adopt',
+            'tree_id' => $data['tree_id'],
+            'plan_id' => $planPrice->plan_id,
+            'plan_price_id' => $planPrice->id,
+            'quantity' => $data['quantity'],
+            'amount' => $amount,
+            'total_amount' => $total,
+        ]);
+
+        if (! empty($data['dedication'])) {
+            $item->dedication()->create($data['dedication']);
+        }
+
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication',
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
+    }
+
+    private function addProduct(Cart $cart, array $data): JsonResponse
+    {
+        $variant = ProductVariant::findOrFail($data['product_variant_id']);
+
+        $amount = $variant->selling_price ?? $variant->original_price;
+        $total = $amount * $data['quantity'];
+
+        $cart->items()->create([
+            'type' => 'product',
+            'product_variant_id' => $variant->id,
+            'quantity' => $data['quantity'],
+            'amount' => $amount,
+            'total_amount' => $total,
+        ]);
+
+        $cart->load([
+            'items.tree.planPrices.plan',
+            'items.productVariant.inventory.product',
+            'items.productVariant.media',
+            'items.planPrice.plan',
+            'items.dedication',
+        ]);
+
+        return $this->success(['cart' => new CartResource($cart)]);
+    }
+
+    private function addItem(Cart $cart, array $data): JsonResponse
+    {
+        return DB::transaction(function () use ($cart, $data): JsonResponse {
+
+            if ($data['type'] === 'product') {
+                return $this->addProduct($cart, $data);
+            }
+
+            if ($data['type'] === 'sponsor') {
+                return $this->addSponsorTree($cart, $data);
+            }
+
+            if ($data['type'] === 'adopt') {
+                return $this->addAdoptTree($cart, $data);
+            }
+
+            return $this->error('Invalid item type');
+        });
     }
 }

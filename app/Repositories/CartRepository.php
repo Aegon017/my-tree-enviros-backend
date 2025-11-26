@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories;
 
 use App\Models\Cart;
 use App\Models\CartItem;
 
-class CartRepository
+final class CartRepository
 {
     public function getOrCreate(int $userId): Cart
     {

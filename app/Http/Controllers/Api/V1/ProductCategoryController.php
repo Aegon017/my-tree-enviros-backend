@@ -29,6 +29,7 @@ final class ProductCategoryController extends Controller
      *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
@@ -36,8 +37,10 @@ final class ProductCategoryController extends Controller
      *                 @OA\Property(
      *                     property="categories",
      *                     type="array",
+     *
      *                     @OA\Items(
      *                         type="object",
+     *
      *                         @OA\Property(property="id", type="integer", example=1),
      *                         @OA\Property(property="name", type="string", example="Indoor Plants"),
      *                         @OA\Property(property="slug", type="string", example="indoor-plants")
@@ -54,14 +57,12 @@ final class ProductCategoryController extends Controller
             ->select(['id', 'name', 'slug'])
             ->orderBy('name')
             ->get()
-            ->map(function (ProductCategory $category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'slug' => $category->slug,
-                    'image_url' => $category->getFirstMedia('images')?->getFullUrl()
-                ];
-            });
+            ->map(fn (ProductCategory $category): array => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'image_url' => $category->getFirstMedia('images')?->getFullUrl(),
+            ]);
 
         return response()->json([
             'success' => true,

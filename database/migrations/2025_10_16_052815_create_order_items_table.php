@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->string('type', 20);
             $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('campaign_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('tree_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_price_id')->nullable()->constrained()->nullOnDelete();

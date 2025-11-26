@@ -11,8 +11,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
 use App\Models\OrderPayment;
-use App\Models\TreeRenewalSchedule;
-use App\Models\TreeStatusLog;
 use App\Traits\ResponseHelpers;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -36,16 +34,17 @@ final class PaymentController extends Controller
             ->where('user_id', $request->user()->id)
             ->find($orderId);
 
-        if (!$order) {
+        if (! $order) {
             return $this->notFound('Order not found');
         }
 
         if ($order->status !== OrderStatusEnum::PENDING) {
-            return $this->error('Order cannot be paid. Current status: ' . $order->status->label(), 422);
+            return $this->error('Order cannot be paid. Current status: '.$order->status->label(), 422);
         }
+
         // Handle free orders (amount <= 0)
         if ($order->total <= 0) {
-            return $this->handleFreeOrder($order, $request->user()->id);
+            return $this->handleFreeOrder($order);
         }
 
         try {
@@ -79,8 +78,8 @@ final class PaymentController extends Controller
                 'key' => config('services.razorpay.key'),
                 'order_number' => $order->reference_number,
             ], 'Payment initiated successfully');
-        } catch (Exception $e) {
-            return $this->error('Failed to initiate payment: ' . $e->getMessage(), 500);
+        } catch (Exception $exception) {
+            return $this->error('Failed to initiate payment: '.$exception->getMessage(), 500);
         }
     }
 
@@ -98,7 +97,7 @@ final class PaymentController extends Controller
                 ->lockForUpdate()
                 ->find($orderId);
 
-            if (!$order) {
+            if (! $order) {
                 return $this->notFound('Order not found');
             }
 
@@ -125,7 +124,6 @@ final class PaymentController extends Controller
                     $validated['razorpay_payment_id'],
                     $paidAmount,
                     PaymentMethodEnum::RAZORPAY->value,
-                    $request->user()->id,
                     $validated['razorpay_order_id']
                 );
 
@@ -133,14 +131,14 @@ final class PaymentController extends Controller
                     'order' => new OrderResource($order->load(['items.treeInstance.tree', 'items.planPrice.plan'])),
                     'payment_id' => $validated['razorpay_payment_id'],
                 ], 'Payment verified successfully');
-            } catch (SignatureVerificationError $e) {
+            } catch (SignatureVerificationError) {
                 $this->markPaymentFailed($order, $validated['razorpay_order_id']);
 
                 return $this->error('Payment verification failed. Invalid signature.', 422);
             } catch (Exception $e) {
                 $this->markPaymentFailed($order, $validated['razorpay_order_id']);
 
-                return $this->error('Payment verification failed: ' . $e->getMessage(), 500);
+                return $this->error('Payment verification failed: '.$e->getMessage(), 500);
             }
         });
     }
@@ -149,7 +147,7 @@ final class PaymentController extends Controller
     {
         $order = Order::where('user_id', $request->user()->id)->find($orderId);
 
-        if (!$order) {
+        if (! $order) {
             return $this->notFound('Order not found');
         }
 
@@ -182,13 +180,15 @@ final class PaymentController extends Controller
         $webhookSignature = $request->header('X-Razorpay-Signature');
         $webhookBody = $request->getContent();
 
-        if (!$webhookSecret) {
+        if (! $webhookSecret) {
             Log::error('Razorpay webhook secret not configured');
+
             return $this->error('Webhook configuration error', 500);
         }
 
-        if (!$webhookSignature) {
+        if (! $webhookSignature) {
             Log::error('Razorpay webhook signature missing');
+
             return $this->error('Signature missing', 401);
         }
 
@@ -200,6 +200,7 @@ final class PaymentController extends Controller
                     'expected' => $expectedSignature,
                     'received' => $webhookSignature,
                 ]);
+
                 return $this->error('Invalid signature', 401);
             }
 
@@ -208,37 +209,32 @@ final class PaymentController extends Controller
 
             Log::info('Razorpay webhook event processing', ['event' => $event, 'payload' => $payload]);
 
-            switch ($event) {
-                case 'payment.captured':
-                    $this->handlePaymentSuccessWebhook($payload);
-                    break;
-                case 'payment.failed':
-                    $this->handlePaymentFailedWebhook($payload);
-                    break;
-                default:
-                    Log::info('Razorpay webhook event not handled', ['event' => $event]);
-            }
+            match ($event) {
+                'payment.captured' => $this->handlePaymentSuccessWebhook($payload),
+                'payment.failed' => $this->handlePaymentFailedWebhook($payload),
+                default => Log::info('Razorpay webhook event not handled', ['event' => $event]),
+            };
 
             return $this->success(null, 'Webhook processed');
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             Log::error('Razorpay webhook processing failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
+
             return $this->error('Webhook processing failed', 500);
         }
     }
 
-    private function handleFreeOrder(Order $order, int $userId): JsonResponse
+    private function handleFreeOrder(Order $order): JsonResponse
     {
         try {
-            DB::transaction(function () use ($order, $userId) {
+            DB::transaction(function () use ($order): void {
                 $this->completeOrder(
                     $order,
-                    'FREE-' . uniqid(),
+                    'FREE-'.uniqid(),
                     0,
-                    PaymentMethodEnum::MANUAL->value,
-                    $userId
+                    PaymentMethodEnum::MANUAL->value
                 );
             });
 
@@ -249,7 +245,7 @@ final class PaymentController extends Controller
                 'currency' => $order->currency,
                 'order_number' => $order->reference_number,
             ], 'Order processed successfully (Free)');
-        } catch (Exception $e) {
+        } catch (Exception) {
             return $this->error('Failed to process free order', 500);
         }
     }
@@ -259,7 +255,6 @@ final class PaymentController extends Controller
         string $transactionId,
         float $paidAmount,
         string $paymentMethod,
-        int $userId,
         ?string $initiationTransactionId = null
     ): void {
         $order->status = OrderStatusEnum::PAID;
@@ -320,12 +315,14 @@ final class PaymentController extends Controller
 
     private function handlePaymentSuccessWebhook(array $payload): void
     {
-        DB::transaction(function () use ($payload) {
+        DB::transaction(function () use ($payload): void {
             $paymentId = $payload['payload']['payment']['entity']['id'] ?? null;
             $orderId = $payload['payload']['payment']['entity']['order_id'] ?? null;
             $amount = ($payload['payload']['payment']['entity']['amount'] ?? 0) / 100;
 
-            if (!$paymentId || !$orderId) return;
+            if (! $paymentId || ! $orderId) {
+                return;
+            }
 
             $orderPayment = OrderPayment::where('transaction_id', $orderId)->first();
             if ($orderPayment && $orderPayment->order) {
@@ -334,7 +331,6 @@ final class PaymentController extends Controller
                     $paymentId,
                     $amount,
                     PaymentMethodEnum::RAZORPAY->value,
-                    $orderPayment->order->user_id,
                     $orderId
                 );
             }
@@ -344,7 +340,9 @@ final class PaymentController extends Controller
     private function handlePaymentFailedWebhook(array $payload): void
     {
         $orderId = $payload['payload']['payment']['entity']['order_id'] ?? null;
-        if (!$orderId) return;
+        if (! $orderId) {
+            return;
+        }
 
         $orderPayment = OrderPayment::where('transaction_id', $orderId)->first();
         if ($orderPayment && $orderPayment->order) {

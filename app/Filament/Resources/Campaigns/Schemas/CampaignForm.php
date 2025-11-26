@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Campaigns\Schemas;
 
-use App\Enums\CampaignTypeEnum;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -17,7 +16,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
-use Symfony\Component\Yaml\Inline;
 
 final class CampaignForm
 {
@@ -27,12 +25,6 @@ final class CampaignForm
             Grid::make()->schema([
                 Section::make('Details')->schema([
                     Flex::make([
-                        Select::make('type')
-                            ->label('Type')
-                            ->options(CampaignTypeEnum::options())
-                            ->required()
-                            ->native(false)
-                            ->searchable(),
                         Toggle::make('is_active')->label('Active')->default(true)->grow(false)->inline(false),
                     ]),
                     Flex::make([
@@ -47,21 +39,21 @@ final class CampaignForm
                             ->required()
                             ->live(onBlur: true)
                             ->afterStateUpdated(
-                                fn(Set $set, ?string $state): mixed => $set(
+                                fn (Set $set, ?string $state): mixed => $set(
                                     'slug',
                                     Str::slug($state ?? ''),
                                 ),
                             ),
 
-                        ]),
-                        Flex::make([
-                            TextInput::make('slug')
-                                ->label('Slug')
-                                ->unique(table: 'campaigns', column: 'slug')
-                                ->readOnly()
-                                ->required(),
-                            TextInput::make('amount')
-                            ->label('Suggested Amount (INR)')
+                    ]),
+                    Flex::make([
+                        TextInput::make('slug')
+                            ->label('Slug')
+                            ->unique(table: 'campaigns', column: 'slug')
+                            ->readOnly()
+                            ->required(),
+                        TextInput::make('target_amount')
+                            ->label('Target Amount (INR)')
                             ->numeric()
                             ->step(0.01)
                             ->required(),
@@ -75,7 +67,7 @@ final class CampaignForm
                         DatePicker::make('end_date')
                             ->label('End Date')
                             ->native(false)
-                            ->closeOnDateSelection()
+                            ->closeOnDateSelection(),
                     ]),
 
                     RichEditor::make('description')
@@ -83,17 +75,8 @@ final class CampaignForm
                 ])->columnSpan(8),
 
                 Section::make('Media')->schema([
-                    SpatieMediaLibraryFileUpload::make('thumbnail')
-                        ->label('Thumbnail')
-                        ->collection('thumbnail')
-                        ->image(),
-
-                    SpatieMediaLibraryFileUpload::make('images')
-                        ->label('Gallery Images')
-                        ->collection('images')
-                        ->image()
-                        ->multiple()
-                        ->reorderable(),
+                    SpatieMediaLibraryFileUpload::make('thumbnail')->label('Thumbnail')->collection('thumbnails')->image(),
+                    SpatieMediaLibraryFileUpload::make('images')->label('Gallery Images')->collection('images')->image()->multiple()->reorderable(),
                 ])->columnSpan(4),
             ])->columns(12)->columnSpanFull(),
         ]);

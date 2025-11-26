@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories;
 
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 
-class WishlistRepository
+final class WishlistRepository
 {
     public function getUserWishlist(int $userId): Wishlist
     {
@@ -20,7 +22,7 @@ class WishlistRepository
     public function findItem(Wishlist $wishlist, int $id)
     {
         return $wishlist->items()
-            ->where(function ($q) use ($id) {
+            ->where(function ($q) use ($id): void {
                 $q->where('id', $id)
                     ->orWhere('product_variant_id', $id);
             })
@@ -31,7 +33,7 @@ class WishlistRepository
     {
         return $wishlist->items()
             ->where('product_id', $productId)
-            ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId))
+            ->when($variantId, fn ($q) => $q->where('product_variant_id', $variantId))
             ->exists();
     }
 
@@ -49,7 +51,7 @@ class WishlistRepository
     {
         return $wishlist->items()
             ->where('product_id', $productId)
-            ->when($variantId, fn($q) => $q->where('product_variant_id', $variantId))
+            ->when($variantId, fn ($q) => $q->where('product_variant_id', $variantId))
             ->first();
     }
 

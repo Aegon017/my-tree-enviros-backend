@@ -19,7 +19,7 @@ final class OrderItemResource extends JsonResource
             'item_type' => $itemDetails['item_type'],
             'quantity' => $this->quantity,
             'price' => $this->amount,
-            'formatted_price' => '₹' . number_format((float) $this->amount, 2),
+            'formatted_price' => '₹'.number_format((float) $this->amount, 2),
             'discount_amount' => 0, // Not stored per item currently
             'gst_amount' => 0, // Not stored per item currently
             'cgst_amount' => 0,
@@ -27,9 +27,9 @@ final class OrderItemResource extends JsonResource
             'formatted_discount' => '₹0.00',
             'formatted_gst' => '₹0.00',
             'subtotal' => $this->amount * $this->quantity,
-            'formatted_subtotal' => '₹' . number_format((float) ($this->amount * $this->quantity), 2),
+            'formatted_subtotal' => '₹'.number_format((float) ($this->amount * $this->quantity), 2),
             'total' => $this->total_amount,
-            'formatted_total' => '₹' . number_format((float) $this->total_amount, 2),
+            'formatted_total' => '₹'.number_format((float) $this->total_amount, 2),
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'is_renewal' => $this->is_renewal,

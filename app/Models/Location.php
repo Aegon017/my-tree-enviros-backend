@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Scopes\ActiveScope;
 use App\Observers\LocationObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy([LocationObserver::class])]
+#[ScopedBy([ActiveScope::class])]
 final class Location extends Model
 {
     protected $casts = [
@@ -36,7 +40,7 @@ final class Location extends Model
             ->with('allDescendants')
             ->get()
             ->flatMap(
-                fn($child) => collect([$child])->merge(
+                fn ($child) => collect([$child])->merge(
                     $child->allDescendants(),
                 ),
             );
@@ -78,8 +82,14 @@ final class Location extends Model
     }
 
     #[Scope]
-    protected function active($query)
+    protected function active(Builder $query): void
     {
-        return $query->where('is_active', true);
+        $query->where('is_active', true);
+    }
+
+    #[Scope]
+    protected function inactive(Builder $query): void
+    {
+        $query->where('is_active', false);
     }
 }
