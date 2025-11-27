@@ -27,11 +27,6 @@ final class OrderResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'Order';
 
-    public static function form(Schema $schema): Schema
-    {
-        return OrderForm::configure($schema);
-    }
-
     public static function table(Table $table): Table
     {
         return OrdersTable::configure($table);
@@ -48,8 +43,6 @@ final class OrderResource extends Resource
     {
         return [
             'index' => ListOrders::route('/'),
-            'create' => CreateOrder::route('/create'),
-            'edit' => EditOrder::route('/{record}/edit'),
         ];
     }
 }
