@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 final class Product extends Model
 {
     public $in_wishlist = false;
-    
+
     protected $casts = [
         'is_active' => 'boolean',
     ];
@@ -33,14 +33,12 @@ final class Product extends Model
     protected function sellingPrice(): Attribute
     {
         return Attribute::make(
-            get: function () {
+            get: function (): float {
                 $variant = $this->inventory?->productVariants
-                    ?->filter(fn($v) => (float) $v->original_price > 0)
-                    ->sortBy(function ($v) {
-                        return $v->selling_price && $v->selling_price > 0
-                            ? $v->selling_price
-                            : $v->original_price;
-                    })
+                    ?->filter(fn ($v): bool => (float) $v->original_price > 0)
+                    ->sortBy(fn ($v) => $v->selling_price && $v->selling_price > 0
+                        ? $v->selling_price
+                        : $v->original_price)
                     ->first();
 
                 if (! $variant) {
@@ -57,14 +55,12 @@ final class Product extends Model
     protected function originalPrice(): Attribute
     {
         return Attribute::make(
-            get: function () {
+            get: function (): ?float {
                 $variant = $this->inventory?->productVariants
-                    ?->filter(fn($v) => (float) $v->original_price > 0)
-                    ->sortBy(function ($v) {
-                        return $v->selling_price && $v->selling_price > 0
-                            ? $v->selling_price
-                            : $v->original_price;
-                    })
+                    ?->filter(fn ($v): bool => (float) $v->original_price > 0)
+                    ->sortBy(fn ($v) => $v->selling_price && $v->selling_price > 0
+                        ? $v->selling_price
+                        : $v->original_price)
                     ->first();
 
                 if (! $variant) {

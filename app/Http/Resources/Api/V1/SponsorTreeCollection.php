@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources\Api\V1;
 
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use App\Traits\HasPaginationMeta;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class SponsorTreeCollection extends ResourceCollection
+final class SponsorTreeCollection extends ResourceCollection
 {
     use HasPaginationMeta;
 
@@ -13,7 +15,7 @@ class SponsorTreeCollection extends ResourceCollection
     {
         return [
             'trees' => SponsorTreeListResource::collection($this->collection),
-            'meta'  => $this->paginationMeta($this->resource),
+            'meta' => $this->paginationMeta($this->resource),
         ];
     }
 }

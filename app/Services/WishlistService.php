@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Http\Resources\Api\V1\WishlistResource;
@@ -7,12 +9,13 @@ use App\Models\User;
 use App\Repositories\WishlistRepository;
 use Illuminate\Support\Facades\DB;
 
-class WishlistService
+final class WishlistService
 {
     private $lastRemovedItem;
-    public function __construct(private WishlistRepository $repo) {}
 
-    public function get(User $user)
+    public function __construct(private readonly WishlistRepository $repo) {}
+
+    public function get(User $user): array
     {
         $wishlist = $this->repo->getUserWishlist($user->id);
 
@@ -21,7 +24,7 @@ class WishlistService
         ];
     }
 
-    public function add(User $user, array $data)
+    public function add(User $user, array $data): array
     {
         $wishlist = $this->repo->getUserWishlist($user->id);
 
@@ -29,21 +32,23 @@ class WishlistService
             return ['success' => false, 'message' => 'Already in wishlist'];
         }
 
-        DB::transaction(fn() => $this->repo->addItem($wishlist, $data));
+        DB::transaction(fn () => $this->repo->addItem($wishlist, $data));
 
         return $this->get($user);
     }
 
-    public function remove(User $user, int $itemId)
+    public function remove(User $user, int $itemId): array
     {
         $wishlist = $this->repo->getUserWishlist($user->id);
         $item = $this->repo->findItem($wishlist, $itemId);
 
-        if (!$item) return ['success' => false, 'message' => 'Not found'];
+        if (! $item) {
+            return ['success' => false, 'message' => 'Not found'];
+        }
 
         $this->lastRemovedItem = $item;
 
-        DB::transaction(fn() => $this->repo->deleteItem($item));
+        DB::transaction(fn () => $this->repo->deleteItem($item));
 
         return $this->get($user);
     }
@@ -53,10 +58,11 @@ class WishlistService
         return $this->lastRemovedItem;
     }
 
-    public function clear(User $user)
+    public function clear(User $user): array
     {
         $wishlist = $this->repo->getUserWishlist($user->id);
-        DB::transaction(fn() => $this->repo->clear($wishlist));
+        DB::transaction(fn () => $this->repo->clear($wishlist));
+
         return $this->get($user);
     }
 }

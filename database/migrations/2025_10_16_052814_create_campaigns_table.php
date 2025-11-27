@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->decimal('amount', 12, 2);
+            $table->decimal('target_amount', 12, 2);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->boolean('is_active');

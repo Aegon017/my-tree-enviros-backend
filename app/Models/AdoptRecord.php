@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AdoptRecord extends Model
+final class AdoptRecord extends Model
 {
     public function treeInstance(): BelongsTo
     {

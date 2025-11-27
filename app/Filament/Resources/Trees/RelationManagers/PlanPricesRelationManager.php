@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Trees\RelationManagers;
 
 use App\Enums\TreeTypeEnum;
@@ -18,7 +20,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
-class PlanPricesRelationManager extends RelationManager
+final class PlanPricesRelationManager extends RelationManager
 {
     protected static string $relationship = 'planPrices';
 
@@ -28,7 +30,7 @@ class PlanPricesRelationManager extends RelationManager
             ->components([
                 Select::make('plan_id')
                     ->relationship('plan', 'id')
-                    ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->duration} {$record->duration_unit->label()} ({$record->type->label()})")
+                    ->getOptionLabelFromRecordUsing(fn (Model $record): string => sprintf('%s %s (%s)', $record->duration, $record->duration_unit->label(), $record->type->label()))
                     ->required()
                     ->preload()
                     ->native(false)
@@ -37,7 +39,7 @@ class PlanPricesRelationManager extends RelationManager
                 TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefixIcon('heroicon-s-currency-rupee')
+                    ->prefixIcon('heroicon-s-currency-rupee'),
             ]);
     }
 
@@ -70,9 +72,9 @@ class PlanPricesRelationManager extends RelationManager
     {
         return [
             'sponsor' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereHas('plan', fn($plan) => $plan->where('type', TreeTypeEnum::SPONSOR->value))),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('plan', fn ($plan) => $plan->where('type', TreeTypeEnum::SPONSOR->value))),
             'adopt' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereHas('plan', fn($plan) => $plan->where('type', TreeTypeEnum::ADOPT->value))),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('plan', fn ($plan) => $plan->where('type', TreeTypeEnum::ADOPT->value))),
         ];
     }
 }

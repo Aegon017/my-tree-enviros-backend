@@ -38,14 +38,11 @@ final class TreeController extends Controller
         $tree = $this->service->getByIdOrSlug($identifier, $type);
 
         return $this->success(['tree' => new TreeResource($tree->load([
-            'planPrices' => fn($q) =>
-            $q->whereHas(
+            'planPrices' => fn ($q) => $q->whereHas(
                 'plan',
-                fn($p) =>
-                $p->where('type', $type)
+                fn ($p) => $p->where('type', $type)
             )->with('plan'),
-            'treeInstances' => fn($q) =>
-            $q->where('status', 'adoptable')
+            'treeInstances' => fn ($q) => $q->where('status', 'adoptable')
                 ->with('location'),
         ]))]);
     }

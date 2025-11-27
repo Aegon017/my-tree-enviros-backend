@@ -7,10 +7,8 @@ namespace App\Filament\Resources\Trees;
 use App\Filament\Resources\Trees\Pages\CreateTree;
 use App\Filament\Resources\Trees\Pages\EditTree;
 use App\Filament\Resources\Trees\Pages\ListTrees;
-use App\Filament\Resources\Trees\RelationManagers\InstancesRelationManager;
 use App\Filament\Resources\Trees\RelationManagers\PlanPricesRelationManager;
 use App\Filament\Resources\Trees\RelationManagers\TreeInstancesRelationManager;
-use App\Filament\Resources\Trees\RelationManagers\TreeLocationsRelationManager;
 use App\Filament\Resources\Trees\Schemas\TreeForm;
 use App\Filament\Resources\Trees\Tables\TreesTable;
 use App\Models\Tree;
@@ -45,7 +43,7 @@ final class TreeResource extends Resource
     {
         return [
             PlanPricesRelationManager::class,
-            TreeInstancesRelationManager::class
+            TreeInstancesRelationManager::class,
         ];
     }
 

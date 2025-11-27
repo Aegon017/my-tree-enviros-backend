@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\TreeUpdates;
 
 use App\Filament\Resources\TreeUpdates\Pages\CreateTreeUpdate;
@@ -15,7 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class TreeUpdateResource extends Resource
+final class TreeUpdateResource extends Resource
 {
     protected static ?string $model = TreeUpdate::class;
 

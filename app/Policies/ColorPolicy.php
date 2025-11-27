@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Color;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class ColorPolicy
+final class ColorPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Color');
     }
 
-    public function view(AuthUser $authUser, Color $color): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Color');
     }
@@ -27,22 +26,22 @@ class ColorPolicy
         return $authUser->can('Create:Color');
     }
 
-    public function update(AuthUser $authUser, Color $color): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Color');
     }
 
-    public function delete(AuthUser $authUser, Color $color): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Color');
     }
 
-    public function restore(AuthUser $authUser, Color $color): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Color');
     }
 
-    public function forceDelete(AuthUser $authUser, Color $color): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Color');
     }
@@ -57,7 +56,7 @@ class ColorPolicy
         return $authUser->can('RestoreAny:Color');
     }
 
-    public function replicate(AuthUser $authUser, Color $color): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Color');
     }
@@ -66,5 +65,4 @@ class ColorPolicy
     {
         return $authUser->can('Reorder:Color');
     }
-
 }

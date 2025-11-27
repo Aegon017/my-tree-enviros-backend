@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Plans\Schemas;
 
 use App\Enums\DurationUnitEnum;
@@ -9,7 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
-class PlanForm
+final class PlanForm
 {
     public static function configure(Schema $schema): Schema
     {

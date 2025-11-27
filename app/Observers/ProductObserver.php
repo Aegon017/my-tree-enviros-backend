@@ -1,33 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Observers;
 
 use App\Models\Product;
 
-class ProductObserver
+final class ProductObserver
 {
     public function saving(Product $product): void
     {
         $variants = $product->inventory?->productVariants;
 
-        if (!$variants || $variants->isEmpty()) {
+        if (! $variants || $variants->isEmpty()) {
             $product->selling_price = 0;
             $product->original_price = null;
+
             return;
         }
 
         $variant = $variants
-            ->filter(fn($v) => (float) $v->original_price > 0)
-            ->sortBy(function ($v) {
-                return $v->selling_price && $v->selling_price > 0
-                    ? $v->selling_price
-                    : $v->original_price;
-            })
+            ->filter(fn ($v): bool => (float) $v->original_price > 0)
+            ->sortBy(fn ($v) => $v->selling_price && $v->selling_price > 0
+                ? $v->selling_price
+                : $v->original_price)
             ->first();
 
-        if (!$variant) {
+        if (! $variant) {
             $product->selling_price = 0;
             $product->original_price = null;
+
             return;
         }
 

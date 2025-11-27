@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\Location;
@@ -10,40 +12,38 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 
-class GeocodeLocationJob implements ShouldQueue
+final class GeocodeLocationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
-    public int $locationId;
-
-    public function __construct(int $locationId)
-    {
-        $this->locationId = $locationId;
-    }
+    public function __construct(public int $locationId) {}
 
     public function handle(): void
     {
         $location = Location::with('parent')->find($this->locationId);
 
-        if (!$location) {
+        if (! $location) {
             return;
         }
 
         $query = $this->buildFullAddress($location);
 
         $response = Http::withHeaders([
-            'User-Agent' => 'YourApp/1.0'
+            'User-Agent' => 'YourApp/1.0',
         ])
             ->timeout(15)
-            ->get("https://nominatim.openstreetmap.org/search", [
+            ->get('https://nominatim.openstreetmap.org/search', [
                 'format' => 'json',
                 'q' => $query,
             ])
             ->json();
 
-        logger('Geocode response for location ' . $location->name, $response);
+        logger('Geocode response for location '.$location->name, $response);
 
-        if (!empty($response)) {
+        if (! empty($response)) {
             $location->latitude = (float) $response[0]['lat'];
             $location->longitude = (float) $response[0]['lon'];
             $location->saveQuietly();

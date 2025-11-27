@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\SponsorRecords\Pages;
 
 use App\Filament\Resources\SponsorRecords\SponsorRecordResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
-class ListSponsorRecords extends ListRecords
+final class ListSponsorRecords extends ListRecords
 {
     protected static string $resource = SponsorRecordResource::class;
 

@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources\Api\V1\Trees;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TreeListResource extends JsonResource
+final class TreeListResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -13,7 +15,7 @@ class TreeListResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'thumbnail_url' => $this->getFirstMedia('thumbnails')->getFullUrl()
+            'thumbnail_url' => $this->getFirstMedia('thumbnails')->getFullUrl(),
         ];
     }
 }

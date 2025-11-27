@@ -6,7 +6,6 @@ namespace App\Http\Requests\Api\Auth;
 
 use App\Rules\PhoneNumberRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 final class SignInRequest extends FormRequest
@@ -25,9 +24,9 @@ final class SignInRequest extends FormRequest
                 'string',
                 new PhoneNumberRule($this->country_code),
                 Rule::exists('users')->where(
-                    fn($query) => $query->where('country_code', $this->country_code)
+                    fn ($query) => $query->where('country_code', $this->country_code)
                 ),
-            ]
+            ],
         ];
     }
 

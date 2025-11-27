@@ -11,6 +11,7 @@ use App\Http\Resources\Api\V1\ShippingAddressResource;
 use App\Models\ShippingAddress;
 use App\Services\ShippingAddressService;
 use App\Traits\ResponseHelpers;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,7 +20,7 @@ final class ShippingAddressController extends Controller
     use ResponseHelpers;
 
     public function __construct(
-        protected ShippingAddressService $service
+        private ShippingAddressService $service
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -39,8 +40,8 @@ final class ShippingAddressController extends Controller
             return $this->created([
                 'address' => new ShippingAddressResource($address),
             ], 'Shipping address created successfully');
-        } catch (\Exception $e) {
-            return $this->error('Failed to create shipping address: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return $this->error('Failed to create shipping address: '.$exception->getMessage());
         }
     }
 
@@ -59,8 +60,8 @@ final class ShippingAddressController extends Controller
             return $this->success([
                 'address' => new ShippingAddressResource($address),
             ], 'Shipping address updated successfully');
-        } catch (\Exception $e) {
-            return $this->error('Failed to update shipping address: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return $this->error('Failed to update shipping address: '.$exception->getMessage());
         }
     }
 
@@ -70,8 +71,8 @@ final class ShippingAddressController extends Controller
             $this->service->deleteAddress($shippingAddress);
 
             return $this->noContent();
-        } catch (\Exception $e) {
-            return $this->error('Failed to delete shipping address: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return $this->error('Failed to delete shipping address: '.$exception->getMessage());
         }
     }
 
@@ -83,8 +84,8 @@ final class ShippingAddressController extends Controller
             return $this->success([
                 'address' => new ShippingAddressResource($address),
             ], 'Default shipping address updated successfully');
-        } catch (\Exception $e) {
-            return $this->error('Failed to update default shipping address: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return $this->error('Failed to update default shipping address: '.$exception->getMessage());
         }
     }
 }

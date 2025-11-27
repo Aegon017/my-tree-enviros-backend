@@ -1,19 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProductListResource extends JsonResource
+final class ProductListResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
         $inventory = $this->inventory;
         $thumbnail_url = $inventory?->getFirstMediaUrl('thumbnail') ?? '';
         $hasVariants = $inventory?->productVariants->filter(
-            fn($v) => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter)
+            fn ($v): bool => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter)
         )->isNotEmpty();
+
         return [
             'id' => $this->id,
             'name' => $this->name,

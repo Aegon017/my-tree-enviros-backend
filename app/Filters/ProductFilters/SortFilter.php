@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filters\ProductFilters;
 
-class SortFilter
+final class SortFilter
 {
-    public static function apply($query, $field, $order)
+    public static function apply($query, string $field, $order): void
     {
-        $query->orderBy("products.$field", $order);
+        $query->orderBy('products.'.$field, $order);
     }
 }

@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Tree;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class TreePolicy
+final class TreePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Tree');
     }
 
-    public function view(AuthUser $authUser, Tree $tree): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Tree');
     }
@@ -27,22 +26,22 @@ class TreePolicy
         return $authUser->can('Create:Tree');
     }
 
-    public function update(AuthUser $authUser, Tree $tree): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Tree');
     }
 
-    public function delete(AuthUser $authUser, Tree $tree): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Tree');
     }
 
-    public function restore(AuthUser $authUser, Tree $tree): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Tree');
     }
 
-    public function forceDelete(AuthUser $authUser, Tree $tree): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Tree');
     }
@@ -57,7 +56,7 @@ class TreePolicy
         return $authUser->can('RestoreAny:Tree');
     }
 
-    public function replicate(AuthUser $authUser, Tree $tree): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Tree');
     }
@@ -66,5 +65,4 @@ class TreePolicy
     {
         return $authUser->can('Reorder:Tree');
     }
-
 }

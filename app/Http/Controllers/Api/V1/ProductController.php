@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Traits\ResponseHelpers;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Services\ProductService;
 use App\Http\Resources\Api\V1\ProductResource;
+use App\Services\ProductService;
+use App\Traits\ResponseHelpers;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 final class ProductController extends Controller
 {
@@ -38,7 +38,10 @@ final class ProductController extends Controller
     public function variants(Request $request, string $id): JsonResponse
     {
         $variants = $this->service->variants($request, $id);
-        if (! $variants) return $this->notFound('Product not found');
+        if (! $variants) {
+            return $this->notFound('Product not found');
+        }
+
         return $this->success($variants);
     }
 
