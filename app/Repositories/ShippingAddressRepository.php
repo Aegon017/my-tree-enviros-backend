@@ -7,7 +7,7 @@ namespace App\Repositories;
 use App\Models\ShippingAddress;
 use Illuminate\Database\Eloquent\Collection;
 
-class ShippingAddressRepository
+final class ShippingAddressRepository
 {
     public function getByUser(int $userId): Collection
     {

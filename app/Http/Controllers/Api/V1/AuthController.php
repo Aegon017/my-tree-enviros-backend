@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Services\AuthService;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\Auth\SignUpRequest;
-use App\Http\Requests\Api\Auth\SignInRequest;
-use App\Http\Requests\Api\Auth\VerifyOtpRequest;
 use App\Http\Requests\Api\Auth\ResendOtpRequest;
+use App\Http\Requests\Api\Auth\SignInRequest;
+use App\Http\Requests\Api\Auth\SignUpRequest;
+use App\Http\Requests\Api\Auth\VerifyOtpRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Services\AuthService;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +24,7 @@ final class AuthController extends Controller
 
     public function signUp(SignUpRequest $request): JsonResponse
     {
-        return DB::transaction(function () use ($request) {
+        return DB::transaction(function () use ($request): JsonResponse {
             $user = $this->service->register($request->validated());
 
             if (! $this->service->sendOtp($user)) {
@@ -39,7 +39,7 @@ final class AuthController extends Controller
     {
         $user = $this->service->findByPhone($request->country_code, $request->phone);
 
-        if (! $user) {
+        if (! $user instanceof \App\Models\User) {
             return $this->notFound('User not found');
         }
 
@@ -50,18 +50,18 @@ final class AuthController extends Controller
         return $this->success(null, 'OTP sent successfully');
     }
 
-    public function verifyOtp(VerifyOtpRequest $request)
+    public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
         $user = $this->service->findByPhone(
             $request->country_code,
             $request->phone
         );
 
-        if (!$user) {
+        if (! $user instanceof \App\Models\User) {
             return $this->notFound('User not found');
         }
 
-        if (!$this->service->verifyOtp($user, $request->otp)) {
+        if (! $this->service->verifyOtp($user, $request->otp)) {
             return $this->error('Invalid or expired OTP', 422);
         }
 
@@ -77,7 +77,7 @@ final class AuthController extends Controller
     {
         $user = $this->service->findByPhone($request->country_code, $request->phone);
 
-        if (! $user) {
+        if (! $user instanceof \App\Models\User) {
             return $this->notFound('User not found');
         }
 

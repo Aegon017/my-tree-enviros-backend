@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filters\ProductFilters;
 
-class InStockFilter
+final class InStockFilter
 {
-    public static function apply($query, $value)
+    public static function apply($query, $value): void
     {
-        $query->whereHas('inventory.productVariants', fn($q) => $q->where('is_instock', filter_var($value, FILTER_VALIDATE_BOOLEAN)));
+        $query->whereHas('inventory.productVariants', fn ($q) => $q->where('is_instock', filter_var($value, FILTER_VALIDATE_BOOLEAN)));
     }
 }

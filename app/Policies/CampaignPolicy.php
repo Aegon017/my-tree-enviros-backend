@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Campaign;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class CampaignPolicy
+final class CampaignPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Campaign');
     }
 
-    public function view(AuthUser $authUser, Campaign $campaign): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Campaign');
     }
@@ -27,22 +26,22 @@ class CampaignPolicy
         return $authUser->can('Create:Campaign');
     }
 
-    public function update(AuthUser $authUser, Campaign $campaign): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Campaign');
     }
 
-    public function delete(AuthUser $authUser, Campaign $campaign): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Campaign');
     }
 
-    public function restore(AuthUser $authUser, Campaign $campaign): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Campaign');
     }
 
-    public function forceDelete(AuthUser $authUser, Campaign $campaign): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Campaign');
     }
@@ -57,7 +56,7 @@ class CampaignPolicy
         return $authUser->can('RestoreAny:Campaign');
     }
 
-    public function replicate(AuthUser $authUser, Campaign $campaign): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Campaign');
     }
@@ -66,5 +65,4 @@ class CampaignPolicy
     {
         return $authUser->can('Reorder:Campaign');
     }
-
 }

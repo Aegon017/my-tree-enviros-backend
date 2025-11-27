@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\BlogController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\FcmTokenController;
+use App\Http\Controllers\Api\V1\GoogleAuthController;
 use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
@@ -26,6 +27,12 @@ Route::post('/sign-in', [AuthController::class, 'signIn']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 
+Route::prefix('auth/google')->group(function () {
+    Route::get('/redirect', [GoogleAuthController::class, 'redirect']);
+    Route::get('/callback', [GoogleAuthController::class, 'callback']);
+    Route::post('/mobile', [GoogleAuthController::class, 'mobileLogin']);
+});
+
 Route::prefix('/locations')->group(function (): void {
     Route::get('/', [LocationController::class, 'index']);
     Route::get('/root', [LocationController::class, 'root']);
@@ -44,7 +51,7 @@ Route::prefix('/trees')->group(function (): void {
     Route::get('/{identifier}', [TreeController::class, 'show']);
 });
 
-Route::prefix('address')->group(function () {
+Route::prefix('address')->group(function (): void {
     Route::get('reverse-geocode', [ReverseGeocodeController::class, 'show']);
     Route::get('post-offices', [PostOfficeController::class, 'index']);
 });
@@ -53,7 +60,7 @@ Route::prefix('products')->group(function (): void {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/featured', [ProductController::class, 'featured']);
 
-    Route::prefix('categories')->group(function () {
+    Route::prefix('categories')->group(function (): void {
         Route::get('/', [ProductCategoryController::class, 'index']);
         Route::get('/{id}', [ProductController::class, 'byCategory']);
     });
@@ -68,7 +75,7 @@ Route::prefix('/blogs')->group(function (): void {
 
 Route::prefix('campaigns')->group(function (): void {
     Route::get('/', [CampaignController::class, 'index']);
-    Route::get('/{id}', [CampaignController::class, 'show']);
+    Route::get('/{identifier}', [CampaignController::class, 'show']);
 });
 
 Route::post('payments/webhook/razorpay', [PaymentController::class, 'webhook']);

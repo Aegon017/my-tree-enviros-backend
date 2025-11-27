@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\TreeInstance;
 use App\Repositories\AdoptTreeRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use App\Models\TreeInstance;
 
-final class AdoptTreeService
+final readonly class AdoptTreeService
 {
     public function __construct(
-        private readonly AdoptTreeRepository $repo
+        private AdoptTreeRepository $repo
     ) {}
 
     public function getAdoptList(float $lat, float $lng, float $radius, int $perPage): LengthAwarePaginator

@@ -19,7 +19,6 @@ use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -168,12 +167,14 @@ final class OrderController extends Controller
             if ($itemType === 'campaign') {
                 $campaign = Campaign::find($validated['campaign_id']);
 
-                if (!$campaign->is_active || ($campaign->end_date && $campaign->end_date->isPast())) {
+                if (! $campaign->is_active || ($campaign->end_date && $campaign->end_date->isPast())) {
                     return $this->error('Campaign is not active or has ended', 422);
                 }
 
                 $amount = (float) ($validated['amount'] ?? $campaign->amount);
-                if ($amount <= 0) return $this->error('Invalid amount', 422);
+                if ($amount <= 0) {
+                    return $this->error('Invalid amount', 422);
+                }
 
                 $subtotal = $amount * $quantity;
 
@@ -194,7 +195,7 @@ final class OrderController extends Controller
 
                 $planPrice = PlanPrice::with('plan')->find($validated['tree_plan_price_id']);
 
-                if (!$planPrice || $planPrice->tree_id !== $treeInstance->tree_id) {
+                if (! $planPrice || $planPrice->tree_id !== $treeInstance->tree_id) {
                     return $this->error('Invalid plan for this tree', 422);
                 }
 
@@ -263,7 +264,7 @@ final class OrderController extends Controller
             ->where('user_id', $request->user()->id)
             ->find($id);
 
-        if (!$order) {
+        if (! $order) {
             return $this->notFound('Order not found');
         }
 
@@ -278,7 +279,7 @@ final class OrderController extends Controller
         return DB::transaction(function () use ($request, $id): JsonResponse {
             $order = Order::where('user_id', $request->user()->id)->find($id);
 
-            if (!$order) {
+            if (! $order) {
                 return $this->notFound('Order not found');
             }
 
@@ -305,11 +306,11 @@ final class OrderController extends Controller
 
         $coupon = \App\Models\Coupon::where('code', $request->code)->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return $this->error('Invalid coupon code', 404);
         }
 
-        if (!$coupon->is_active) {
+        if (! $coupon->is_active) {
             return $this->error('Coupon is not active', 422);
         }
 
@@ -317,13 +318,7 @@ final class OrderController extends Controller
             return $this->error('Coupon has expired', 422);
         }
 
-        // Calculate discount
-        $discount = 0;
-        if ($coupon->type === 'percentage') {
-            $discount = ($request->amount * $coupon->value) / 100;
-        } else {
-            $discount = $coupon->value;
-        }
+        $discount = $coupon->type === 'percentage' ? ($request->amount * $coupon->value) / 100 : $coupon->value;
 
         // Cap discount if needed (e.g., max_discount column)
         // if ($coupon->max_discount && $discount > $coupon->max_discount) {
@@ -344,7 +339,7 @@ final class OrderController extends Controller
     {
         $query = OrderItem::query()
             ->with(['treeInstance.tree', 'treeInstance.location', 'planPrice.plan', 'order'])
-            ->whereHas('order', function ($q) use ($request) {
+            ->whereHas('order', function ($q) use ($request): void {
                 $q->where('user_id', $request->user()->id)
                     ->whereIn('status', [OrderStatusEnum::PAID->value, OrderStatusEnum::SUCCESS->value, OrderStatusEnum::COMPLETED->value]);
             })
@@ -368,7 +363,7 @@ final class OrderController extends Controller
     private function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-' . mb_strtoupper(Str::random(3)) . '-' . now()->format('Ymd') . '-' . random_int(1000, 9999);
+            $orderNumber = 'ORD-'.mb_strtoupper(Str::random(3)).'-'.now()->format('Ymd').'-'.random_int(1000, 9999);
         } while (Order::where('reference_number', $orderNumber)->exists());
 
         return $orderNumber;

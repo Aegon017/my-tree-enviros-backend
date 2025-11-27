@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Size;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class SizePolicy
+final class SizePolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Size');
     }
 
-    public function view(AuthUser $authUser, Size $size): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Size');
     }
@@ -27,22 +26,22 @@ class SizePolicy
         return $authUser->can('Create:Size');
     }
 
-    public function update(AuthUser $authUser, Size $size): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Size');
     }
 
-    public function delete(AuthUser $authUser, Size $size): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Size');
     }
 
-    public function restore(AuthUser $authUser, Size $size): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Size');
     }
 
-    public function forceDelete(AuthUser $authUser, Size $size): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Size');
     }
@@ -57,7 +56,7 @@ class SizePolicy
         return $authUser->can('RestoreAny:Size');
     }
 
-    public function replicate(AuthUser $authUser, Size $size): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Size');
     }
@@ -66,5 +65,4 @@ class SizePolicy
     {
         return $authUser->can('Reorder:Size');
     }
-
 }

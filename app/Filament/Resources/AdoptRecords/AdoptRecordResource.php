@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\AdoptRecords;
 
 use App\Filament\Resources\AdoptRecords\Pages\ListAdoptRecords;
@@ -13,7 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class AdoptRecordResource extends Resource
+final class AdoptRecordResource extends Resource
 {
     protected static ?string $model = AdoptRecord::class;
 

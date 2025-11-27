@@ -32,7 +32,7 @@ final class TreeForm
                         Flex::make([
                             TextInput::make('name')
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(fn(Set $set, ?string $state): mixed => $set('slug', Str::slug($state)))
+                                ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('slug', Str::slug($state)))
                                 ->required(),
                             TextInput::make('slug')
                                 ->readOnly()

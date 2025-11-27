@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
@@ -54,23 +56,22 @@ final class CartItemResource extends JsonResource
 
         $availablePlans = $tree->planPrices
             ->groupBy('plan_id')
-            ->map(function ($planPrices) {
+            ->map(function ($planPrices): array {
                 $firstPlanPrice = $planPrices->first();
+
                 return [
                     'id' => $firstPlanPrice->plan->id,
                     'duration' => $firstPlanPrice->plan->duration,
                     'duration_unit' => $firstPlanPrice->plan->duration_unit,
-                    'plan_prices' => $planPrices->map(function ($pp) {
-                        return [
-                            'id' => $pp->id,
-                            'price' => (float) $pp->price,
-                            'plan' => [
-                                'id' => $pp->plan->id,
-                                'duration' => $pp->plan->duration,
-                                'duration_unit' => $pp->plan->duration_unit,
-                            ],
-                        ];
-                    })->values()->toArray(),
+                    'plan_prices' => $planPrices->map(fn ($pp): array => [
+                        'id' => $pp->id,
+                        'price' => (float) $pp->price,
+                        'plan' => [
+                            'id' => $pp->plan->id,
+                            'duration' => $pp->plan->duration,
+                            'duration_unit' => $pp->plan->duration_unit,
+                        ],
+                    ])->values()->toArray(),
                 ];
             })->values()->toArray();
 

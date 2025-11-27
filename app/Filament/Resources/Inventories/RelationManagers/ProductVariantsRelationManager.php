@@ -32,7 +32,7 @@ final class ProductVariantsRelationManager extends RelationManager
                     ->options(function (): array {
                         $options = [];
                         $options['base'] = 'Base Product (No Variant)';
-                        
+
                         $variants = Variant::with(['color', 'size', 'planter'])->get();
                         foreach ($variants as $variant) {
                             $options[$variant->id] = sprintf('%s - %s - %s',
@@ -41,14 +41,12 @@ final class ProductVariantsRelationManager extends RelationManager
                                 $variant->planter->name
                             );
                         }
-                        
+
                         return $options;
                     })
-                    ->dehydrateStateUsing(function ($state) {
-                        return $state === 'base' ? null : $state;
-                    })
-                    ->afterStateHydrated(function ($component, $state) {
-                        $component->state($state === null ? 'base' : $state);
+                    ->dehydrateStateUsing(fn ($state) => $state === 'base' ? null : $state)
+                    ->afterStateHydrated(function ($component, $state): void {
+                        $component->state($state ?? 'base');
                     })
                     ->searchable()
                     ->native(false)
@@ -104,7 +102,7 @@ final class ProductVariantsRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

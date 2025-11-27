@@ -17,7 +17,7 @@ final class TreeInstance extends Model
 
     protected $casts = [
         'status' => TreeStatusEnum::class,
-        'planted_at' => 'datetime'
+        'planted_at' => 'datetime',
     ];
 
     public function location(): BelongsTo
@@ -55,7 +55,7 @@ final class TreeInstance extends Model
         $treeShort = $model->tree?->short_code ?? Str::upper(Str::substr($model->tree?->name ?? 'TREE', 0, 3));
         $locationShort = $model->location?->short_code ?? Str::upper(Str::substr($model->location?->name ?? 'LOC', 0, 3));
 
-        return "TREE-{$treeShort}-{$locationShort}-";
+        return sprintf('TREE-%s-%s-', $treeShort, $locationShort);
     }
 
     protected static function skuPadding(): int

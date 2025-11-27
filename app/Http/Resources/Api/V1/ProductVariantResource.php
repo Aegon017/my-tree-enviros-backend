@@ -9,9 +9,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 final class ProductVariantResource extends JsonResource
 {
-    /**
-     * @return array
-     */
     public function toArray(Request $request): array
     {
         $variant = $this->whenLoaded('variant');
@@ -19,9 +16,9 @@ final class ProductVariantResource extends JsonResource
         return [
             'id' => $this->id,
             'sku' => $this->sku,
-            'variant' => $this->when($this->relationLoaded('variant'), fn(): array => [
+            'variant' => $this->when($this->relationLoaded('variant'), fn (): array => [
                 'id' => $variant?->id,
-                'name' => $variant?->color?->name . ' ' . $variant?->size->name . ' ' . $variant?->planter->name,
+                'name' => $variant?->color?->name.' '.$variant?->size->name.' '.$variant?->planter->name,
                 'color' => $variant?->color ? [
                     'name' => $variant->color->name,
                     'code' => $variant->color->code,
@@ -31,16 +28,16 @@ final class ProductVariantResource extends JsonResource
                 ] : null,
                 'planter' => $variant?->planter ? [
                     'name' => $variant->planter->name,
-                    'image_url' => $variant->planter->getFirstMedia('images')->getFullUrl()
+                    'image_url' => $variant->planter->getFirstMedia('images')->getFullUrl(),
                 ] : null,
             ], null),
-            'image_urls' => $this->getMedia('images')->map(fn($m) => ['url' => $m->getUrl()])->toArray(),
+            'image_urls' => $this->getMedia('images')->map(fn ($m): array => ['url' => $m->getUrl()])->toArray(),
             'selling_price' => $this->selling_price && $this->selling_price > 0 ? (float) $this->selling_price : (float) $this->original_price,
             'original_price' => $this->selling_price && $this->selling_price > 0 ? (float) $this->original_price : null,
             'stock_quantity' => (int) $this->stock_quantity,
             'is_instock' => (bool) $this->is_instock,
             'in_wishlist' => (bool) $this->in_wishlist,
-            'in_cart' => (bool) $this->in_cart
+            'in_cart' => (bool) $this->in_cart,
         ];
     }
 }

@@ -24,8 +24,8 @@ final class BlogController extends Controller
         if ($request->filled('search')) {
             $search = (string) $request->input('search');
             $query->where(function ($q) use ($search): void {
-                $q->where('title', 'like', '%' . $search . '%')
-                    ->orWhere('short_description', 'like', '%' . $search . '%');
+                $q->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('short_description', 'like', '%'.$search.'%');
             });
         }
 
@@ -51,7 +51,7 @@ final class BlogController extends Controller
     public function show(string $identifier): JsonResponse
     {
         $blog = Blog::query()->with(['blogCategory'])
-            ->when(is_numeric($identifier), fn($q) => $q->where('id', $identifier))
+            ->when(is_numeric($identifier), fn ($q) => $q->where('id', $identifier))
             ->orWhere('slug', $identifier)
             ->first();
 

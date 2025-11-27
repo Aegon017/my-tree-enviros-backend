@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\SponsorRecords\Pages;
 
 use App\Filament\Resources\SponsorRecords\SponsorRecordResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditSponsorRecord extends EditRecord
+final class EditSponsorRecord extends EditRecord
 {
     protected static string $resource = SponsorRecordResource::class;
 

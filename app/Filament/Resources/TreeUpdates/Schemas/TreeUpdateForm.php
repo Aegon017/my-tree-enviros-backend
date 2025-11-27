@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\TreeUpdates\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
-class TreeUpdateForm
+final class TreeUpdateForm
 {
     public static function configure(Schema $schema): Schema
     {

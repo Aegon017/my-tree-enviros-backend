@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Blog;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class BlogPolicy
+final class BlogPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Blog');
     }
 
-    public function view(AuthUser $authUser, Blog $blog): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Blog');
     }
@@ -27,22 +26,22 @@ class BlogPolicy
         return $authUser->can('Create:Blog');
     }
 
-    public function update(AuthUser $authUser, Blog $blog): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Blog');
     }
 
-    public function delete(AuthUser $authUser, Blog $blog): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Blog');
     }
 
-    public function restore(AuthUser $authUser, Blog $blog): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Blog');
     }
 
-    public function forceDelete(AuthUser $authUser, Blog $blog): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Blog');
     }
@@ -57,7 +56,7 @@ class BlogPolicy
         return $authUser->can('RestoreAny:Blog');
     }
 
-    public function replicate(AuthUser $authUser, Blog $blog): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Blog');
     }
@@ -66,5 +65,4 @@ class BlogPolicy
     {
         return $authUser->can('Reorder:Blog');
     }
-
 }

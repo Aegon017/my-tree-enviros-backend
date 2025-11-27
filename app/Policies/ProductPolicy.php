@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use App\Models\Product;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
-class ProductPolicy
+final class ProductPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Product');
     }
 
-    public function view(AuthUser $authUser, Product $product): bool
+    public function view(AuthUser $authUser): bool
     {
         return $authUser->can('View:Product');
     }
@@ -27,22 +26,22 @@ class ProductPolicy
         return $authUser->can('Create:Product');
     }
 
-    public function update(AuthUser $authUser, Product $product): bool
+    public function update(AuthUser $authUser): bool
     {
         return $authUser->can('Update:Product');
     }
 
-    public function delete(AuthUser $authUser, Product $product): bool
+    public function delete(AuthUser $authUser): bool
     {
         return $authUser->can('Delete:Product');
     }
 
-    public function restore(AuthUser $authUser, Product $product): bool
+    public function restore(AuthUser $authUser): bool
     {
         return $authUser->can('Restore:Product');
     }
 
-    public function forceDelete(AuthUser $authUser, Product $product): bool
+    public function forceDelete(AuthUser $authUser): bool
     {
         return $authUser->can('ForceDelete:Product');
     }
@@ -57,7 +56,7 @@ class ProductPolicy
         return $authUser->can('RestoreAny:Product');
     }
 
-    public function replicate(AuthUser $authUser, Product $product): bool
+    public function replicate(AuthUser $authUser): bool
     {
         return $authUser->can('Replicate:Product');
     }
@@ -66,5 +65,4 @@ class ProductPolicy
     {
         return $authUser->can('Reorder:Product');
     }
-
 }

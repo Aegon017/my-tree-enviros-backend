@@ -6,12 +6,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\AdoptTreeCollection;
-use App\Http\Resources\Api\V1\TreeCollection;
 use App\Http\Resources\Api\V1\TreeInstanceResource;
 use App\Services\AdoptTreeService;
 use App\Traits\ResponseHelpers;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 final class AdoptTreeController extends Controller
 {
@@ -37,7 +36,7 @@ final class AdoptTreeController extends Controller
     {
         $instance = $this->service->getAdoptDetails($identifier);
 
-        if (!$instance) {
+        if (! $instance instanceof \App\Models\TreeInstance) {
             return $this->notFound('Tree instance not found');
         }
 

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
-class ReverseGeocodeController extends Controller
+final class ReverseGeocodeController extends Controller
 {
     public function show(Request $request)
     {
@@ -18,8 +20,8 @@ class ReverseGeocodeController extends Controller
         $lat = $request->lat;
         $lng = $request->lng;
 
-        $cacheKey = "reverse_geocode:{$lat}:{$lng}";
-        $data = cache()->remember($cacheKey, 3600, function () use ($lat, $lng) {
+        $cacheKey = sprintf('reverse_geocode:%s:%s', $lat, $lng);
+        $data = cache()->remember($cacheKey, 3600, function () use ($lat, $lng): array {
             $resp = Http::withHeaders(['User-Agent' => 'MyTreeApp/1.0'])
                 ->timeout(10)
                 ->get('https://nominatim.openstreetmap.org/reverse', [

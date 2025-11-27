@@ -1,17 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filters\ProductFilters;
 
-class SearchFilter
+final class SearchFilter
 {
-    public static function apply($query, $value)
+    public static function apply($query, $value): void
     {
-        $value = strtolower($value);
+        $value = mb_strtolower((string) $value);
         $query->where(
-            fn($q) =>
-            $q->whereRaw('LOWER(name) LIKE ?', ["%{$value}%"])
-                ->orWhereRaw('LOWER(botanical_name) LIKE ?', ["%{$value}%"])
-                ->orWhereRaw('LOWER(nick_name) LIKE ?', ["%{$value}%"])
+            fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', [sprintf('%%%s%%', $value)])
+                ->orWhereRaw('LOWER(botanical_name) LIKE ?', [sprintf('%%%s%%', $value)])
+                ->orWhereRaw('LOWER(nick_name) LIKE ?', [sprintf('%%%s%%', $value)])
         );
     }
 }

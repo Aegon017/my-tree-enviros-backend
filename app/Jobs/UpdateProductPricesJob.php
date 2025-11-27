@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\Product;
@@ -9,9 +11,12 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class UpdateProductPricesJob implements ShouldQueue
+final class UpdateProductPricesJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public function handle(): void
     {
@@ -19,7 +24,7 @@ class UpdateProductPricesJob implements ShouldQueue
 
         foreach ($products as $product) {
             $product->update([
-                'selling_price'  => $product->selling_price,
+                'selling_price' => $product->selling_price,
                 'original_price' => $product->original_price,
             ]);
         }
