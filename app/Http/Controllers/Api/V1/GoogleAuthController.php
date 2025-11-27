@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Traits\ResponseHelpers;
 use Google_Client;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
@@ -11,11 +13,13 @@ use Laravel\Socialite\Two\GoogleProvider;
 
 class GoogleAuthController extends Controller
 {
+    use ResponseHelpers;
+
     public function redirect()
     {
         /** @var GoogleProvider $provider */
         $provider = Socialite::driver('google');
-        return $provider->stateless()->redirect()->getTargetUrl();
+        return $provider->stateless()->redirect();
     }
 
     public function callback()
@@ -33,12 +37,14 @@ class GoogleAuthController extends Controller
         );
 
         if (! $user->hasMedia('avatars')) {
-            $user->addMediaFromUrl($googleUser->getAvatar())->toMediaCollection('avatars');
+            $user->addMediaFromUrl($googleUser->getAvatar())
+                ->toMediaCollection('avatars');
         }
 
         $token = $user->createToken('web')->plainTextToken;
 
-        return redirect("https://your-frontend.com/auth/callback?token={$token}");
+        $redirectUrl = env('FRONTEND_URL') . "/auth/callback?token={$token}";
+        return redirect($redirectUrl);
     }
 
     public function mobileLogin(Request $request)
@@ -51,8 +57,8 @@ class GoogleAuthController extends Controller
 
         $payload = $client->verifyIdToken($request->token);
 
-        if (!$payload) {
-            return response()->json(['message' => 'Invalid Google token'], 401);
+        if (! $payload) {
+            return $this->error('Invalid Google token', 401);
         }
 
         $email = $payload['email'];
@@ -74,9 +80,9 @@ class GoogleAuthController extends Controller
 
         $token = $user->createToken('mobile')->plainTextToken;
 
-        return response()->json([
+        return $this->success([
+            'user' => new UserResource($user),
             'token' => $token,
-            'user' => $user->load('media'),
-        ]);
+        ], 'Logged in successfully');
     }
 }
