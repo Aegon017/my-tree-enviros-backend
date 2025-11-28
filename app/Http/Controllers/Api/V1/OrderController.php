@@ -15,16 +15,23 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PlanPrice;
 use App\Models\TreeInstance;
+use App\Services\InvoiceService;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Spatie\LaravelPdf\Facades\Pdf;
+
+use function Spatie\LaravelPdf\Support\pdf;
 
 final class OrderController extends Controller
 {
     use ResponseHelpers;
+
+    public function __construct(private InvoiceService $invoiceService) {}
 
     /**
      * List user's orders
@@ -363,9 +370,18 @@ final class OrderController extends Controller
     private function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-'.mb_strtoupper(Str::random(3)).'-'.now()->format('Ymd').'-'.random_int(1000, 9999);
+            $orderNumber = 'ORD-' . mb_strtoupper(Str::random(3)) . '-' . now()->format('Ymd') . '-' . random_int(1000, 9999);
         } while (Order::where('reference_number', $orderNumber)->exists());
 
         return $orderNumber;
+    }
+
+    public function invoice(Request $request, Order $order)
+    {
+        if ($order->user_id !== $request->user()->id) {
+            return $this->error('Unauthorized', 403);
+        }
+
+        return $this->invoiceService->generate($order);
     }
 }
