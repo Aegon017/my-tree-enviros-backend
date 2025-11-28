@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BlogController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\CartController;
+use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\FcmTokenController;
 use App\Http\Controllers\Api\V1\GoogleAuthController;
 use App\Http\Controllers\Api\V1\LocationController;
@@ -93,14 +94,13 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/', [CartController::class, 'clear']);
     });
 
+    Route::post('/checkout/prepare', [CheckoutController::class, 'prepare'])->name('checkout.prepare');
+    Route::post('/checkout/verify', [PaymentController::class, 'verify'])->name('checkout.verify');
+
     Route::prefix('orders')->group(function (): void {
-        Route::get('/', [OrderController::class, 'index']);
-        Route::post('/', [OrderController::class, 'store']);
-        Route::post('/direct', [OrderController::class, 'storeDirect']);
-        Route::post('/validate-coupon', [OrderController::class, 'validateCoupon']);
-        Route::get('/{id}', [OrderController::class, 'show']);
-        Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
-        Route::get('/{id}/invoice', [OrderController::class, 'invoice']);
+        Route::get('/', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
     });
 
     Route::get('my-trees', [OrderController::class, 'myTrees']);

@@ -13,17 +13,17 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
-            $table->string('type', 20);
+            $table->string('type', 50);
             $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('campaign_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('tree_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_price_id')->nullable()->constrained()->nullOnDelete();
-            $table->unsignedInteger('sponsor_quantity')->nullable();
             $table->foreignId('tree_instance_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedInteger('sponsor_quantity')->nullable();
             $table->unsignedInteger('quantity');
-            $table->decimal('amount', 10, 2)->nullable();
-            $table->decimal('total_amount', 10, 2)->nullable();
+            $table->decimal('amount', 12, 2)->nullable();
+            $table->decimal('total_amount', 12, 2)->nullable();
             $table->timestamps();
         });
     }
