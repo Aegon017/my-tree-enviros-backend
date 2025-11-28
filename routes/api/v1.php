@@ -27,7 +27,7 @@ Route::post('/sign-in', [AuthController::class, 'signIn']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 
-Route::prefix('auth/google')->group(function () {
+Route::prefix('auth/google')->group(function (): void {
     Route::get('/redirect', [GoogleAuthController::class, 'redirect']);
     Route::get('/callback', [GoogleAuthController::class, 'callback']);
     Route::post('/mobile', [GoogleAuthController::class, 'mobileLogin']);
