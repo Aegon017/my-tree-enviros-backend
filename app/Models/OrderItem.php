@@ -20,4 +20,19 @@ final class OrderItem extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function tree(): BelongsTo
+    {
+        return $this->belongsTo(Tree::class);
+    }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function planPrice(): BelongsTo
+    {
+        return $this->belongsTo(PlanPrice::class);
+    }
 }

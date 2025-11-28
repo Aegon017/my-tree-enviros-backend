@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ChargeModeEnum;
+use App\Enums\ChargeTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Charge extends Model
 {
     protected $casts = [
+        'type' => ChargeTypeEnum::class,
+        'mode' => ChargeModeEnum::class,
         'value' => 'decimal:4',
-        'meta' => 'array',
         'is_active' => 'boolean',
     ];
 

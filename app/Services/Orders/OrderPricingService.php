@@ -23,30 +23,30 @@ final class OrderPricingService
         $appliedCharges = [];
 
         foreach ($charges as $charge) {
-            $base = $charge->type === 'tax' ? $afterDiscount : $subtotal;
+            $base = $charge->type === \App\Enums\ChargeTypeEnum::TAX ? $afterDiscount : $subtotal;
 
-            $amount = $charge->mode === 'percentage'
+            $amount = $charge->mode === \App\Enums\ChargeModeEnum::PERCENTAGE
                 ? $base * ($charge->value / 100)
                 : $charge->value;
 
-            if ($charge->type === 'tax') {
+            if ($charge->type === \App\Enums\ChargeTypeEnum::TAX) {
                 $totalTax += $amount;
             }
 
-            if ($charge->type === 'shipping') {
+            if ($charge->type === \App\Enums\ChargeTypeEnum::SHIPPING) {
                 $totalShipping += $amount;
             }
 
-            if ($charge->type === 'fee') {
+            if ($charge->type === \App\Enums\ChargeTypeEnum::FEE) {
                 $totalFee += $amount;
             }
 
             $appliedCharges[] = [
                 'charge_id' => $charge->id,
-                'type' => $charge->type,
+                'type' => $charge->type->value,
                 'label' => $charge->label,
                 'amount' => $amount,
-                'meta' => ['mode' => $charge->mode],
+                'meta' => ['mode' => $charge->mode->value],
             ];
         }
 

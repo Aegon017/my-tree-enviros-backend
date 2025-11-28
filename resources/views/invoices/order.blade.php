@@ -50,9 +50,15 @@
                 <tr class="item">
                     <td class="p-1 align-top border-b border-gray-200">
                         @if ($item->tree)
-                            {{ $item->tree->name }} ({{ $item->planPrice->plan->name ?? 'Plan' }})
+                            {{ $item->tree->name }}
+                            @if ($item->planPrice && $item->planPrice->plan)
+                                <br><span class="text-sm text-gray-600">({{ $item->planPrice->plan->duration }}
+                                    {{ $item->planPrice->plan->duration > 1 ? 'Years' : 'Year' }} Plan)</span>
+                            @endif
                         @elseif($item->type === 'campaign')
                             Campaign Donation
+                        @elseif($item->productVariant)
+                            {{ $item->productVariant->inventory->product->name ?? 'Product' }}
                         @else
                             {{ ucfirst($item->type) }}
                         @endif
@@ -72,22 +78,40 @@
                 <td class="p-1 align-top text-right pt-2 border-t-2 border-gray-200 font-bold">
                     ₹{{ number_format($order->subtotal, 2) }}</td>
             </tr>
-            @if ($order->gst_amount > 0)
+            @if ($order->total_discount > 0)
                 <tr class="total">
                     <td class="p-1 align-top"></td>
                     <td class="p-1 align-top"></td>
-                    <td class="p-1 align-top text-right pt-2 border-t-2 border-gray-200 font-bold">GST (18%):</td>
-                    <td class="p-1 align-top text-right pt-2 border-t-2 border-gray-200 font-bold">
-                        ₹{{ number_format($order->gst_amount, 2) }}</td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">Discount:</td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">
+                        -₹{{ number_format($order->total_discount, 2) }}</td>
                 </tr>
             @endif
-            @if ($order->discount > 0)
+            @if ($order->total_tax > 0)
                 <tr class="total">
                     <td class="p-1 align-top"></td>
                     <td class="p-1 align-top"></td>
-                    <td class="p-1 align-top text-right pt-2 border-t-2 border-gray-200 font-bold">Discount:</td>
-                    <td class="p-1 align-top text-right pt-2 border-t-2 border-gray-200 font-bold">
-                        -₹{{ number_format($order->discount, 2) }}</td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">Tax:</td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">
+                        ₹{{ number_format($order->total_tax, 2) }}</td>
+                </tr>
+            @endif
+            @if ($order->total_shipping > 0)
+                <tr class="total">
+                    <td class="p-1 align-top"></td>
+                    <td class="p-1 align-top"></td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">Shipping:</td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">
+                        ₹{{ number_format($order->total_shipping, 2) }}</td>
+                </tr>
+            @endif
+            @if ($order->total_fee > 0)
+                <tr class="total">
+                    <td class="p-1 align-top"></td>
+                    <td class="p-1 align-top"></td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">Fee:</td>
+                    <td class="p-1 align-top text-right pt-2 font-bold">
+                        ₹{{ number_format($order->total_fee, 2) }}</td>
                 </tr>
             @endif
             <tr class="total">
@@ -96,7 +120,7 @@
                 <td class="p-1 align-top text-right pt-2 border-t-2 border-gray-200 font-bold"><strong>Total:</strong>
                 </td>
                 <td class="p-1 align-top text-right pt-2 border-t-2 border-gray-200 font-bold">
-                    <strong>₹{{ number_format($order->total, 2) }}</strong>
+                    <strong>₹{{ number_format($order->grand_total, 2) }}</strong>
                 </td>
             </tr>
         </table>
