@@ -10,14 +10,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('order_payments', function (Blueprint $table) {
+        Schema::create('order_charges', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('charge_id')->nullable()->constrained('charges')->nullOnDelete();
+            $table->string('type', 50);
+            $table->string('label', 120);
             $table->decimal('amount', 12, 2);
-            $table->string('payment_method');
-            $table->string('transaction_id')->nullable();
-            $table->string('status', 50);
-            $table->timestamp('paid_at')->nullable();
+            $table->json('meta')->nullable();
             $table->timestamps();
         });
     }

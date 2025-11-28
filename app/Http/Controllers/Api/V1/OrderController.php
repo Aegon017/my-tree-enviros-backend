@@ -4,28 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\OrderStatusEnum;
-use App\Enums\TreeStatusEnum;
-use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\V1\OrderItemResource;
-use App\Http\Resources\Api\V1\OrderResource;
-use App\Models\Campaign;
-use App\Models\Cart;
+use App\Models\Charge;
+use App\Models\Coupon;
 use App\Models\Order;
+use App\Models\OrderCharge;
 use App\Models\OrderItem;
-use App\Models\PlanPrice;
-use App\Models\TreeInstance;
+use App\Models\OrderPayment;
 use App\Services\InvoiceService;
 use App\Traits\ResponseHelpers;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use Spatie\LaravelPdf\Facades\Pdf;
-
-use function Spatie\LaravelPdf\Support\pdf;
 
 final class OrderController extends Controller
 {
@@ -33,355 +21,194 @@ final class OrderController extends Controller
 
     public function __construct(private InvoiceService $invoiceService) {}
 
-    /**
-     * List user's orders
-     */
-    public function index(Request $request): JsonResponse
+    public function store(Request $request)
     {
-        $query = Order::query()
-            ->with(['items.treeInstance.tree', 'items.planPrice.plan', 'items.treeInstance.location'])
-            ->where('user_id', $request->user()->id)
-            ->orderBy('created_at', 'desc');
+        return DB::transaction(function () use ($request) {
 
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $perPage = min((int) $request->input('per_page', 15), 50);
-        $orders = $query->paginate($perPage);
-
-        return $this->success([
-            'orders' => OrderResource::collection($orders->items()),
-            'meta' => [
-                'current_page' => $orders->currentPage(),
-                'last_page' => $orders->lastPage(),
-                'per_page' => $orders->perPage(),
-                'total' => $orders->total(),
-            ],
-        ]);
-    }
-
-    /**
-     * Create order from cart
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'coupon_id' => 'nullable|exists:coupons,id',
-            'shipping_address_id' => 'nullable|exists:shipping_addresses,id',
-        ]);
-
-        return DB::transaction(function () use ($request, $validated): JsonResponse {
             $user = $request->user();
+            $items = collect($request->items);
+            $subtotal = $items->sum(fn ($item): int|float => $item['quantity'] * $item['amount']);
 
-            $cart = Cart::with([
-                'items.tree.planPrices.plan',
-                'items.planPrice.plan',
-                'items.productVariant.inventory.product',
-            ])
-                ->where('user_id', $user->id)
-                ->first();
+            $couponResult = $this->validateCoupon($request->coupon_code, $subtotal);
+            $totalDiscount = $couponResult['discount'] ?? 0;
+            $couponId = $couponResult['coupon']->id ?? null;
 
-            if (! $cart || $cart->items->isEmpty()) {
-                return $this->error('Cart is empty', 422);
-            }
+            $charges = Charge::where('is_active', true)->get();
+            $chargeResults = $this->calculateCharges($charges, $subtotal, $subtotal - $totalDiscount);
 
-            // Calculate totals
-            $subtotal = $cart->totalAmount();
-            $discount = 0.0; // Implement coupon logic here if needed
-            $gstRate = 0.18;
-            $gstAmount = round($subtotal * $gstRate, 2);
-            $cgstAmount = round($gstAmount / 2, 2);
-            $sgstAmount = round($gstAmount / 2, 2);
-            $total = $subtotal - $discount + $gstAmount;
-
-            // Create Order
             $order = Order::create([
-                'reference_number' => $this->generateOrderNumber(),
                 'user_id' => $user->id,
+                'reference_number' => 'ORD-'.time().'-'.random_int(1000, 9999),
+                'status' => 'pending',
                 'subtotal' => $subtotal,
-                'discount' => $discount,
-                'gst_amount' => $gstAmount,
-                'cgst_amount' => $cgstAmount,
-                'sgst_amount' => $sgstAmount,
-                'total' => $total,
-                'status' => OrderStatusEnum::PENDING->value,
+                'total_discount' => $totalDiscount,
+                'total_tax' => $chargeResults['tax'],
+                'total_shipping' => $chargeResults['shipping'],
+                'total_fee' => $chargeResults['fee'],
+                'grand_total' => $chargeResults['total'],
+                'coupon_id' => $couponId,
+                'payment_method' => $request->payment['method'] ?? null,
                 'currency' => 'INR',
-                'coupon_id' => $validated['coupon_id'] ?? null,
-                'shipping_address_id' => $validated['shipping_address_id'] ?? null,
-                'payment_method' => null, // Will be set upon payment
             ]);
 
-            // Create Order Items
-            foreach ($cart->items as $cartItem) {
-                $orderItemData = [
+            foreach ($items as $item) {
+                OrderItem::create([
                     'order_id' => $order->id,
-                    'type' => $cartItem->type,
-                    'quantity' => $cartItem->quantity,
-                    'amount' => $cartItem->amount,
-                    'total_amount' => $cartItem->total_amount,
-                ];
-
-                if ($cartItem->tree_id) {
-                    $orderItemData['tree_id'] = $cartItem->tree_id;
-                    $orderItemData['plan_id'] = $cartItem->plan_id;
-                    $orderItemData['plan_price_id'] = $cartItem->plan_price_id;
-                    $orderItemData['tree_instance_id'] = $cartItem->tree_instance_id; // If assigned in cart
-                } elseif ($cartItem->product_variant_id) {
-                    $orderItemData['product_variant_id'] = $cartItem->product_variant_id;
-                }
-
-                OrderItem::create($orderItemData);
+                    'type' => $item['type'],
+                    'product_variant_id' => $item['product_variant_id'] ?? null,
+                    'campaign_id' => $item['campaign_id'] ?? null,
+                    'tree_id' => $item['tree_id'] ?? null,
+                    'plan_id' => $item['plan_id'] ?? null,
+                    'plan_price_id' => $item['plan_price_id'] ?? null,
+                    'tree_instance_id' => $item['tree_instance_id'] ?? null,
+                    'sponsor_quantity' => $item['sponsor_quantity'] ?? null,
+                    'quantity' => $item['quantity'],
+                    'amount' => $item['amount'],
+                    'total_amount' => $item['quantity'] * $item['amount'],
+                ]);
             }
 
-            // Clear Cart
-            $cart->items()->delete();
-
-            return $this->created(
-                ['order' => new OrderResource($order->load(['items.tree', 'items.planPrice.plan']))],
-                'Order created successfully'
-            );
-        });
-    }
-
-    /**
-     * Create direct order (Buy Now)
-     */
-    public function storeDirect(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'item_type' => ['required', 'string', Rule::in(['tree', 'campaign'])],
-            // Tree validation
-            'tree_instance_id' => 'required_if:item_type,tree|nullable|exists:tree_instances,id',
-            'tree_plan_price_id' => 'required_if:item_type,tree|nullable|exists:plan_prices,id',
-            // Campaign validation
-            'campaign_id' => 'required_if:item_type,campaign|nullable|exists:campaigns,id',
-            'amount' => 'required_if:item_type,campaign|nullable|numeric|min:1',
-            // Common
-            'quantity' => 'nullable|integer|min:1|max:100',
-            'coupon_id' => 'nullable|exists:coupons,id',
-            'shipping_address_id' => 'nullable|exists:shipping_addresses,id',
-        ]);
-
-        return DB::transaction(function () use ($request, $validated): JsonResponse {
-            $user = $request->user();
-            $itemType = $validated['item_type'];
-            $quantity = $validated['quantity'] ?? 1;
-
-            $subtotal = 0.0;
-            $orderItemData = [];
-
-            if ($itemType === 'campaign') {
-                $campaign = Campaign::find($validated['campaign_id']);
-
-                if (! $campaign->is_active || ($campaign->end_date && $campaign->end_date->isPast())) {
-                    return $this->error('Campaign is not active or has ended', 422);
-                }
-
-                $amount = (float) ($validated['amount'] ?? $campaign->amount);
-                if ($amount <= 0) {
-                    return $this->error('Invalid amount', 422);
-                }
-
-                $subtotal = $amount * $quantity;
-
-                $orderItemData = [
-                    'type' => 'campaign',
-                    'quantity' => $quantity,
-                    'amount' => $amount,
-                    'total_amount' => $subtotal,
-                    // Store campaign reference if needed, currently schema doesn't have campaign_id in order_items
-                    // Assuming campaign orders are tracked via type or other means, or we might need to add campaign_id to order_items
-                ];
-            } elseif ($itemType === 'tree') {
-                $treeInstance = TreeInstance::find($validated['tree_instance_id']);
-
-                if ($treeInstance->status !== TreeStatusEnum::ADOPTABLE) {
-                    return $this->error('Tree is not available', 422);
-                }
-
-                $planPrice = PlanPrice::with('plan')->find($validated['tree_plan_price_id']);
-
-                if (! $planPrice || $planPrice->tree_id !== $treeInstance->tree_id) {
-                    return $this->error('Invalid plan for this tree', 422);
-                }
-
-                $subtotal = (float) $planPrice->price * $quantity;
-                $planType = $planPrice->plan->type->value === 'sponsorship' ? 'sponsor' : 'adopt';
-
-                $orderItemData = [
-                    'type' => $planType,
-                    'tree_instance_id' => $treeInstance->id,
-                    'tree_id' => $treeInstance->tree_id,
-                    'plan_id' => $planPrice->plan_id,
-                    'plan_price_id' => $planPrice->id,
-                    'quantity' => $quantity,
-                    'amount' => $planPrice->price,
-                    'total_amount' => $subtotal,
-                ];
+            foreach ($chargeResults['applied'] as $c) {
+                OrderCharge::create([
+                    'order_id' => $order->id,
+                    'charge_id' => $c['charge_id'],
+                    'type' => $c['type'],
+                    'label' => $c['label'],
+                    'amount' => $c['amount'],
+                    'meta' => $c['meta'],
+                ]);
             }
 
-            // Calculate Taxes
-            $discount = 0.0;
-            $gstRate = 0.18;
-            $gstAmount = round($subtotal * $gstRate, 2);
-            $cgstAmount = round($gstAmount / 2, 2);
-            $sgstAmount = round($gstAmount / 2, 2);
-            $total = $subtotal - $discount + $gstAmount;
+            if ($request->payment) {
+                $payment = $request->payment;
 
-            // Create Order
-            $order = Order::create([
-                'reference_number' => $this->generateOrderNumber(),
-                'user_id' => $user->id,
-                'subtotal' => $subtotal,
-                'discount' => $discount,
-                'gst_amount' => $gstAmount,
-                'cgst_amount' => $cgstAmount,
-                'sgst_amount' => $sgstAmount,
-                'total' => $total,
-                'status' => OrderStatusEnum::PENDING->value,
-                'currency' => 'INR',
-                'coupon_id' => $validated['coupon_id'] ?? null,
-                'shipping_address_id' => $validated['shipping_address_id'] ?? null,
+                OrderPayment::create([
+                    'order_id' => $order->id,
+                    'amount' => $chargeResults['total'],
+                    'payment_method' => $payment['method'],
+                    'transaction_id' => $payment['transaction_id'] ?? null,
+                    'status' => $payment['status'] ?? 'pending',
+                    'paid_at' => ($payment['status'] ?? null) === 'paid' ? now() : null,
+                ]);
+
+                if (($payment['status'] ?? null) === 'paid') {
+                    $order->update(['status' => 'paid', 'paid_at' => now()]);
+                }
+            }
+
+            if ($couponId) {
+                DB::table(config('couponables.pivot_table', 'couponables'))->insert([
+                    'coupon_id' => $couponId,
+                    'couponable_type' => Order::class,
+                    'couponable_id' => $order->id,
+                    'redeemed_at' => now(),
+                ]);
+            }
+
+            return response()->json([
+                'order_id' => $order->id,
+                'reference_number' => $order->reference_number,
+                'grand_total' => $order->grand_total,
             ]);
-
-            // Create Order Item
-            $orderItemData['order_id'] = $order->id;
-            OrderItem::create($orderItemData);
-
-            return $this->created(
-                ['order' => new OrderResource($order->load(['items.treeInstance.tree', 'items.planPrice.plan']))],
-                'Order created successfully'
-            );
         });
     }
 
-    /**
-     * Show order details
-     */
-    public function show(Request $request, string $id): JsonResponse
+    private function validateCoupon(?string $code, float $subtotal): ?array
     {
-        $order = Order::with([
-            'items.treeInstance.tree',
-            'items.treeInstance.location',
-            'items.planPrice.plan',
-            'shippingAddress',
-            'coupon',
-        ])
-            ->where('user_id', $request->user()->id)
-            ->find($id);
-
-        if (! $order) {
-            return $this->notFound('Order not found');
+        if (! $code) {
+            return null;
         }
 
-        return $this->success(['order' => new OrderResource($order)]);
-    }
+        $coupon = Coupon::where('code', $code)->first();
 
-    /**
-     * Cancel order
-     */
-    public function cancel(Request $request, string $id): JsonResponse
-    {
-        return DB::transaction(function () use ($request, $id): JsonResponse {
-            $order = Order::where('user_id', $request->user()->id)->find($id);
+        if (! $coupon || ! $coupon->is_enabled) {
+            return null;
+        }
 
-            if (! $order) {
-                return $this->notFound('Order not found');
+        if ($coupon->expires_at && now()->gt($coupon->expires_at)) {
+            return null;
+        }
+
+        if ($coupon->quantity !== null && $coupon->quantity <= 0) {
+            return null;
+        }
+
+        if ($coupon->limit !== null) {
+            $usedCount = DB::table(config('couponables.pivot_table', 'couponables'))
+                ->where('coupon_id', $coupon->id)
+                ->count();
+
+            if ($usedCount >= $coupon->limit) {
+                return null;
             }
-
-            if ($order->status !== OrderStatusEnum::PENDING) {
-                return $this->error('Only pending orders can be cancelled', 422);
-            }
-
-            $order->status = OrderStatusEnum::CANCELLED;
-            $order->save();
-
-            return $this->success(
-                ['order' => new OrderResource($order)],
-                'Order cancelled successfully'
-            );
-        });
-    }
-
-    public function validateCoupon(Request $request): JsonResponse
-    {
-        $request->validate([
-            'code' => 'required|string',
-            'amount' => 'required|numeric|min:0',
-        ]);
-
-        $coupon = \App\Models\Coupon::where('code', $request->code)->first();
-
-        if (! $coupon) {
-            return $this->error('Invalid coupon code', 404);
         }
 
-        if (! $coupon->is_active) {
-            return $this->error('Coupon is not active', 422);
-        }
+        $discount = $this->calculateCouponDiscount($coupon, $subtotal);
 
-        if ($coupon->expires_at && $coupon->expires_at->isPast()) {
-            return $this->error('Coupon has expired', 422);
-        }
-
-        $discount = $coupon->type === 'percentage' ? ($request->amount * $coupon->value) / 100 : $coupon->value;
-
-        // Cap discount if needed (e.g., max_discount column)
-        // if ($coupon->max_discount && $discount > $coupon->max_discount) {
-        //     $discount = $coupon->max_discount;
-        // }
-
-        return $this->success([
-            'coupon_id' => $coupon->id,
-            'code' => $coupon->code,
+        return [
+            'coupon' => $coupon,
             'discount' => $discount,
-        ], 'Coupon applied successfully');
+        ];
     }
 
-    /**
-     * Get user's trees (from successful orders)
-     */
-    public function myTrees(Request $request): JsonResponse
+    private function calculateCouponDiscount(Coupon $coupon, float $subtotal): float
     {
-        $query = OrderItem::query()
-            ->with(['treeInstance.tree', 'treeInstance.location', 'planPrice.plan', 'order'])
-            ->whereHas('order', function ($q) use ($request): void {
-                $q->where('user_id', $request->user()->id)
-                    ->whereIn('status', [OrderStatusEnum::PAID->value, OrderStatusEnum::SUCCESS->value, OrderStatusEnum::COMPLETED->value]);
-            })
-            ->whereNotNull('tree_instance_id')
-            ->orderBy('created_at', 'desc');
+        $discount = $coupon->type === 'percentage' ? $subtotal * ($coupon->value / 100) : (float) $coupon->value;
 
-        $perPage = min((int) $request->input('per_page', 15), 50);
-        $items = $query->paginate($perPage);
-
-        return $this->success([
-            'trees' => OrderItemResource::collection($items->items()),
-            'meta' => [
-                'current_page' => $items->currentPage(),
-                'last_page' => $items->lastPage(),
-                'per_page' => $items->perPage(),
-                'total' => $items->total(),
-            ],
-        ]);
-    }
-
-    private function generateOrderNumber(): string
-    {
-        do {
-            $orderNumber = 'ORD-' . mb_strtoupper(Str::random(3)) . '-' . now()->format('Ymd') . '-' . random_int(1000, 9999);
-        } while (Order::where('reference_number', $orderNumber)->exists());
-
-        return $orderNumber;
-    }
-
-    public function invoice(Request $request, Order $order)
-    {
-        if ($order->user_id !== $request->user()->id) {
-            return $this->error('Unauthorized', 403);
+        if (isset($coupon->data['max_discount'])) {
+            $discount = min($discount, $coupon->data['max_discount']);
         }
 
-        return $this->invoiceService->generate($order);
+        if ($discount < 0) {
+            return 0;
+        }
+
+        return $discount;
+    }
+
+    private function calculateCharges($charges, float $subtotal, float $afterDiscount): array
+    {
+        $totalTax = 0;
+        $totalShipping = 0;
+        $totalFee = 0;
+        $applied = [];
+
+        foreach ($charges as $charge) {
+            $base = $charge->type === 'tax' ? $afterDiscount : $subtotal;
+
+            $amount = $charge->mode === 'percentage'
+                ? $base * ($charge->value / 100)
+                : $charge->value;
+
+            if ($charge->type === 'tax') {
+                $totalTax += $amount;
+            }
+
+            if ($charge->type === 'shipping') {
+                $totalShipping += $amount;
+            }
+
+            if ($charge->type === 'fee') {
+                $totalFee += $amount;
+            }
+
+            $applied[] = [
+                'charge_id' => $charge->id,
+                'type' => $charge->type,
+                'label' => $charge->label,
+                'amount' => $amount,
+                'meta' => ['mode' => $charge->mode],
+            ];
+        }
+
+        $total = $afterDiscount + $totalTax + $totalShipping + $totalFee;
+
+        return [
+            'tax' => $totalTax,
+            'shipping' => $totalShipping,
+            'fee' => $totalFee,
+            'total' => $total,
+            'applied' => $applied,
+        ];
     }
 }

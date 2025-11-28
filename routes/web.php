@@ -7,6 +7,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'admin');
 
-Route::prefix('orders')->name('orders.')->group(function () {
+Route::prefix('orders')->name('orders.')->group(function (): void {
     Route::get('/{order}/invoice', [OrderController::class, 'generateInvoice'])->name('invoice');
 });
