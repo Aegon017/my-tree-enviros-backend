@@ -27,7 +27,7 @@ Route::post('/sign-in', [AuthController::class, 'signIn']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 
-Route::prefix('auth/google')->group(function () {
+Route::prefix('auth/google')->group(function (): void {
     Route::get('/redirect', [GoogleAuthController::class, 'redirect']);
     Route::get('/callback', [GoogleAuthController::class, 'callback']);
     Route::post('/mobile', [GoogleAuthController::class, 'mobileLogin']);
@@ -100,6 +100,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::post('/validate-coupon', [OrderController::class, 'validateCoupon']);
         Route::get('/{id}', [OrderController::class, 'show']);
         Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
+        Route::get('/{id}/invoice', [OrderController::class, 'invoice']);
     });
 
     Route::get('my-trees', [OrderController::class, 'myTrees']);
