@@ -94,8 +94,10 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/', [CartController::class, 'clear']);
     });
 
+    Route::get('/checkout', [CheckoutController::class, 'index']);
     Route::post('/checkout/prepare', [CheckoutController::class, 'prepare'])->name('checkout.prepare');
     Route::post('/checkout/verify', [PaymentController::class, 'verify'])->name('checkout.verify');
+    Route::post('/checkout/check-coupon', [CheckoutController::class, 'checkCoupon'])->name('checkout.check-coupon');
 
     Route::prefix('orders')->group(function (): void {
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
@@ -104,15 +106,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
 
-    Route::post('/checkout/check-coupon', [CheckoutController::class, 'checkCoupon'])->name('checkout.check-coupon');
-
     Route::get('my-trees', [OrderController::class, 'myTrees']);
-
-    Route::prefix('orders/{orderId}/payment')->group(function (): void {
-        Route::post('/initiate', [PaymentController::class, 'initiateRazorpay']);
-        Route::post('/verify', [PaymentController::class, 'verifyRazorpay']);
-        Route::get('/status', [PaymentController::class, 'status']);
-    });
 
     Route::prefix('products')->group(function (): void {
         Route::get('/category/{categoryId}', [ProductController::class, 'byCategory']);

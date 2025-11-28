@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('type', 50);
             $table->string('mode', 50)->default('fixed');
             $table->decimal('value', 12, 4)->nullable();
-            $table->json('meta')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
