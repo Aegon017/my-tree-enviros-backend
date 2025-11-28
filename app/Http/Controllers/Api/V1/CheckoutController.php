@@ -9,10 +9,14 @@ use App\Http\Requests\Api\V1\CheckoutRequest;
 use App\Services\Orders\OrderService;
 use App\Services\Payments\PaymentFactory;
 
+use App\Services\Coupons\CouponService;
+use Illuminate\Http\Request;
+
 final class CheckoutController extends Controller
 {
     public function __construct(
-        private readonly OrderService $orders
+        private readonly OrderService $orders,
+        private readonly CouponService $coupons
     ) {}
 
     public function prepare(CheckoutRequest $request)
@@ -37,6 +41,28 @@ final class CheckoutController extends Controller
                 'grand_total' => $order->grand_total,
             ],
             'payment' => $payment,
+        ]);
+    }
+
+    public function checkCoupon(Request $request)
+    {
+        $request->validate([
+            'coupon_code' => 'required|string',
+            'amount' => 'required|numeric',
+        ]);
+
+        $result = $this->coupons->validateAndCalculate($request->coupon_code, (float) $request->amount);
+
+        if (!$result) {
+            return response()->json(['message' => 'Invalid coupon'], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'discount' => $result['discount'],
+                'coupon' => $result['coupon'],
+            ]
         ]);
     }
 }
