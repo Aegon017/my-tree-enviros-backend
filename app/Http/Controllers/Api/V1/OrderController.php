@@ -27,7 +27,7 @@ final class OrderController extends Controller
 
             $user = $request->user();
             $items = collect($request->items);
-            $subtotal = $items->sum(fn ($item): int|float => $item['quantity'] * $item['amount']);
+            $subtotal = $items->sum(fn($item): int|float => $item['quantity'] * $item['amount']);
 
             $couponResult = $this->validateCoupon($request->coupon_code, $subtotal);
             $totalDiscount = $couponResult['discount'] ?? 0;
@@ -38,7 +38,7 @@ final class OrderController extends Controller
 
             $order = Order::create([
                 'user_id' => $user->id,
-                'reference_number' => 'ORD-'.time().'-'.random_int(1000, 9999),
+                'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
                 'status' => 'pending',
                 'subtotal' => $subtotal,
                 'total_discount' => $totalDiscount,

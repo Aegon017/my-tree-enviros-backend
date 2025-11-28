@@ -22,7 +22,7 @@ final readonly class OrderService
         return DB::transaction(function () use ($payload, $userId) {
             $items = $payload['items'];
 
-            $subtotal = collect($items)->sum(fn ($item): int|float => $item['quantity'] * $item['amount']);
+            $subtotal = collect($items)->sum(fn($item): int|float => $item['quantity'] * $item['amount']);
 
             $couponResult = $this->coupons->validateAndCalculate($payload['coupon_code'] ?? null, $subtotal);
             $couponId = $couponResult['coupon']->id ?? null;
@@ -31,7 +31,7 @@ final readonly class OrderService
 
             $order = Order::create([
                 'user_id' => $userId,
-                'reference_number' => 'ORD-'.time().'-'.random_int(1000, 9999),
+                'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
                 'status' => 'pending',
                 'subtotal' => $totals['subtotal'],
                 'total_discount' => $totals['discount'],

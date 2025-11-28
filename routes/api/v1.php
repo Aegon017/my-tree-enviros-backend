@@ -101,7 +101,10 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
+
+    Route::post('/checkout/check-coupon', [CheckoutController::class, 'checkCoupon'])->name('checkout.check-coupon');
 
     Route::get('my-trees', [OrderController::class, 'myTrees']);
 
