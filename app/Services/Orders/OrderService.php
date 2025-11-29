@@ -48,7 +48,7 @@ final readonly class OrderService
 
             $order = $this->repository->create([
                 'user_id' => $userId,
-                'reference_number' => 'ORD-'.time().'-'.random_int(1000, 9999),
+                'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
                 'status' => 'pending',
                 'subtotal' => $totals['subtotal'],
                 'total_discount' => $totals['discount'],
@@ -59,6 +59,7 @@ final readonly class OrderService
                 'coupon_id' => $couponId,
                 'payment_method' => $payload['payment_method'] ?? null,
                 'currency' => $payload['currency'] ?? 'INR',
+                'shipping_address_id' => $payload['shipping_address_id'] ?? null,
             ]);
 
             foreach ($items as $item) {
