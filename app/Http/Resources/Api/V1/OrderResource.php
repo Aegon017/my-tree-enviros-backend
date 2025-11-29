@@ -25,11 +25,20 @@ final class OrderResource extends JsonResource
             'created_at' => $this->created_at->toDateTimeString(),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'charges' => OrderChargeResource::collection($this->whenLoaded('orderCharges')),
-            'payment' => $this->whenLoaded('payment', fn (): array => [
+            'payment' => $this->whenLoaded('payment', fn(): array => [
                 'method' => $this->payment->payment_method,
                 'status' => $this->payment->status,
                 'transaction_id' => $this->payment->transaction_id,
             ]),
+            'shipping_address' => $this->whenLoaded('shippingAddress', fn(): ?array => $this->shippingAddress ? [
+                'id' => $this->shippingAddress->id,
+                'name' => $this->shippingAddress->name,
+                'phone' => $this->shippingAddress->phone,
+                'address' => $this->shippingAddress->address,
+                'area' => $this->shippingAddress->area,
+                'city' => $this->shippingAddress->city,
+                'postal_code' => $this->shippingAddress->postal_code,
+            ] : null),
         ];
     }
 }

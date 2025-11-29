@@ -23,7 +23,7 @@ final class OrderController extends Controller
     {
         $orders = $request->user()
             ->orders()
-            ->with(['items', 'payment', 'orderCharges'])
+            ->with(['items', 'payment', 'orderCharges', 'shippingAddress'])
             ->latest()
             ->paginate(10);
 
@@ -32,9 +32,8 @@ final class OrderController extends Controller
 
     public function show(Order $order): OrderResource
     {
-        $this->authorize('view', $order);
 
-        $order->load(['items.productVariant.product', 'items.tree', 'payment', 'orderCharges']);
+        $order->load(['items.productVariant.product', 'items.tree', 'payment', 'orderCharges', 'shippingAddress']);
 
         return new OrderResource($order);
     }
@@ -64,7 +63,6 @@ final class OrderController extends Controller
 
     public function invoice(Order $order): \Spatie\LaravelPdf\PdfBuilder
     {
-        $this->authorize('view', $order);
 
         if ($order->status !== 'paid') {
             abort(403, 'Invoice is only available for paid orders.');
@@ -75,7 +73,6 @@ final class OrderController extends Controller
 
     public function cancel(Order $order): OrderResource
     {
-        $this->authorize('update', $order);
 
         if ($order->status === 'paid' || $order->status === 'completed') {
             abort(422, 'Cannot cancel a paid or completed order.');

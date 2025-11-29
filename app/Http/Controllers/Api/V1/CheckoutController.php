@@ -60,6 +60,7 @@ final class CheckoutController extends Controller
             'coupon_code' => $request->coupon_code,
             'payment_method' => 'razorpay',
             'currency' => 'INR',
+            'shipping_address_id' => $request->shipping_address_id,
         ];
 
         $order = $this->orders->createDraftOrder($payload, $userId);
@@ -78,7 +79,7 @@ final class CheckoutController extends Controller
                 'shipping' => $order->total_shipping,
                 'fee' => $order->total_fee,
                 'grand_total' => $order->grand_total,
-                'charges' => $order->charges ? $order->charges->map(fn ($c): array => [
+                'charges' => $order->charges ? $order->charges->map(fn($c): array => [
                     'type' => $c->type,
                     'label' => $c->label,
                     'amount' => $c->amount,

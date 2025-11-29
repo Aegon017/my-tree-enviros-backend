@@ -28,6 +28,7 @@ final class CheckoutRequest extends FormRequest
             'items.*.tree_instance_id' => ['nullable', 'integer'],
             'items.*.sponsor_quantity' => ['nullable', 'integer', 'min:1'],
             'coupon_code' => ['nullable', 'string'],
+            'shipping_address_id' => ['nullable', 'integer', 'exists:shipping_addresses,id'],
         ];
     }
 }
