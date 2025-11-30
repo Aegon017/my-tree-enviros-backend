@@ -41,7 +41,7 @@ final readonly class ProductService
         $sortOrder = $request->get('sort_order', 'asc');
         SortFilter::apply($query, $sortBy, $sortOrder);
 
-        $products = $query->paginate(min((int) $request->get('per_page', 15), 50));
+        $products = $query->whereHas('inventory.productVariants')->paginate(min((int) $request->get('per_page', 15), 50));
         $this->attachVariantWishlistFlags($request->user(), $products->getCollection());
 
         return new ProductCollection($products);
@@ -85,7 +85,7 @@ final readonly class ProductService
     public function featured($request): ProductCollection
     {
         $products = $this->repo->baseQuery()
-            ->whereHas('inventory.productVariants', fn ($q) => $q->where('is_instock', true))
+            ->whereHas('inventory.productVariants', fn($q) => $q->where('is_instock', true))
             ->inRandomOrder()
             ->limit(min($request->get('limit', 10), 20))
             ->get();
@@ -108,7 +108,7 @@ final readonly class ProductService
                 'inventory.productVariants.variant.size:id,name',
                 'inventory.productVariants.variant.planter:id,name',
             ])
-            ->when(is_numeric($identifier), fn ($q) => $q->where('id', $identifier))
+            ->when(is_numeric($identifier), fn($q) => $q->where('id', $identifier))
             ->orWhere('slug', $identifier)
             ->first();
 

@@ -56,24 +56,34 @@ final class CartItemResource extends JsonResource
 
         $availablePlans = $tree->planPrices
             ->groupBy('plan_id')
-            ->map(function ($planPrices): array {
+            ->map(function ($planPrices) use ($planPrice): array {
                 $firstPlanPrice = $planPrices->first();
+
+                $filteredPlanPrices = $planPrices->filter(fn ($pp): bool => $pp->plan->type === $planPrice->plan->type);
+
+                if ($filteredPlanPrices->isEmpty()) {
+                    return [];
+                }
 
                 return [
                     'id' => $firstPlanPrice->plan->id,
                     'duration' => $firstPlanPrice->plan->duration,
                     'duration_unit' => $firstPlanPrice->plan->duration_unit,
-                    'plan_prices' => $planPrices->map(fn ($pp): array => [
+                    'plan_prices' => $filteredPlanPrices->map(fn ($pp): array => [
                         'id' => $pp->id,
                         'price' => (float) $pp->price,
                         'plan' => [
                             'id' => $pp->plan->id,
+                            'type' => $pp->plan->type,
                             'duration' => $pp->plan->duration,
                             'duration_unit' => $pp->plan->duration_unit,
                         ],
                     ])->values()->toArray(),
                 ];
-            })->values()->toArray();
+            })
+            ->filter(fn ($item): bool => ! empty($item))
+            ->values()
+            ->toArray();
 
         return [
             'id' => $this->id,

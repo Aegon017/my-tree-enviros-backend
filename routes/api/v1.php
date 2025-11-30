@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BlogController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\CartController;
+use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\FcmTokenController;
 use App\Http\Controllers\Api\V1\GoogleAuthController;
 use App\Http\Controllers\Api\V1\LocationController;
@@ -27,7 +28,7 @@ Route::post('/sign-in', [AuthController::class, 'signIn']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 
-Route::prefix('auth/google')->group(function () {
+Route::prefix('auth/google')->group(function (): void {
     Route::get('/redirect', [GoogleAuthController::class, 'redirect']);
     Route::get('/callback', [GoogleAuthController::class, 'callback']);
     Route::post('/mobile', [GoogleAuthController::class, 'mobileLogin']);
@@ -93,22 +94,19 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/', [CartController::class, 'clear']);
     });
 
+    Route::get('/checkout', [CheckoutController::class, 'index']);
+    Route::post('/checkout/prepare', [CheckoutController::class, 'prepare'])->name('checkout.prepare');
+    Route::post('/checkout/verify', [PaymentController::class, 'verify'])->name('checkout.verify');
+    Route::post('/checkout/check-coupon', [CheckoutController::class, 'checkCoupon'])->name('checkout.check-coupon');
+
     Route::prefix('orders')->group(function (): void {
-        Route::get('/', [OrderController::class, 'index']);
-        Route::post('/', [OrderController::class, 'store']);
-        Route::post('/direct', [OrderController::class, 'storeDirect']);
-        Route::post('/validate-coupon', [OrderController::class, 'validateCoupon']);
-        Route::get('/{id}', [OrderController::class, 'show']);
-        Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
+        Route::get('/', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
 
     Route::get('my-trees', [OrderController::class, 'myTrees']);
-
-    Route::prefix('orders/{orderId}/payment')->group(function (): void {
-        Route::post('/initiate', [PaymentController::class, 'initiateRazorpay']);
-        Route::post('/verify', [PaymentController::class, 'verifyRazorpay']);
-        Route::get('/status', [PaymentController::class, 'status']);
-    });
 
     Route::prefix('products')->group(function (): void {
         Route::get('/category/{categoryId}', [ProductController::class, 'byCategory']);

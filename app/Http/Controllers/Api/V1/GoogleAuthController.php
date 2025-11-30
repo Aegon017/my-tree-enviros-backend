@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
@@ -11,7 +13,7 @@ use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 
-class GoogleAuthController extends Controller
+final class GoogleAuthController extends Controller
 {
     use ResponseHelpers;
 
@@ -19,10 +21,11 @@ class GoogleAuthController extends Controller
     {
         /** @var GoogleProvider $provider */
         $provider = Socialite::driver('google');
+
         return $provider->stateless()->redirect();
     }
 
-    public function callback()
+    public function callback(): \Illuminate\Routing\Redirector|\Illuminate\Http\RedirectResponse
     {
         /** @var GoogleProvider $provider */
         $provider = Socialite::driver('google');
@@ -43,11 +46,12 @@ class GoogleAuthController extends Controller
 
         $token = $user->createToken('web')->plainTextToken;
 
-        $redirectUrl = env('FRONTEND_URL') . "/auth/callback?token={$token}";
+        $redirectUrl = env('FRONTEND_URL').('/auth/callback?token='.$token);
+
         return redirect($redirectUrl);
     }
 
-    public function mobileLogin(Request $request)
+    public function mobileLogin(Request $request): \Illuminate\Http\JsonResponse
     {
         $request->validate([
             'token' => 'required',
