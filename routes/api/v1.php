@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PostOfficeController;
 use App\Http\Controllers\Api\V1\ProductCategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ProductReviewController;
 use App\Http\Controllers\Api\V1\ReverseGeocodeController;
 use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
@@ -60,6 +61,7 @@ Route::prefix('address')->group(function (): void {
 Route::prefix('products')->group(function (): void {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/featured', [ProductController::class, 'featured']);
+    Route::get('/{id}/reviews', [ProductReviewController::class, 'index']);
 
     Route::prefix('categories')->group(function (): void {
         Route::get('/', [ProductCategoryController::class, 'index']);
@@ -111,6 +113,9 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::prefix('products')->group(function (): void {
         Route::get('/category/{categoryId}', [ProductController::class, 'byCategory']);
         Route::get('/{id}/variants', [ProductController::class, 'variants']);
+        Route::post('/{id}/reviews', [ProductReviewController::class, 'store']);
+        Route::delete('/{id}/reviews/{reviewId}', [ProductReviewController::class, 'destroy']);
+        Route::put('/{id}/reviews/{reviewId}', [ProductReviewController::class, 'update']);
     });
 
     Route::prefix('wishlist')->group(function (): void {

@@ -14,7 +14,7 @@ final class ProductListResource extends JsonResource
         $inventory = $this->inventory;
         $thumbnail_url = $inventory?->getFirstMediaUrl('thumbnail') ?? '';
         $hasVariants = $inventory?->productVariants->filter(
-            fn ($v): bool => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter)
+            fn($v): bool => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter)
         )->isNotEmpty();
 
         return [
@@ -29,8 +29,8 @@ final class ProductListResource extends JsonResource
             'short_description' => $this->short_description ?? '',
             'selling_price' => $this->selling_price,
             'original_price' => $this->original_price,
-            'rating' => (float) ($this->rating ?? 0),
-            'review_count' => (int) ($this->review_count ?? 0),
+            'rating' => (float) ($this->average_rating ?? 0),
+            'review_count' => (int) ($this->reviews()->count() ?? 0),
             'has_variants' => $hasVariants,
             'in_wishlist' => (bool) $this->in_wishlist,
         ];

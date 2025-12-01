@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[ObservedBy([ProductObserver::class])]
@@ -33,47 +34,15 @@ final class Product extends Model
         return $this->hasOne(Inventory::class);
     }
 
-    protected function sellingPrice(): Attribute
+    public function reviews(): HasMany
     {
-        return Attribute::make(
-            get: function (): float {
-                $variant = $this->inventory?->productVariants
-                    ?->filter(fn($v): bool => (float) $v->original_price > 0)
-                    ->sortBy(fn($v) => $v->selling_price && $v->selling_price > 0
-                        ? $v->selling_price
-                        : $v->original_price)
-                    ->first();
-
-                if (! $variant) {
-                    return 0.0;
-                }
-
-                return $variant->selling_price && $variant->selling_price > 0
-                    ? (float) $variant->selling_price
-                    : (float) $variant->original_price;
-            }
-        );
+        return $this->hasMany(ProductReview::class);
     }
 
-    protected function originalPrice(): Attribute
+    protected function averageRating(): Attribute
     {
         return Attribute::make(
-            get: function (): ?float {
-                $variant = $this->inventory?->productVariants
-                    ?->filter(fn($v): bool => (float) $v->original_price > 0)
-                    ->sortBy(fn($v) => $v->selling_price && $v->selling_price > 0
-                        ? $v->selling_price
-                        : $v->original_price)
-                    ->first();
-
-                if (! $variant) {
-                    return null;
-                }
-
-                return $variant->selling_price && $variant->selling_price > 0
-                    ? (float) $variant->original_price
-                    : null;
-            }
+            get: fn() => $this->reviews()->avg('rating'),
         );
     }
 }

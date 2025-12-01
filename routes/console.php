@@ -8,6 +8,4 @@ use Spatie\OneTimePasswords\Models\OneTimePassword;
 
 Schedule::command('model:prune', ['--model' => [OneTimePassword::class]])->daily();
 
-Schedule::command('passport:purge')->hourly();
-
 Schedule::job(new UpdateProductPricesJob)->everyFiveMinutes();

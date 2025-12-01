@@ -26,9 +26,8 @@ final class ProductResource extends JsonResource
             ],
             'description' => $this->description ?? '',
             'short_description' => $this->short_description ?? '',
-            'reviews' => [],
-            'rating' => 0,
-            'review_count' => 0,
+            'rating' => (float) ($this->average_rating ?? 0),
+            'review_count' => (int) ($this->reviews()->count() ?? 0),
             'variants' => ProductVariantResource::collection($this->inventory->productVariants),
         ];
     }

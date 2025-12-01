@@ -9,6 +9,7 @@ use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -28,13 +29,14 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
     use InteractsWithMedia;
     use Notifiable;
 
-    protected $fillable = [
-        'name',
-        'email',
-        'country_code',
-        'phone',
-        'password',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'type' => UserTypeEnum::class,
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -73,17 +75,13 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
         return $this->hasMany(Order::class);
     }
 
-    public function wishlist()
+    public function wishlist():HasOne
     {
         return $this->hasOne(Wishlist::class);
     }
 
-    protected function casts(): array
+    public function reviews(): HasMany
     {
-        return [
-            'type' => UserTypeEnum::class,
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(ProductReview::class);
     }
 }

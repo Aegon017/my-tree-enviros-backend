@@ -32,6 +32,7 @@ final class ProductRepository
                 'inventory.productVariants.variant.color:id,name,code',
                 'inventory.productVariants.variant.size:id,name',
                 'inventory.productVariants.variant.planter:id,name',
+                'reviews:id,product_id,rating',
             ]);
     }
 
