@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /home/mytreeca/public_html/api.mytree.care
+            cd /home/mytreeca/api.mytree.care
             git fetch origin main
             git reset --hard origin/main
             npm ci
