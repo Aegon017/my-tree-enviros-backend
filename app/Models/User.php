@@ -72,6 +72,11 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
         return $this->hasMany(ProductReview::class);
     }
 
+    public function notificationDeviceTokens(): HasMany
+    {
+        return $this->hasMany(NotificationDeviceToken::class);
+    }
+
     protected function casts(): array
     {
         return [
