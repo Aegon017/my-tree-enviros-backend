@@ -11,7 +11,9 @@ enum AgeUnitEnum: string
     use HasLabelOptions;
 
     case DAY = 'day';
+
     case MONTH = 'month';
+
     case YEAR = 'year';
 
     public function label(): string

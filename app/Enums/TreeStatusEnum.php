@@ -11,8 +11,11 @@ enum TreeStatusEnum: string
     use HasLabelOptions;
 
     case SPONSORED = 'sponsored';
+
     case PLANTED = 'planted';
+
     case ADOPTABLE = 'adoptable';
+
     case ADOPTED = 'adopted';
 
     public function label(): string

@@ -7,11 +7,17 @@ namespace App\Enums;
 enum OrderStatusEnum: string
 {
     case PENDING = 'pending';
+
     case PAID = 'paid';
+
     case FAILED = 'failed';
+
     case SUCCESS = 'success';
+
     case CANCELLED = 'cancelled';
+
     case REFUNDED = 'refunded';
+
     case COMPLETED = 'completed';
 
     public function label(): string

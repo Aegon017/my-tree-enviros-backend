@@ -11,7 +11,9 @@ enum IdentificationTypeEnum: string
     use HasLabelOptions;
 
     case QR = 'qr';
+
     case NFC = 'nfc';
+
     case RFID = 'rfid';
 
     public function label(): string

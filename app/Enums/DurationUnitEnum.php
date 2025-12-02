@@ -11,6 +11,7 @@ enum DurationUnitEnum: string
     use HasLabelOptions;
 
     case MONTH = 'month';
+
     case YEAR = 'year';
 
     public function label(): string

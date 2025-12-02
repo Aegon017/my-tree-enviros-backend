@@ -11,9 +11,13 @@ enum ChargeTypeEnum: string
     use HasLabelOptions;
 
     case TAX = 'tax';
+
     case SHIPPING = 'shipping';
+
     case FEE = 'fee';
+
     case SERVICE = 'service';
+
     case CONVENIENCE = 'convenience';
 
     public function label(): string

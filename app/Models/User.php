@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserTypeEnum;
+use DevKandil\NotiFire\Traits\HasFcm;
 use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,19 +25,11 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
     use HasApiTokens;
     use HasCoupons;
     use HasFactory;
+    use HasFcm;
     use HasOneTimePasswords;
     use HasRoles;
     use InteractsWithMedia;
     use Notifiable;
-
-    protected function casts(): array
-    {
-        return [
-            'type' => UserTypeEnum::class,
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -75,7 +68,7 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
         return $this->hasMany(Order::class);
     }
 
-    public function wishlist():HasOne
+    public function wishlist(): HasOne
     {
         return $this->hasOne(Wishlist::class);
     }
@@ -83,5 +76,14 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'type' => UserTypeEnum::class,
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 }

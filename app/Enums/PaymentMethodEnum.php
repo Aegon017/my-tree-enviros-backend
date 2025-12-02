@@ -7,8 +7,11 @@ namespace App\Enums;
 enum PaymentMethodEnum: string
 {
     case RAZORPAY = 'razorpay';
+
     case STRIPE = 'stripe';
+
     case PAYPAL = 'paypal';
+
     case MANUAL = 'manual';
 
     public function label(): string
