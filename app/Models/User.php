@@ -25,7 +25,6 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
     use HasApiTokens;
     use HasCoupons;
     use HasFactory;
-    use HasFcm;
     use HasOneTimePasswords;
     use HasRoles;
     use InteractsWithMedia;
@@ -51,11 +50,6 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('avatars')->singleFile();
-    }
-
-    public function fcmTokens(): HasMany
-    {
-        return $this->hasMany(FcmToken::class);
     }
 
     public function cart(): HasMany

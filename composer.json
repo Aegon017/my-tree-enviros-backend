@@ -12,7 +12,6 @@
         "php": "^8.2",
         "bezhansalleh/filament-shield": "^4.0",
         "darkaonline/l5-swagger": "^9.0",
-        "devkandil/notifire": "^1.2",
         "filament/filament": "~4.0",
         "filament/spatie-laravel-media-library-plugin": "~4.0",
         "google/apiclient": "^2.18",
