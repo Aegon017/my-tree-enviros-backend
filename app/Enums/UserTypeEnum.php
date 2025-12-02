@@ -11,6 +11,7 @@ enum UserTypeEnum: string
     use HasLabelOptions;
 
     case INDIVIDUAL = 'individual';
+
     case ORGANIZATION = 'organization';
 
     public function label(): string

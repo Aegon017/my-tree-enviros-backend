@@ -11,6 +11,7 @@ enum PlanTypeEnum: string
     use HasLabelOptions;
 
     case SPONSOR = 'sponsor';
+
     case ADOPT = 'adopt';
 
     public function label(): string

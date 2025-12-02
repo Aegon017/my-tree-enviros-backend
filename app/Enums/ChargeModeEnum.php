@@ -11,6 +11,7 @@ enum ChargeModeEnum: string
     use HasLabelOptions;
 
     case FIXED = 'fixed';
+
     case PERCENTAGE = 'percentage';
 
     public function label(): string

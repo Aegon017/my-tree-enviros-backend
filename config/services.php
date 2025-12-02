@@ -51,14 +51,6 @@ return [
         'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
     ],
 
-    'fcm' => [
-        'credentials' => env('FIREBASE_CREDENTIALS'),
-        'database_url' => env('FIREBASE_DATABASE_URL'),
-        'storage_bucket' => env('FIREBASE_STORAGE_BUCKET'),
-        'server_key' => env('FCM_SERVER_KEY'),
-        'project_id' => env('FIREBASE_PROJECT_ID'),
-    ],
-
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

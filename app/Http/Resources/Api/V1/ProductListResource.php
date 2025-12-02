@@ -14,7 +14,7 @@ final class ProductListResource extends JsonResource
         $inventory = $this->inventory;
         $thumbnail_url = $inventory?->getFirstMediaUrl('thumbnail') ?? '';
         $hasVariants = $inventory?->productVariants->filter(
-            fn($v): bool => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter)
+            fn ($v): bool => $v->variant && ($v->variant->color || $v->variant->size || $v->variant->planter)
         )->isNotEmpty();
 
         return [

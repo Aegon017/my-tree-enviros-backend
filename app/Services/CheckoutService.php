@@ -9,7 +9,6 @@ use App\Models\ProductVariant;
 use App\Services\Coupons\CouponService;
 use App\Services\Orders\OrderPricingService;
 use Illuminate\Support\Collection;
-use PhpParser\ErrorHandler\Collecting;
 
 final readonly class CheckoutService
 {
@@ -55,7 +54,7 @@ final readonly class CheckoutService
 
     private function hydrateItems(Collection $items): Collection
     {
-        return $items->map(function ($item): ?array {
+        return $items->map(function (array $item): ?array {
             if ($item['type'] === 'product') {
                 $variant = ProductVariant::with('inventory.product')->find($item['product_variant_id']);
 

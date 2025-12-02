@@ -11,7 +11,9 @@ enum DeviceTypeEnum: string
     use HasLabelOptions;
 
     case ANDROID = 'android';
+
     case IOS = 'ios';
+
     case WEB = 'web';
 
     public function label(): string

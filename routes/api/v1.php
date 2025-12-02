@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\FcmTokenController;
 use App\Http\Controllers\Api\V1\GoogleAuthController;
 use App\Http\Controllers\Api\V1\LocationController;
+use App\Http\Controllers\Api\V1\NotificationDeviceTokenController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PostOfficeController;
@@ -142,4 +144,11 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::delete('/{id}', [ShippingAddressController::class, 'destroy']);
         Route::post('/{id}/set-default', [ShippingAddressController::class, 'setDefault']);
     });
+
+    Route::post('/device-tokens', [NotificationDeviceTokenController::class, 'store']);
+    Route::delete('/device-tokens', [NotificationDeviceTokenController::class, 'destroy']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/read', [NotificationController::class, 'markRead']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
 });

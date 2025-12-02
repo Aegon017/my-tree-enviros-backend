@@ -42,7 +42,7 @@ final class Product extends Model
     protected function averageRating(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->reviews()->avg('rating'),
+            get: fn () => $this->reviews()->avg('rating'),
         );
     }
 }

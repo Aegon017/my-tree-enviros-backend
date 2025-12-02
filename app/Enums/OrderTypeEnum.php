@@ -11,8 +11,11 @@ enum OrderTypeEnum: string
     use HasLabelOptions;
 
     case SPONSOR = 'sponsor';
+
     case ADOPT = 'adopt';
+
     case PRODUCT = 'product';
+
     case CAMPAIGN = 'campaign';
 
     public function label(): string

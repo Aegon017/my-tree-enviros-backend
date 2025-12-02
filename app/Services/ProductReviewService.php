@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Http\Resources\Api\V1\ProductReviewResource;
-use App\Models\ProductReview;
 use App\Repositories\ProductReviewRepository;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
@@ -28,7 +27,7 @@ final readonly class ProductReviewService
             );
         }
 
-        if (!$this->repo->userHasPurchasedProduct($productId, $userId)) {
+        if (! $this->repo->userHasPurchasedProduct($productId, $userId)) {
             throw new HttpResponseException(
                 response()->json(['message' => 'You can only review products you have purchased'], 403)
             );
@@ -43,7 +42,7 @@ final readonly class ProductReviewService
     {
         $review = $this->repo->findById($reviewId);
 
-        if (!$review) {
+        if (! $review instanceof \App\Models\ProductReview) {
             throw new HttpResponseException(
                 response()->json(['message' => 'Review not found'], 404)
             );
@@ -64,7 +63,7 @@ final readonly class ProductReviewService
     {
         $review = $this->repo->findById($reviewId);
 
-        if (!$review) {
+        if (! $review instanceof \App\Models\ProductReview) {
             throw new HttpResponseException(
                 response()->json(['message' => 'Review not found'], 404)
             );

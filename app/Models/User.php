@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserTypeEnum;
+use DevKandil\NotiFire\Traits\HasFcm;
 use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,15 +30,6 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
     use InteractsWithMedia;
     use Notifiable;
 
-    protected function casts(): array
-    {
-        return [
-            'type' => UserTypeEnum::class,
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
-
     protected $hidden = ['password', 'remember_token'];
 
     public function routeNotificationForSmsLogin(): string
@@ -60,11 +52,6 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
         $this->addMediaCollection('avatars')->singleFile();
     }
 
-    public function fcmTokens(): HasMany
-    {
-        return $this->hasMany(FcmToken::class);
-    }
-
     public function cart(): HasMany
     {
         return $this->hasMany(Cart::class);
@@ -75,7 +62,7 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
         return $this->hasMany(Order::class);
     }
 
-    public function wishlist():HasOne
+    public function wishlist(): HasOne
     {
         return $this->hasOne(Wishlist::class);
     }
@@ -83,5 +70,19 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class);
+    }
+
+    public function notificationDeviceTokens(): HasMany
+    {
+        return $this->hasMany(NotificationDeviceToken::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'type' => UserTypeEnum::class,
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 }

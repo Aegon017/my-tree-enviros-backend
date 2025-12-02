@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use App\Models\Product;
 use App\Models\ProductReview;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +48,6 @@ final class ProductReviewRepository
     {
         return ProductReview::find($reviewId);
     }
-
 
     public function userHasReviewed(int $productId, int $userId): bool
     {

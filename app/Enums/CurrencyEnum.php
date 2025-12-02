@@ -7,9 +7,13 @@ namespace App\Enums;
 enum CurrencyEnum: string
 {
     case USD = 'USD';
+
     case EUR = 'EUR';
+
     case INR = 'INR';
+
     case GBP = 'GBP';
+
     case JPY = 'JPY';
 
     public function label(): string

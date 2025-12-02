@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('push_notifications', function (Blueprint $table) {
+        Schema::create('admin_notifications', function (Blueprint $table) {
             $table->id();
-            $table->string('title')->nullable();
-            $table->text('text')->nullable();
+            $table->string('title');
+            $table->text('body');
+            $table->json('channels');
+            $table->json('target');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('push_notifications');
+        Schema::dropIfExists('admin_notifications');
     }
 };
