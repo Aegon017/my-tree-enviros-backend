@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3812e8397e2a8488379a494e35cd1003",
+    "content-hash": "4053221cead0ade7268111869cd0b918",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3974,16 +3974,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.40.2",
+            "version": "v12.41.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "1ccd99220b474500e672b373f32bd709ec38de50"
+                "reference": "3e229b05935fd0300c632fb1f718c73046d664fc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/1ccd99220b474500e672b373f32bd709ec38de50",
-                "reference": "1ccd99220b474500e672b373f32bd709ec38de50",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/3e229b05935fd0300c632fb1f718c73046d664fc",
+                "reference": "3e229b05935fd0300c632fb1f718c73046d664fc",
                 "shasum": ""
             },
             "require": {
@@ -4189,7 +4189,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-11-26T19:24:25+00:00"
+            "time": "2025-12-03T01:02:13+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -7773,16 +7773,16 @@
         },
         {
             "name": "rize/uri-template",
-            "version": "0.4.0",
+            "version": "0.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rize/UriTemplate.git",
-                "reference": "56f374a9a42c7c3998f8b55b6b21b224de90c58b"
+                "reference": "abb53c8b73a5b6c24e11f49036ab842f560cad33"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rize/UriTemplate/zipball/56f374a9a42c7c3998f8b55b6b21b224de90c58b",
-                "reference": "56f374a9a42c7c3998f8b55b6b21b224de90c58b",
+                "url": "https://api.github.com/repos/rize/UriTemplate/zipball/abb53c8b73a5b6c24e11f49036ab842f560cad33",
+                "reference": "abb53c8b73a5b6c24e11f49036ab842f560cad33",
                 "shasum": ""
             },
             "require": {
@@ -7817,7 +7817,7 @@
             ],
             "support": {
                 "issues": "https://github.com/rize/UriTemplate/issues",
-                "source": "https://github.com/rize/UriTemplate/tree/0.4.0"
+                "source": "https://github.com/rize/UriTemplate/tree/0.4.1"
             },
             "funding": [
                 {
@@ -7833,7 +7833,7 @@
                     "type": "open_collective"
                 }
             ],
-            "time": "2024-11-27T12:13:42+00:00"
+            "time": "2025-12-02T15:19:04+00:00"
         },
         {
             "name": "rmccue/requests",
@@ -12848,16 +12848,16 @@
         },
         {
             "name": "laravel/sail",
-            "version": "v1.48.1",
+            "version": "v1.49.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sail.git",
-                "reference": "ef122b223f5fca5e5d88bda5127c846710886329"
+                "reference": "070c7f34ca8dbece4350fbfe0bab580047dfacc7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sail/zipball/ef122b223f5fca5e5d88bda5127c846710886329",
-                "reference": "ef122b223f5fca5e5d88bda5127c846710886329",
+                "url": "https://api.github.com/repos/laravel/sail/zipball/070c7f34ca8dbece4350fbfe0bab580047dfacc7",
+                "reference": "070c7f34ca8dbece4350fbfe0bab580047dfacc7",
                 "shasum": ""
             },
             "require": {
@@ -12907,7 +12907,7 @@
                 "issues": "https://github.com/laravel/sail/issues",
                 "source": "https://github.com/laravel/sail"
             },
-            "time": "2025-11-17T22:05:34+00:00"
+            "time": "2025-11-25T21:15:57+00:00"
         },
         {
             "name": "mockery/mockery",
@@ -14400,16 +14400,16 @@
         },
         {
             "name": "rector/rector",
-            "version": "2.2.10",
+            "version": "2.2.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rectorphp/rector.git",
-                "reference": "2abbf73dc953fdc5a556c0c3d5c47aa4da47d34c"
+                "reference": "7bd21a40b0332b93d4bfee284093d7400696902d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rectorphp/rector/zipball/2abbf73dc953fdc5a556c0c3d5c47aa4da47d34c",
-                "reference": "2abbf73dc953fdc5a556c0c3d5c47aa4da47d34c",
+                "url": "https://api.github.com/repos/rectorphp/rector/zipball/7bd21a40b0332b93d4bfee284093d7400696902d",
+                "reference": "7bd21a40b0332b93d4bfee284093d7400696902d",
                 "shasum": ""
             },
             "require": {
@@ -14448,7 +14448,7 @@
             ],
             "support": {
                 "issues": "https://github.com/rectorphp/rector/issues",
-                "source": "https://github.com/rectorphp/rector/tree/2.2.10"
+                "source": "https://github.com/rectorphp/rector/tree/2.2.11"
             },
             "funding": [
                 {
@@ -14456,7 +14456,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-12-01T10:59:13+00:00"
+            "time": "2025-12-02T11:23:46+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -15354,6 +15354,71 @@
                 }
             ],
             "time": "2025-02-07T05:00:38+00:00"
+        },
+        {
+            "name": "spatie/laravel-stubs",
+            "version": "3.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/laravel-stubs.git",
+                "reference": "dc56f829229ae7e5fefbc6415faef682486a6083"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/laravel-stubs/zipball/dc56f829229ae7e5fefbc6415faef682486a6083",
+                "reference": "dc56f829229ae7e5fefbc6415faef682486a6083",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^11.0|^12.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.4",
+                "orchestra/testbench": "^9.0|^10.0",
+                "pestphp/pest": "^2.0|^3.7"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Spatie\\Stubs\\StubsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\Stubs\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Opinionated Laravel stubs",
+            "homepage": "https://github.com/spatie/laravel-stubs",
+            "keywords": [
+                "laravel-stubs",
+                "spatie"
+            ],
+            "support": {
+                "source": "https://github.com/spatie/laravel-stubs/tree/3.1.1"
+            },
+            "funding": [
+                {
+                    "url": "https://spatie.be/open-source/support-us",
+                    "type": "custom"
+                }
+            ],
+            "time": "2025-02-20T11:04:25+00:00"
         },
         {
             "name": "staabm/side-effects-detector",

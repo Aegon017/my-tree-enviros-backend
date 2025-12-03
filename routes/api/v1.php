@@ -87,8 +87,8 @@ Route::post('payments/webhook/razorpay', [PaymentController::class, 'webhook']);
 
 Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::get('me', [AuthController::class, 'me']);
+    Route::post('me', [AuthController::class, 'updateProfile']);
     Route::post('sign-out', [AuthController::class, 'signOut']);
-    Route::apiResource('users', UserController::class);
 
     Route::prefix('cart')->group(function (): void {
         Route::get('/', [CartController::class, 'index']);

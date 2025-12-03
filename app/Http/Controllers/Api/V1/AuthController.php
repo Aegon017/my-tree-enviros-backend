@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Auth\ResendOtpRequest;
 use App\Http\Requests\Api\Auth\SignInRequest;
 use App\Http\Requests\Api\Auth\SignUpRequest;
+use App\Http\Requests\Api\Auth\UpdateProfileRequest;
 use App\Http\Requests\Api\Auth\VerifyOtpRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Services\AuthService;
@@ -15,6 +16,7 @@ use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final class AuthController extends Controller
 {
@@ -103,5 +105,22 @@ final class AuthController extends Controller
         return $this->success([
             'user' => new UserResource($request->user()),
         ]);
+    }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $data = collect($request->validated())->except('avatar')->toArray();
+
+        $user->update($data);
+
+        if ($request->hasFile('avatar')) {
+            $user->addMediaFromRequest('avatar')->toMediaCollection('avatars');
+        }
+
+        return $this->success([
+            'user' => new UserResource($user->refresh()),
+        ], 'Profile updated successfully');
     }
 }
