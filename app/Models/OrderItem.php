@@ -41,4 +41,9 @@ final class OrderItem extends Model
     {
         return $this->morphOne(TreeDedication::class, 'dedicatable');
     }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
+    }
 }
