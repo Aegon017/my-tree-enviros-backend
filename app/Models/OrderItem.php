@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 final class OrderItem extends Model
 {
@@ -34,5 +35,10 @@ final class OrderItem extends Model
     public function planPrice(): BelongsTo
     {
         return $this->belongsTo(PlanPrice::class);
+    }
+
+    public function dedication(): MorphOne
+    {
+        return $this->morphOne(TreeDedication::class, 'dedicatable');
     }
 }

@@ -48,7 +48,7 @@ final readonly class OrderService
 
             $order = $this->repository->create([
                 'user_id' => $userId,
-                'reference_number' => 'ORD-'.time().'-'.random_int(1000, 9999),
+                'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
                 'status' => 'pending',
                 'subtotal' => $totals['subtotal'],
                 'total_discount' => $totals['discount'],
@@ -63,7 +63,7 @@ final readonly class OrderService
             ]);
 
             foreach ($items as $item) {
-                $this->repository->createItem([
+                $orderItem = $this->repository->createItem([
                     'order_id' => $order->id,
                     'type' => $item['type'],
                     'product_variant_id' => $item['product_variant_id'] ?? null,
@@ -77,6 +77,15 @@ final readonly class OrderService
                     'amount' => $item['amount'],
                     'total_amount' => $item['total_amount'],
                 ]);
+
+                // Create dedication if provided
+                if (!empty($item['dedication'])) {
+                    $orderItem->dedication()->create([
+                        'name' => $item['dedication']['name'] ?? '',
+                        'occasion' => $item['dedication']['occasion'] ?? '',
+                        'message' => $item['dedication']['message'] ?? null,
+                    ]);
+                }
             }
 
             foreach ($totals['applied_charges'] as $c) {

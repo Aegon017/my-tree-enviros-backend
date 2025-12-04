@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CheckoutRequest;
+use App\Models\Campaign;
 use App\Models\PlanPrice;
 use App\Models\ProductVariant;
 use App\Services\CheckoutService;
@@ -27,7 +28,7 @@ final class CheckoutController extends Controller
     {
         $user = $request->user();
 
-        if ($request->boolean('buy_now')) {
+        if ($request->mode === 'buy_now') {
             return $this->buildBuyNowCheckout($request);
         }
 
@@ -53,8 +54,6 @@ final class CheckoutController extends Controller
     {
         $userId = $request->user()->id;
 
-        Log::info($request->items);
-
         $payload = [
             'items' => $request->items,
             'coupon_code' => $request->coupon_code,
@@ -79,7 +78,7 @@ final class CheckoutController extends Controller
                 'shipping' => $order->total_shipping,
                 'fee' => $order->total_fee,
                 'grand_total' => $order->grand_total,
-                'charges' => $order->charges ? $order->charges->map(fn ($c): array => [
+                'charges' => $order->charges ? $order->charges->map(fn($c): array => [
                     'type' => $c->type,
                     'label' => $c->label,
                     'amount' => $c->amount,
@@ -137,6 +136,15 @@ final class CheckoutController extends Controller
         if ($type === 'sponsor' || $type === 'adopt') {
             $planPrice = PlanPrice::with('plan', 'tree')->findOrFail($request->plan_price_id);
 
+            $dedication = null;
+            if ($request->has('dedication_name') || $request->has('dedication_occasion') || $request->has('dedication_message')) {
+                $dedication = [
+                    'name' => $request->input('dedication_name'),
+                    'occasion' => $request->input('dedication_occasion'),
+                    'message' => $request->input('dedication_message'),
+                ];
+            }
+
             $items = collect([[
                 'type' => $type,
                 'quantity' => $request->quantity ?? 1,
@@ -149,6 +157,20 @@ final class CheckoutController extends Controller
                     'name' => $planPrice->tree->name,
                 ],
                 'plan_price_id' => $planPrice->id,
+                'dedication' => $dedication,
+            ]]);
+        }
+
+        if ($type === 'campaign') {
+            $campaign = Campaign::findOrFail($request->campaign_id);
+
+            $items = collect([[
+                'type' => 'campaign',
+                'quantity' => 1,
+                'amount' => (float) $request->amount,
+                'name' => $campaign->name,
+                'image_url' => $campaign->getFirstMedia('thumbnails')?->getFullUrl() ?? $campaign->getFirstMedia('images')?->getFullUrl(),
+                'campaign_id' => $campaign->id,
             ]]);
         }
 

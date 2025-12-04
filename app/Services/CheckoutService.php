@@ -21,18 +21,18 @@ final readonly class CheckoutService
     {
         $hydrated = $this->hydrateItems($items);
 
-        $pricingItems = $hydrated->map(fn ($i): array => [
+        $pricingItems = $hydrated->map(fn($i): array => [
             'quantity' => $i['quantity'],
             'amount' => $i['amount'],
         ])->toArray();
 
-        $subtotal = collect($pricingItems)->sum(fn ($i): int|float => $i['quantity'] * $i['amount']);
+        $subtotal = collect($pricingItems)->sum(fn($i): int|float => $i['quantity'] * $i['amount']);
 
         $couponResult = $this->couponService->validateAndCalculate($couponCode, $subtotal);
 
         $totals = $this->pricingService->calculateTotals($pricingItems, $couponResult);
 
-        $chargesMeta = collect($totals['applied_charges'])->map(fn ($c): array => [
+        $chargesMeta = collect($totals['applied_charges'])->map(fn($c): array => [
             'code' => $c['label'],
             'label' => $c['label'],
             'type' => $c['type'],
@@ -91,6 +91,20 @@ final readonly class CheckoutService
                     'image_url' => $planPrice->tree->getFirstMedia('images')->getFullUrl(),
                     'duration' => $planPrice->plan->duration,
                     'duration_unit' => $planPrice->plan->duration_unit,
+                    'dedication' => $item['dedication'] ?? null,
+                ];
+            }
+
+            if ($item['type'] === 'campaign') {
+                return [
+                    'id' => $item['id'] ?? null,
+                    'type' => 'campaign',
+                    'quantity' => $item['quantity'],
+                    'amount' => (float) $item['amount'],
+                    'total_amount' => (float) $item['amount'] * $item['quantity'],
+                    'campaign_id' => $item['campaign_id'],
+                    'name' => $item['name'],
+                    'image_url' => $item['image_url'],
                 ];
             }
 
