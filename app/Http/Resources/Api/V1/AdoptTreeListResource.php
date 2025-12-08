@@ -15,7 +15,7 @@ final class AdoptTreeListResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'thumbnail_url' => $this->getFirstMedia('thumbnails')->getFullUrl(),
+            'thumbnail_url' => $this->getFirstMedia('thumbnails')?->getFullUrl(),
         ];
     }
 }

@@ -18,7 +18,7 @@ final class UserResource extends JsonResource
             'email' => $this->email,
             'country_code' => $this->country_code,
             'phone' => $this->phone,
-            'avatar_url' => $this->getFirstMedia('avatars')->getFullUrl(),
+            'avatar_url' => $this->getFirstMedia('avatars')?->getFullUrl(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
