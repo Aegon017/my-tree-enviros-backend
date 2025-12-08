@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 
 final class TreeDedication extends Model
 {
+    protected $fillable = [
+        'name',
+        'occasion',
+        'message',
+    ];
+
     public function dedicatable()
     {
         return $this->morphTo();
