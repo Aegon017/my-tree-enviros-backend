@@ -59,6 +59,10 @@ final class CartService
             $item->amount = (float) $planPrice->price;
         }
 
+        if (array_key_exists('initiative_site_id', $data)) {
+            $item->initiative_site_id = $data['initiative_site_id'];
+        }
+
         if ($item->plan_price_id) {
             $price = PlanPrice::find($item->plan_price_id)?->price ?? $item->amount;
             $item->total_amount = $price * $item->quantity;
@@ -161,6 +165,7 @@ final class CartService
             'tree_id' => $data['tree_id'],
             'plan_id' => $planPrice->plan_id,
             'plan_price_id' => $planPrice->id,
+            'initiative_site_id' => $data['initiative_site_id'] ?? null,
             'quantity' => $data['quantity'],
             'amount' => $amount,
             'total_amount' => $total,

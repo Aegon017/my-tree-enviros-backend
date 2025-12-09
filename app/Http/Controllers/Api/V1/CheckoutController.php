@@ -157,6 +157,7 @@ final class CheckoutController extends Controller
                     'name' => $planPrice->tree->name,
                 ],
                 'plan_price_id' => $planPrice->id,
+                'initiative_site_id' => $request->input('initiative_site_id'),
                 'dedication' => $dedication,
             ]]);
         }

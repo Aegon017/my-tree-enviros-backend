@@ -12,23 +12,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class Order extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'reference_number',
-        'status',
-        'subtotal',
-        'total_discount',
-        'total_tax',
-        'total_shipping',
-        'total_fee',
-        'grand_total',
-        'shipping_address_id',
-        'coupon_id',
-        'payment_method',
-        'currency',
-        'paid_at',
-    ];
-
     protected $casts = [
         'status' => OrderStatusEnum::class,
         'subtotal' => 'decimal:2',
