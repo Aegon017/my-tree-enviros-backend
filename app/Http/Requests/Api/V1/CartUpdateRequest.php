@@ -26,6 +26,7 @@ final class CartUpdateRequest extends FormRequest
         return [
             'quantity' => 'sometimes|integer|min:1|max:100',
             'plan_price_id' => 'sometimes|exists:plan_prices,id',
+            'initiative_site_id' => 'nullable|exists:initiative_sites,id',
             'dedication' => 'sometimes|array',
             'dedication.name' => 'sometimes|string',
             'dedication.occasion' => 'sometimes|string',

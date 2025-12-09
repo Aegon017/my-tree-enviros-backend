@@ -7,14 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InitiativeSite extends Model
 {
-    protected $fillable = [
-        'initiative_id',
-        'location_id',
-        'label',
-        'latitude',
-        'longitude',
-        'capacity',
-    ];
     public function initiative(): BelongsTo
     {
         return $this->belongsTo(Initiative::class);

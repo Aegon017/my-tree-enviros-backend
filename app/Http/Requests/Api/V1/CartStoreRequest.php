@@ -22,6 +22,7 @@ final class CartStoreRequest extends FormRequest
             'tree_id' => 'required_if:type,sponsor,adopt|exists:trees,id',
             'plan_id' => 'required_if:type,sponsor,adopt|exists:plans,id',
             'plan_price_id' => 'required_if:type,sponsor,adopt|exists:plan_prices,id',
+            'initiative_site_id' => 'nullable|exists:initiative_sites,id',
             'dedication' => 'nullable|array',
             'dedication.name' => 'sometimes|string',
             'dedication.occasion' => 'sometimes|string',
