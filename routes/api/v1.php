@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BlogController;
 use App\Http\Controllers\Api\V1\CampaignController;
+use App\Http\Controllers\Api\V1\InitiativeController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\FcmTokenController;
@@ -80,6 +81,10 @@ Route::prefix('/blogs')->group(function (): void {
 Route::prefix('campaigns')->group(function (): void {
     Route::get('/', [CampaignController::class, 'index']);
     Route::get('/{identifier}', [CampaignController::class, 'show']);
+});
+
+Route::prefix('initiatives')->group(function (): void {
+    Route::get('/', [InitiativeController::class, 'index']);
 });
 
 Route::post('payments/webhook/razorpay', [PaymentController::class, 'webhook']);

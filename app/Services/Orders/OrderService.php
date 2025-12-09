@@ -71,6 +71,7 @@ final readonly class OrderService
                     'tree_id' => $item['tree_id'] ?? null,
                     'plan_id' => $item['plan_id'] ?? null,
                     'plan_price_id' => $item['plan_price_id'] ?? null,
+                    'initiative_site_id' => $item['initiative_site_id'] ?? null,
                     'tree_instance_id' => $item['tree_instance_id'] ?? null,
                     'sponsor_quantity' => $item['sponsor_quantity'] ?? null,
                     'quantity' => $item['quantity'],

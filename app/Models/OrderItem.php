@@ -37,6 +37,11 @@ final class OrderItem extends Model
         return $this->belongsTo(PlanPrice::class);
     }
 
+    public function initiativeSite(): BelongsTo
+    {
+        return $this->belongsTo(InitiativeSite::class);
+    }
+
     public function dedication(): MorphOne
     {
         return $this->morphOne(TreeDedication::class, 'dedicatable');
