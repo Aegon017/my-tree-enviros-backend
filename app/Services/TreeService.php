@@ -13,11 +13,20 @@ final readonly class TreeService
 
     public function getTrees(float $lat, float $lng, float $radius, string $type, int $perPage): \Illuminate\Pagination\LengthAwarePaginator
     {
+        if ($type === 'adopt') {
+            return $this->repository->findPaginatedTreeInstances($lat, $lng, $radius, $perPage);
+        }
+
         return $this->repository->findPaginatedTrees($lat, $lng, $radius, $type, $perPage);
     }
 
     public function getByIdOrSlug(string $identifier, string $type): ?Tree
     {
         return $this->repository->findTreeByIdOrSlug($identifier, $type);
+    }
+
+    public function getInstance(int $id): ?\App\Models\TreeInstance
+    {
+        return $this->repository->findInstanceById($id);
     }
 }

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('product_variant_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('initiative_site_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('tree_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('tree_instance_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_price_id')->nullable()->constrained()->nullOnDelete();
             $table->unsignedInteger('quantity');
