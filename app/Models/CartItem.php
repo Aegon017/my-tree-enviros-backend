@@ -20,6 +20,11 @@ final class CartItem extends Model
         return $this->belongsTo(Tree::class);
     }
 
+    public function treeInstance(): BelongsTo
+    {
+        return $this->belongsTo(TreeInstance::class);
+    }
+
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);

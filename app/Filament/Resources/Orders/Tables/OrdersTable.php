@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Tables;
 
+use Filament\Actions\ActionGroup;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 use Hugomyb\FilamentMediaAction\Actions\MediaAction;
 
@@ -13,6 +16,7 @@ final class OrdersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', direction: 'desc')
             ->columns([
                 TextColumn::make('reference_number')->searchable(),
                 TextColumn::make('user.name')->searchable(),
@@ -23,10 +27,13 @@ final class OrdersTable
             ])
             ->filters([])
             ->recordActions([
-                MediaAction::make('invoice')
-                    ->label('Invoice')
-                    ->media(fn ($record): string => route('admin.orders.invoice', $record))
-                    ->mediaType(MediaAction::TYPE_PDF),
-            ]);
+                ActionGroup::make([
+                    MediaAction::make('invoice')
+                        ->icon(Heroicon::OutlinedArrowDownOnSquareStack)
+                        ->label('Invoice')
+                        ->media(fn($record): string => route('admin.orders.invoice', $record))
+                        ->mediaType(MediaAction::TYPE_PDF),
+                ]),
+            ], position: RecordActionsPosition::BeforeCells);
     }
 }

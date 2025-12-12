@@ -156,17 +156,19 @@ final class CartService
     private function addAdoptTree(Cart $cart, array $data): JsonResponse
     {
         $planPrice = PlanPrice::findOrFail($data['plan_price_id']);
+        $instance = \App\Models\TreeInstance::findOrFail($data['tree_instance_id']);
 
         $amount = (float) $planPrice->price;
-        $total = $amount * $data['quantity'];
+        $quantity = 1;
+        $total = $amount * $quantity;
 
         $item = $cart->items()->create([
             'type' => 'adopt',
-            'tree_id' => $data['tree_id'],
+            'tree_id' => $instance->tree_id,
+            'tree_instance_id' => $instance->id,
             'plan_id' => $planPrice->plan_id,
             'plan_price_id' => $planPrice->id,
-            'initiative_site_id' => $data['initiative_site_id'] ?? null,
-            'quantity' => $data['quantity'],
+            'quantity' => $quantity,
             'amount' => $amount,
             'total_amount' => $total,
         ]);
