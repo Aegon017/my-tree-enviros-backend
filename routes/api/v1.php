@@ -159,3 +159,4 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
 });
 
 Route::get('/get-app', [AppDownloadController::class, 'getApp'])->name('get-app');
+Route::get('/app-settings', [AppDownloadController::class, 'getSettings'])->name('app-settings');
