@@ -11,8 +11,9 @@ class AppDownloadController extends Controller
     {
         $userAgent = $request->header('User-Agent');
 
-        $androidUrl = config('services.app.android');
-        $iosUrl = config('services.app.ios');
+        $settings = \App\Models\AppSetting::first();
+        $androidUrl = $settings->android_url ?? config('services.app.android');
+        $iosUrl = $settings->ios_url ?? config('services.app.ios');
         $fallbackUrl = '/';
 
         if (stripos($userAgent, 'iPhone') !== false || stripos($userAgent, 'iPad') !== false || stripos($userAgent, 'iPod') !== false) {
@@ -24,5 +25,17 @@ class AppDownloadController extends Controller
         }
 
         return redirect()->to($fallbackUrl);
+    }
+
+    public function getSettings()
+    {
+        $settings = \App\Models\AppSetting::first();
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'android_url' => $settings->android_url ?? config('services.app.android'),
+                'ios_url' => $settings->ios_url ?? config('services.app.ios'),
+            ]
+        ]);
     }
 }
