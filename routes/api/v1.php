@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\TreeController;
 use App\Http\Controllers\Api\V1\WishlistController;
+use App\Http\Controllers\Api\V1\AppDownloadController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/sign-up', [AuthController::class, 'signUp']);
@@ -156,3 +157,5 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
 });
+
+Route::get('/get-app', [AppDownloadController::class, 'getApp'])->name('get-app');

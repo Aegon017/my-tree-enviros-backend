@@ -56,4 +56,9 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
+
+    'app' => [
+        'ios' => env('APP_STORE_LINK', 'https://apps.apple.com/in/app/my-tree-enviros/id6748556520'),
+        'android' => env('PLAY_STORE_LINK', 'https://play.google.com/store/apps/details?id=com.mytree&pcampaignid=web_share'),
+    ],
 ];
