@@ -3,19 +3,17 @@
 namespace App\Http\Controllers\Api\V1;
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class AppDownloadController extends Controller
 {
-    /**
-     * Redirect users to the appropriate store based on their device.
-     */
     public function getApp(Request $request)
     {
         $userAgent = $request->header('User-Agent');
 
         $androidUrl = config('services.app.android');
         $iosUrl = config('services.app.ios');
-        $fallbackUrl = '/'; // Or a specific landing page
+        $fallbackUrl = '/';
 
         if (stripos($userAgent, 'iPhone') !== false || stripos($userAgent, 'iPad') !== false || stripos($userAgent, 'iPod') !== false) {
             if ($iosUrl) return redirect()->away($iosUrl);
@@ -25,7 +23,6 @@ class AppDownloadController extends Controller
             if ($androidUrl) return redirect()->away($androidUrl);
         }
 
-        // Fallback for desktop or unknown devices
         return redirect()->to($fallbackUrl);
     }
 }
