@@ -12,6 +12,7 @@ final class PaymentFactory
     {
         return match ($gateway) {
             'razorpay' => new RazorpayService(),
+            'phonepe' => new PhonepeService(),
             default => throw new InvalidArgumentException('Unsupported payment gateway'),
         };
     }
