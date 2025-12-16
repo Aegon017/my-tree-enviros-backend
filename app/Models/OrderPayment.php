@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class OrderPayment extends Model
 {
+    protected $guarded = [];
+
     protected $casts = [
         'amount' => 'decimal:2',
         'paid_at' => 'datetime',

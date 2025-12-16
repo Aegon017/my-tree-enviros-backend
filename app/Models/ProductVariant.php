@@ -23,6 +23,11 @@ final class ProductVariant extends Model implements HasMedia
         $this->addMediaCollection('images');
     }
 
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class);

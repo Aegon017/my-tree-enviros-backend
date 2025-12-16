@@ -57,7 +57,7 @@ final class CheckoutController extends Controller
         $payload = [
             'items' => $request->items,
             'coupon_code' => $request->coupon_code,
-            'payment_method' => 'razorpay',
+            'payment_method' => $request->payment_method ?? 'razorpay',
             'currency' => 'INR',
             'shipping_address_id' => $request->shipping_address_id,
         ];
@@ -66,7 +66,8 @@ final class CheckoutController extends Controller
 
         $order->load('orderCharges');
 
-        $payment = PaymentFactory::driver('razorpay')->createGatewayOrder($order);
+        $driver = $request->payment_method ?? 'razorpay';
+        $payment = PaymentFactory::driver($driver)->createGatewayOrder($order);
 
         return response()->json([
             'order' => [

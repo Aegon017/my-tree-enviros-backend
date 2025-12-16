@@ -88,7 +88,7 @@ Route::prefix('initiatives')->group(function (): void {
     Route::get('/', [InitiativeController::class, 'index']);
 });
 
-Route::post('payments/webhook/razorpay', [PaymentController::class, 'webhook']);
+Route::post('payments/webhook', [PaymentController::class, 'webhook'])->name('api.v1.payment.webhook');
 
 Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::get('me', [AuthController::class, 'me']);
