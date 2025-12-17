@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PaymentGatewayResource extends Resource
 {
@@ -32,13 +33,6 @@ class PaymentGatewayResource extends Resource
         return PaymentGatewaysTable::configure($table);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
@@ -46,5 +40,10 @@ class PaymentGatewayResource extends Resource
             'create' => CreatePaymentGateway::route('/create'),
             'edit' => EditPaymentGateway::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withoutGlobalScopes();
     }
 }
