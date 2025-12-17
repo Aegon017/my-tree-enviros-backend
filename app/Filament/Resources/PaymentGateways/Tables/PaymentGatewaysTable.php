@@ -20,9 +20,6 @@ class PaymentGatewaysTable
                 SpatieMediaLibraryImageColumn::make('image')->collection('images'),
                 IconColumn::make('is_active')->boolean(),
             ])
-            ->filters([
-                //
-            ])
             ->recordActions([
                 EditAction::make(),
             ])
@@ -31,6 +28,7 @@ class PaymentGatewaysTable
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->defaultSort('sort', 'asc')
             ->reorderable('sort');
     }
 }

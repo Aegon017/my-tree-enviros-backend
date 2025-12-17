@@ -17,8 +17,8 @@ class PaymentGatewayForm
             ->components([
                 TextInput::make('name')->required(),
                 Textarea::make('description')->columnSpanFull(),
-                SpatieMediaLibraryFileUpload::make('image')->collection('images')->required(),
-                Toggle::make('is_active')->default(true)->required(),
+                SpatieMediaLibraryFileUpload::make('image')->collection('images'),
+                Toggle::make('is_active')->default(true),
                 Hidden::make('sort')->default(0),
             ]);
     }
