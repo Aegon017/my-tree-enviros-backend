@@ -1,20 +1,43 @@
-name: Deployment Workflow
+name: API Deployment Workflow
 
 on:
   push:
     branches:
+      - test
       - main
 
 jobs:
-  deploy:
+  deploy-test:
+    if: github.ref == 'refs/heads/test'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - name: SSH Deploy API to TEST
+        uses: appleboy/ssh-action@v1.2.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/mytreeca/api-test.mytree.care
+            git fetch origin test
+            git reset --hard origin/test
+            npm ci
+            npm run build
+            /opt/cpanel/ea-php85/root/usr/bin/php /usr/local/bin/composer install --no-interaction --prefer-dist
+            /opt/cpanel/ea-php85/root/usr/bin/php artisan migrate --force
+            /opt/cpanel/ea-php85/root/usr/bin/php artisan config:cache
+            /opt/cpanel/ea-php85/root/usr/bin/php artisan route:cache
+            /opt/cpanel/ea-php85/root/usr/bin/php artisan view:cache
 
-      - name: SSH Deploy
-        uses: appleboy/ssh-action@v1.2.2
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH Deploy API to PRODUCTION
+        uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -26,14 +49,8 @@ jobs:
             git reset --hard origin/main
             npm ci
             npm run build
-
-            # Use PHP 8.5 to run Composer (non-interactive)
             /opt/cpanel/ea-php85/root/usr/bin/php /usr/local/bin/composer install --no-interaction --prefer-dist
-
-            # Run Laravel migrations safely in production
             /opt/cpanel/ea-php85/root/usr/bin/php artisan migrate --force
-
-            # (Optional) Rebuild caches for performance
             /opt/cpanel/ea-php85/root/usr/bin/php artisan config:cache
             /opt/cpanel/ea-php85/root/usr/bin/php artisan route:cache
             /opt/cpanel/ea-php85/root/usr/bin/php artisan view:cache
