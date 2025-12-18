@@ -24,12 +24,12 @@ final class TreeInstanceDetailResource extends JsonResource
 
             'thumbnail_url' => $tree?->getFirstMedia('thumbnails')?->getFullUrl(),
             'image_urls' => $tree?->getMedia('images')->map(
-                fn($media) => $media->getFullUrl()
+                fn ($media) => $media->getFullUrl()
             ),
 
             'plan_prices' => PlanPriceResource::collection(
                 $tree->planPrices
-                    ->where(fn($planPrice) => $planPrice->plan?->type === PlanTypeEnum::ADOPT)
+                    ->where(fn ($planPrice): bool => $planPrice->plan?->type === PlanTypeEnum::ADOPT)
                     ->load('plan')
             ),
 

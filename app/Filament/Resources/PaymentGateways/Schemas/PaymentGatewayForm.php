@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\PaymentGateways\Schemas;
 
 use Filament\Forms\Components\Hidden;
@@ -9,7 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
-class PaymentGatewayForm
+final class PaymentGatewayForm
 {
     public static function configure(Schema $schema): Schema
     {

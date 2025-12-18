@@ -2,19 +2,21 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\AppDownloadController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BlogController;
 use App\Http\Controllers\Api\V1\CampaignController;
-use App\Http\Controllers\Api\V1\InitiativeController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\FcmTokenController;
 use App\Http\Controllers\Api\V1\GoogleAuthController;
+use App\Http\Controllers\Api\V1\InitiativeController;
 use App\Http\Controllers\Api\V1\LocationController;
-use App\Http\Controllers\Api\V1\NotificationDeviceTokenController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\NotificationDeviceTokenController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PaymentGatewayController;
 use App\Http\Controllers\Api\V1\PostOfficeController;
 use App\Http\Controllers\Api\V1\ProductCategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -24,8 +26,6 @@ use App\Http\Controllers\Api\V1\ShippingAddressController;
 use App\Http\Controllers\Api\V1\SliderController;
 use App\Http\Controllers\Api\V1\TreeController;
 use App\Http\Controllers\Api\V1\WishlistController;
-use App\Http\Controllers\Api\V1\AppDownloadController;
-use App\Http\Controllers\Api\V1\PaymentGatewayController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/sign-up', [AuthController::class, 'signUp']);
@@ -158,7 +158,6 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
 });
-
 
 Route::get('/payment-gateways', [PaymentGatewayController::class, 'index']);
 

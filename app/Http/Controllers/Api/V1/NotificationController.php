@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class NotificationController extends Controller
+final class NotificationController extends Controller
 {
     public function index(Request $request)
     {
@@ -25,7 +27,7 @@ class NotificationController extends Controller
 
         $query = $request->user()->unreadNotifications();
 
-        if (!empty($data['ids'])) {
+        if (! empty($data['ids'])) {
             $query->whereIn('id', $data['ids']);
         }
 
@@ -34,7 +36,7 @@ class NotificationController extends Controller
         return response()->noContent();
     }
 
-    public function unreadCount(Request $request)
+    public function unreadCount(Request $request): array
     {
         return ['count' => $request->user()->unreadNotifications()->count()];
     }

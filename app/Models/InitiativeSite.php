@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class InitiativeSite extends Model
+final class InitiativeSite extends Model
 {
     public function initiative(): BelongsTo
     {

@@ -8,7 +8,7 @@ use InvalidArgumentException;
 
 final class PaymentFactory
 {
-    public static function driver(string $gateway)
+    public static function driver(string $gateway): RazorpayService|PhonepeService
     {
         return match ($gateway) {
             'razorpay' => new RazorpayService(),

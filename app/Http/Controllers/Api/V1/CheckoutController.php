@@ -14,7 +14,6 @@ use App\Services\Coupons\CouponService;
 use App\Services\Orders\OrderService;
 use App\Services\Payments\PaymentFactory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 final class CheckoutController extends Controller
 {
@@ -79,7 +78,7 @@ final class CheckoutController extends Controller
                 'shipping' => $order->total_shipping,
                 'fee' => $order->total_fee,
                 'grand_total' => $order->grand_total,
-                'charges' => $order->charges ? $order->charges->map(fn($c): array => [
+                'charges' => $order->charges ? $order->charges->map(fn ($c): array => [
                     'type' => $c->type,
                     'label' => $c->label,
                     'amount' => $c->amount,

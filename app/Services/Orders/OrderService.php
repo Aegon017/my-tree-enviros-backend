@@ -48,7 +48,7 @@ final readonly class OrderService
 
             $order = $this->repository->create([
                 'user_id' => $userId,
-                'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
+                'reference_number' => 'ORD-'.time().'-'.random_int(1000, 9999),
                 'status' => 'pending',
                 'subtotal' => $totals['subtotal'],
                 'total_discount' => $totals['discount'],
@@ -80,7 +80,7 @@ final readonly class OrderService
                 ]);
 
                 // Create dedication if provided
-                if (!empty($item['dedication'])) {
+                if (! empty($item['dedication'])) {
                     $orderItem->dedication()->create([
                         'name' => $item['dedication']['name'] ?? '',
                         'occasion' => $item['dedication']['occasion'] ?? '',

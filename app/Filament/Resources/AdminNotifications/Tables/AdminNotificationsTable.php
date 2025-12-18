@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\AdminNotifications\Tables;
 
 use Filament\Actions\BulkActionGroup;
@@ -8,7 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class AdminNotificationsTable
+final class AdminNotificationsTable
 {
     public static function configure(Table $table): Table
     {
@@ -23,7 +25,7 @@ class AdminNotificationsTable
                     ->wrap(),
 
                 TextColumn::make('channels')
-                    ->formatStateUsing(function ($state) {
+                    ->formatStateUsing(function ($state): string {
                         if (is_array($state)) {
                             return implode(', ', $state);
                         }

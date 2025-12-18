@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Initiatives;
 
 use App\Filament\Resources\Initiatives\Pages\CreateInitiative;
@@ -14,12 +16,13 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
-class InitiativeResource extends Resource
+final class InitiativeResource extends Resource
 {
     protected static ?string $model = Initiative::class;
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Campaigns';
+    protected static UnitEnum|string|null $navigationGroup = 'Campaigns';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMegaphone;
 

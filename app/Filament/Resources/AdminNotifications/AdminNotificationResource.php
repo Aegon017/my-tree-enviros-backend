@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\AdminNotifications;
 
 use App\Filament\Resources\AdminNotifications\Pages\CreateAdminNotification;
@@ -14,7 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class AdminNotificationResource extends Resource
+final class AdminNotificationResource extends Resource
 {
     protected static ?string $model = AdminNotification::class;
 

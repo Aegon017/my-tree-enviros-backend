@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\PaymentGateways;
 
 use App\Filament\Resources\PaymentGateways\Pages\CreatePaymentGateway;
@@ -15,7 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class PaymentGatewayResource extends Resource
+final class PaymentGatewayResource extends Resource
 {
     protected static ?string $model = PaymentGateway::class;
 

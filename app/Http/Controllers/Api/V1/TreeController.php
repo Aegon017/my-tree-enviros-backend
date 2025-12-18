@@ -45,7 +45,7 @@ final class TreeController extends Controller
         if ($type === 'adopt') {
             $instance = $this->service->getInstance((int) $identifier);
 
-            if (! $instance) {
+            if (! $instance instanceof \App\Models\TreeInstance) {
                 return $this->notFound('Tree instance not found');
             }
 
@@ -62,16 +62,16 @@ final class TreeController extends Controller
 
         $tree = $this->service->getByIdOrSlug($identifier, $type);
 
-        if (! $tree) {
+        if (! $tree instanceof \App\Models\Tree) {
             return $this->notFound('Tree not found');
         }
 
         return $this->success(['tree' => new TreeResource($tree->load([
-            'planPrices' => fn($q) => $q->whereHas(
+            'planPrices' => fn ($q) => $q->whereHas(
                 'plan',
-                fn($p) => $p->where('type', $type)
+                fn ($p) => $p->where('type', $type)
             )->with('plan'),
-            'treeInstances' => fn($q) => $q->where('status', 'adoptable')
+            'treeInstances' => fn ($q) => $q->where('status', 'adoptable')
                 ->with('location'),
         ]))]);
     }
