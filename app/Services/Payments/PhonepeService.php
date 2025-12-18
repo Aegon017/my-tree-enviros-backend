@@ -34,7 +34,7 @@ final readonly class PhonepeService
         }
 
         $this->baseUrl = $this->env === 'PROD'
-            ? 'https://api.phonepe.com/apis/hermes'
+            ? 'https://api.phonepe.com/apis/pg'
             : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
     }
 
@@ -42,11 +42,11 @@ final readonly class PhonepeService
     {
         $token = $this->getAccessToken();
 
-        $transactionId = 'MT-'.$order->id.'-'.Str::random(6);
+        $transactionId = 'MT-' . $order->id . '-' . Str::random(6);
         $amountInPaise = (int) round($order->grand_total * 100);
 
         $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-        $callbackUrl = $frontendUrl.('/payment/phonepe-callback?merchantOrderId='.$transactionId);
+        $callbackUrl = $frontendUrl . ('/payment/phonepe-callback?merchantOrderId=' . $transactionId);
 
         $payload = [
             'merchantOrderId' => $transactionId,
@@ -59,15 +59,15 @@ final readonly class PhonepeService
             ],
         ];
 
-        $endpoint = $this->baseUrl.'/checkout/v2/pay';
+        $endpoint = $this->baseUrl . '/checkout/v2/pay';
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Authorization' => 'O-Bearer '.$token,
+            'Authorization' => 'O-Bearer ' . $token,
         ])->post($endpoint, $payload);
 
         if (! $response->successful()) {
-            throw new RuntimeException('PhonePe API Error: '.$response->body());
+            throw new RuntimeException('PhonePe API Error: ' . $response->body());
         }
 
         $resData = $response->json();
@@ -104,15 +104,15 @@ final readonly class PhonepeService
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Authorization' => 'O-Bearer '.$token,
-        ])->get($this->baseUrl.$path);
+            'Authorization' => 'O-Bearer ' . $token,
+        ])->get($this->baseUrl . $path);
 
         $resData = $response->json();
 
         $state = $resData['state'] ?? '';
 
         if ($state !== 'COMPLETED' && $state !== 'PAYMENT_SUCCESS') {
-            throw new RuntimeException('Payment Validation Failed: '.($resData['message'] ?? 'State: '.$state));
+            throw new RuntimeException('Payment Validation Failed: ' . ($resData['message'] ?? 'State: ' . $state));
         }
 
         $parts = explode('-', (string) $merchantTransactionId);
@@ -169,7 +169,7 @@ final readonly class PhonepeService
         ]);
 
         if (! $response->successful()) {
-            throw new RuntimeException('PhonePe Auth Error: '.$response->body());
+            throw new RuntimeException('PhonePe Auth Error: ' . $response->body());
         }
 
         return $response->json()['access_token'];
