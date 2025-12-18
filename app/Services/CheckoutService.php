@@ -54,7 +54,11 @@ final readonly class CheckoutService
 
     private function hydrateItems(Collection $items): Collection
     {
-        return $items->map(function (array $item): ?array {
+        return $items->map(function ($item): ?array {
+            if (is_object($item) && method_exists($item, 'toArray')) {
+                $item = $item->toArray();
+            }
+
             if ($item['type'] === 'product') {
                 $variant = ProductVariant::with('inventory.product')->find($item['product_variant_id']);
 
