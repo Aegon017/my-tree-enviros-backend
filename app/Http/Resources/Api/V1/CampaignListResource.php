@@ -22,7 +22,7 @@ final class CampaignListResource extends JsonResource
             'end_date' => $this->end_date,
             'is_active' => (bool) $this->is_active,
             'thumbnail_url' => $this->getFirstMedia('thumbnails')?->getFullUrl(),
-            'location' => $this->whenLoaded('location', fn(): array => [
+            'location' => $this->whenLoaded('location', fn (): array => [
                 'id' => $this->location->id,
                 'name' => $this->location->name,
                 'parent_id' => $this->location->parent_id,

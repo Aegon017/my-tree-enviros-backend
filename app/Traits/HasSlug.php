@@ -12,15 +12,15 @@ trait HasSlug
     public static function bootHasSlug(): void
     {
         static::creating(function (Model $model): void {
-            if (!$model->slug) {
+            if (! $model->slug) {
                 $model->slug = self::makeUniqueSlug($model);
             }
         });
 
         static::updating(function (Model $model): void {
-            $sourceFields = (array) self::slugSourceFields($model);
+            $sourceFields = self::slugSourceFields($model);
 
-            if ($model->isDirty($sourceFields) && !$model->isDirty('slug')) {
+            if ($model->isDirty($sourceFields) && ! $model->isDirty('slug')) {
                 $model->slug = self::makeUniqueSlug($model);
             }
         });
@@ -38,7 +38,7 @@ trait HasSlug
         $fields = self::slugSourceFields($model);
 
         return collect($fields)
-            ->map(fn($field) => (string) ($model->{$field} ?? ''))
+            ->map(fn ($field): string => (string) ($model->{$field} ?? ''))
             ->implode(' ');
     }
 
@@ -50,15 +50,15 @@ trait HasSlug
 
         $query = $model->newQuery()
             ->where('slug', $slug)
-            ->when($model->exists, fn($q) => $q->where('id', '!=', $model->getKey()));
+            ->when($model->exists, fn ($q) => $q->where('id', '!=', $model->getKey()));
 
         while ($query->exists()) {
-            $slug = "{$base}-{$i}";
-            $i++;
+            $slug = sprintf('%s-%d', $base, $i);
+            ++$i;
 
             $query = $model->newQuery()
                 ->where('slug', $slug)
-                ->when($model->exists, fn($q) => $q->where('id', '!=', $model->getKey()));
+                ->when($model->exists, fn ($q) => $q->where('id', '!=', $model->getKey()));
         }
 
         return $slug;

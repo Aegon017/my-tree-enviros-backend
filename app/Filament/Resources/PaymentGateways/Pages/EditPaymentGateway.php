@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\PaymentGateways\Pages;
 
 use App\Filament\Resources\PaymentGateways\PaymentGatewayResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditPaymentGateway extends EditRecord
+final class EditPaymentGateway extends EditRecord
 {
     protected static string $resource = PaymentGatewayResource::class;
 

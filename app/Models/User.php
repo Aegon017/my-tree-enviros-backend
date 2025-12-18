@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserTypeEnum;
-use DevKandil\NotiFire\Traits\HasFcm;
 use Filament\Models\Contracts\FilamentUser as FilamentUserContract;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

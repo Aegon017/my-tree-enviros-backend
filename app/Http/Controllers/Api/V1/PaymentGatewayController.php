@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
@@ -8,7 +10,7 @@ use App\Models\PaymentGateway;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 
-class PaymentGatewayController extends Controller
+final class PaymentGatewayController extends Controller
 {
     use ResponseHelpers;
 

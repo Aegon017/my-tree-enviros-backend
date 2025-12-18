@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\Payments\PaymentFactory;
+use Exception;
 use Illuminate\Http\Request;
 
 final class PaymentController extends Controller
@@ -37,22 +38,24 @@ final class PaymentController extends Controller
         try {
             if ($gateway === 'phonepe') {
                 $responseStr = $request->input('response');
-                $decoded = json_decode(base64_decode($responseStr), true);
+                $decoded = json_decode(base64_decode((string) $responseStr), true);
                 $payload = [
                     'transaction_id' => $decoded['data']['merchantTransactionId'] ?? null,
                     'raw_response' => $decoded,
-                    'is_webhook' => true
+                    'is_webhook' => true,
                 ];
                 if ($payload['transaction_id']) {
                     PaymentFactory::driver('phonepe')->verifyAndCapture($payload);
                 }
+
                 return response()->json(['success' => true]);
             }
 
             PaymentFactory::driver($gateway)->verifyAndCapture($request->all());
+
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        } catch (Exception $exception) {
+            return response()->json(['success' => false, 'message' => $exception->getMessage()], 500);
         }
     }
 }

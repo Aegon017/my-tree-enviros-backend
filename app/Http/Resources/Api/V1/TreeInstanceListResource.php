@@ -14,7 +14,7 @@ final class TreeInstanceListResource extends JsonResource
         return [
             'id' => $this->id,
             'sku' => $this->sku,
-            'name' => ($this->tree->name ?? 'Unknown Tree') . ' (' . $this->sku . ')',
+            'name' => ($this->tree->name ?? 'Unknown Tree').' ('.$this->sku.')',
             'slug' => $this->tree->slug ?? '',
             'thumbnail_url' => $this->tree->getFirstMedia('thumbnails')?->getFullUrl(),
             'location' => [

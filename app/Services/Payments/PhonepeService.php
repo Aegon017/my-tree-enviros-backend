@@ -13,9 +13,13 @@ use RuntimeException;
 final readonly class PhonepeService
 {
     private string $clientId;
+
     private string $clientSecret;
+
     private int $clientVersion;
+
     private string $baseUrl;
+
     private string $env;
 
     public function __construct()
@@ -25,7 +29,7 @@ final readonly class PhonepeService
         $this->clientVersion = (int) (config('services.phonepe.client_version') ?? 1);
         $this->env = (string) config('services.phonepe.env', 'UAT');
 
-        if (empty($this->clientId) || empty($this->clientSecret)) {
+        if ($this->clientId === '' || $this->clientId === '0' || ($this->clientSecret === '' || $this->clientSecret === '0')) {
             throw new RuntimeException('PhonePe credentials (client_id or client_secret) are missing in config.');
         }
 
@@ -34,51 +38,15 @@ final readonly class PhonepeService
             : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
     }
 
-    private function getAccessToken(): string
-    {
-        $authUrl = $this->env === 'PROD'
-            ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token'
-            : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
-
-        $response = Http::asForm()->post($authUrl, [
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'grant_type' => 'client_credentials',
-            'client_version' => $this->clientVersion,
-        ]);
-
-        if (!$response->successful()) {
-            throw new RuntimeException('PhonePe Auth Error: ' . $response->body());
-        }
-
-        return $response->json()['access_token'];
-    }
-
-    private function getMerchantIdFromToken(string $token): string
-    {
-        $parts = explode('.', $token);
-        if (count($parts) < 2) {
-            throw new RuntimeException('Invalid Access Token format');
-        }
-
-        $payload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $parts[1])), true);
-
-        if (!isset($payload['merchantId'])) {
-            throw new RuntimeException('Merchant ID not found in Access Token');
-        }
-
-        return $payload['merchantId'];
-    }
-
     public function createGatewayOrder(Order $order): array
     {
         $token = $this->getAccessToken();
 
-        $transactionId = "MT-" . $order->id . "-" . Str::random(6);
+        $transactionId = 'MT-'.$order->id.'-'.Str::random(6);
         $amountInPaise = (int) round($order->grand_total * 100);
 
         $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-        $callbackUrl = $frontendUrl . "/payment/phonepe-callback?merchantOrderId={$transactionId}";
+        $callbackUrl = $frontendUrl.('/payment/phonepe-callback?merchantOrderId='.$transactionId);
 
         $payload = [
             'merchantOrderId' => $transactionId,
@@ -88,18 +56,18 @@ final readonly class PhonepeService
                 'merchantUrls' => [
                     'redirectUrl' => $callbackUrl,
                 ],
-            ]
+            ],
         ];
 
-        $endpoint = $this->baseUrl . '/checkout/v2/pay';
+        $endpoint = $this->baseUrl.'/checkout/v2/pay';
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Authorization' => 'O-Bearer ' . $token,
+            'Authorization' => 'O-Bearer '.$token,
         ])->post($endpoint, $payload);
 
-        if (!$response->successful()) {
-            throw new RuntimeException('PhonePe API Error: ' . $response->body());
+        if (! $response->successful()) {
+            throw new RuntimeException('PhonePe API Error: '.$response->body());
         }
 
         $resData = $response->json();
@@ -107,7 +75,7 @@ final readonly class PhonepeService
         $redirectUrl = $resData['redirectUrl'] ?? null;
         $orderId = $resData['orderId'] ?? null;
 
-        if (!$redirectUrl) {
+        if (! $redirectUrl) {
             throw new RuntimeException('PhonePe Redirect URL not found in V2 response');
         }
 
@@ -118,7 +86,7 @@ final readonly class PhonepeService
             'amount' => $amountInPaise,
             'currency' => 'INR',
             'url' => $redirectUrl,
-            'env' => $this->env
+            'env' => $this->env,
         ];
     }
 
@@ -132,25 +100,26 @@ final readonly class PhonepeService
 
         $token = $this->getAccessToken();
 
-        $path = "/checkout/v2/order/{$merchantTransactionId}/status";
+        $path = sprintf('/checkout/v2/order/%s/status', $merchantTransactionId);
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'Authorization' => 'O-Bearer ' . $token,
-        ])->get($this->baseUrl . $path);
+            'Authorization' => 'O-Bearer '.$token,
+        ])->get($this->baseUrl.$path);
 
         $resData = $response->json();
 
         $state = $resData['state'] ?? '';
 
         if ($state !== 'COMPLETED' && $state !== 'PAYMENT_SUCCESS') {
-            throw new RuntimeException('Payment Validation Failed: ' . ($resData['message'] ?? 'State: ' . $state));
+            throw new RuntimeException('Payment Validation Failed: '.($resData['message'] ?? 'State: '.$state));
         }
 
-        $parts = explode('-', $merchantTransactionId);
+        $parts = explode('-', (string) $merchantTransactionId);
         if (count($parts) < 2) {
             throw new RuntimeException('Invalid Transaction ID format');
         }
+
         $orderId = (int) $parts[1];
 
         $order = Order::findOrFail($orderId);
@@ -164,7 +133,6 @@ final readonly class PhonepeService
         }
 
         $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId'] ?? $resData['orderId'] ?? $merchantTransactionId;
-        $paymentMode = $resData['paymentDetails'][0]['paymentMode'] ?? 'PHONEPE';
 
         OrderPayment::create([
             'order_id' => $order->id,
@@ -185,5 +153,25 @@ final readonly class PhonepeService
             'order_id' => $order->id,
             'reference_number' => $order->reference_number,
         ];
+    }
+
+    private function getAccessToken(): string
+    {
+        $authUrl = $this->env === 'PROD'
+            ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token'
+            : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+
+        $response = Http::asForm()->post($authUrl, [
+            'client_id' => $this->clientId,
+            'client_secret' => $this->clientSecret,
+            'grant_type' => 'client_credentials',
+            'client_version' => $this->clientVersion,
+        ]);
+
+        if (! $response->successful()) {
+            throw new RuntimeException('PhonePe Auth Error: '.$response->body());
+        }
+
+        return $response->json()['access_token'];
     }
 }

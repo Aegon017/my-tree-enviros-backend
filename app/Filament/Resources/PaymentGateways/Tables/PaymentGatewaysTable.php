@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\PaymentGateways\Tables;
 
 use Filament\Actions\BulkActionGroup;
@@ -10,7 +12,7 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class PaymentGatewaysTable
+final class PaymentGatewaysTable
 {
     public static function configure(Table $table): Table
     {

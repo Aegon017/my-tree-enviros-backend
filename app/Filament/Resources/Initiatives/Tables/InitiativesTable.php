@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Initiatives\Tables;
 
 use Filament\Actions\BulkActionGroup;
@@ -8,7 +10,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class InitiativesTable
+final class InitiativesTable
 {
     public static function configure(Table $table): Table
     {
@@ -17,7 +19,7 @@ class InitiativesTable
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('primaryLocation.name')->label('Primary Location')->sortable(),
-                TextColumn::make('status')->badge()->color(fn(string $state): string => match ($state) {
+                TextColumn::make('status')->badge()->color(fn (string $state): string => match ($state) {
                     'active' => 'success',
                     'inactive' => 'danger',
                     default => 'gray',

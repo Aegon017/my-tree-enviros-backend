@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Notification\Channels\MultiDeviceFcmChannel;
@@ -10,31 +12,28 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\Fcm\FcmMessage;
 use NotificationChannels\Fcm\Resources\Notification as ResourcesNotification;
 
-class BaseAppNotification extends Notification implements ShouldQueue
+final class BaseAppNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public string $title;
-    public string $body;
-    public array $data;
-    public array $channels;
-
-    public function __construct(string $title, string $body, array $data = [], array $channels = ['database', 'mail', 'fcm'])
-    {
-        $this->title = $title;
-        $this->body = $body;
-        $this->data = $data;
-        $this->channels = $channels;
-    }
+    public function __construct(public string $title, public string $body, public array $data = [], public array $channels = ['database', 'mail', 'fcm']) {}
 
     public function via(object $notifiable): array
     {
         $via = [];
 
         foreach ($this->channels as $channel) {
-            if ($channel === 'database') $via[] = 'database';
-            if ($channel === 'mail') $via[] = 'mail';
-            if ($channel === 'fcm') $via[] = MultiDeviceFcmChannel::class;
+            if ($channel === 'database') {
+                $via[] = 'database';
+            }
+
+            if ($channel === 'mail') {
+                $via[] = 'mail';
+            }
+
+            if ($channel === 'fcm') {
+                $via[] = MultiDeviceFcmChannel::class;
+            }
         }
 
         return $via;

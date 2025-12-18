@@ -31,7 +31,7 @@ final class OrdersTable
                     MediaAction::make('invoice')
                         ->icon(Heroicon::OutlinedArrowDownOnSquareStack)
                         ->label('Invoice')
-                        ->media(fn($record): string => route('admin.orders.invoice', $record))
+                        ->media(fn ($record): string => route('admin.orders.invoice', $record))
                         ->mediaType(MediaAction::TYPE_PDF),
                 ]),
             ], position: RecordActionsPosition::BeforeCells);

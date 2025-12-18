@@ -160,7 +160,7 @@ final class CartService
 
         $amount = (float) $planPrice->price;
         $quantity = 1;
-        $total = $amount * $quantity;
+        $total = $amount;
 
         $item = $cart->items()->create([
             'type' => 'adopt',

@@ -44,7 +44,7 @@ final class TreeRepository
             $query->whereHas('planPrices', function ($q) use ($haversine, $radius, $type): void {
                 $q->whereHas(
                     'plan',
-                    fn($p) => $p->where('type', $type)
+                    fn ($p) => $p->where('type', $type)
                 )->whereHas('location', function ($loc) use ($haversine, $radius): void {
                     $loc->selectRaw(sprintf('locations.*, %s as distance', $haversine))
                         ->having('distance', '<=', $radius);
@@ -95,19 +95,19 @@ final class TreeRepository
         return Tree::query()
             ->where('is_active', true)
             ->with([
-                'planPrices.plan' => fn($q) => $q->where('type', $type),
+                'planPrices.plan' => fn ($q) => $q->where('type', $type),
             ])
             ->with([
-                'treeInstances' => fn($q) => $q->where('status', 'adoptable')
+                'treeInstances' => fn ($q) => $q->where('status', 'adoptable')
                     ->with('location'),
             ])
             ->withCount([
-                'treeInstances as adoptable_count' => fn($q) => $q->where('status', 'adoptable'),
+                'treeInstances as adoptable_count' => fn ($q) => $q->where('status', 'adoptable'),
             ])
             ->when(
                 is_numeric($identifier),
-                fn($q) => $q->where('id', $identifier),
-                fn($q) => $q->where('slug', $identifier)
+                fn ($q) => $q->where('id', $identifier),
+                fn ($q) => $q->where('slug', $identifier)
             )
             ->first();
     }

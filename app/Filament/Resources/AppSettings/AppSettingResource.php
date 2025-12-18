@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\AppSettings;
 
 use App\Filament\Resources\AppSettings\Pages\CreateAppSetting;
@@ -14,7 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class AppSettingResource extends Resource
+final class AppSettingResource extends Resource
 {
     protected static ?string $model = AppSetting::class;
 

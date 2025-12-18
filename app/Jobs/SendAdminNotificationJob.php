@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\AdminNotification;
@@ -8,7 +10,7 @@ use App\Notifications\BaseAppNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
-class SendAdminNotificationJob implements ShouldQueue
+final class SendAdminNotificationJob implements ShouldQueue
 {
     use Queueable;
 
