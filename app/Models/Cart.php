@@ -20,10 +20,6 @@ final class Cart extends Model
         return $this->hasMany(CartItem::class);
     }
 
-    /**
-     * Calculate total amount for the cart.
-     * Sums `total_amount` on items if available, otherwise falls back to amount * quantity.
-     */
     public function totalAmount(): float
     {
         $this->loadMissing('items');

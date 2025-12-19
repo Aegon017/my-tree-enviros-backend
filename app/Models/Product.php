@@ -34,6 +34,11 @@ final class Product extends Model
         return $this->hasOne(Inventory::class);
     }
 
+    public function productVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class);
@@ -42,7 +47,7 @@ final class Product extends Model
     protected function averageRating(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->reviews()->avg('rating'),
+            get: fn() => $this->reviews()->avg('rating'),
         );
     }
 }
