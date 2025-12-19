@@ -54,7 +54,6 @@ final class OrderController extends Controller
                 $this->orderService->recordPayment($order, $request->payment);
             }
 
-            // Reload to get latest status and relations
             $order->refresh()->load(['items', 'payment', 'orderCharges']);
 
             return new OrderResource($order);
