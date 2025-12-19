@@ -12,11 +12,14 @@ use App\Models\ProductVariant;
 use App\Services\CheckoutService;
 use App\Services\Coupons\CouponService;
 use App\Services\Orders\OrderService;
+use App\Http\Resources\Api\V1\OrderResource;
 use App\Services\Payments\PaymentFactory;
 use Illuminate\Http\Request;
 
 final class CheckoutController extends Controller
 {
+    use \App\Traits\ResponseHelpers;
+
     public function __construct(
         private readonly OrderService $orders,
         private readonly CouponService $coupons,
@@ -34,19 +37,13 @@ final class CheckoutController extends Controller
         $cart = $user->cart()->with('items')->first();
 
         if (! $cart || $cart->items->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cart is empty',
-            ], 422);
+            return $this->error('Cart is empty', 422);
         }
 
         $items = $cart->items;
         $summary = $this->checkout->buildSummary($items, $request->query('coupon_code'));
 
-        return response()->json([
-            'success' => true,
-            'data' => $summary,
-        ]);
+        return $this->success($summary);
     }
 
     public function prepare(CheckoutRequest $request)
@@ -68,22 +65,8 @@ final class CheckoutController extends Controller
         $driver = $request->payment_method ?? 'razorpay';
         $payment = PaymentFactory::driver($driver)->createGatewayOrder($order);
 
-        return response()->json([
-            'order' => [
-                'id' => $order->id,
-                'reference_number' => $order->reference_number,
-                'subtotal' => $order->subtotal,
-                'discount' => $order->total_discount,
-                'tax' => $order->total_tax,
-                'shipping' => $order->total_shipping,
-                'fee' => $order->total_fee,
-                'grand_total' => $order->grand_total,
-                'charges' => $order->charges ? $order->charges->map(fn ($c): array => [
-                    'type' => $c->type,
-                    'label' => $c->label,
-                    'amount' => $c->amount,
-                ]) : [],
-            ],
+        return $this->success([
+            'order' => new OrderResource($order),
             'payment' => $payment,
         ]);
     }
@@ -98,15 +81,12 @@ final class CheckoutController extends Controller
         $result = $this->coupons->validateAndCalculate($request->coupon_code, (float) $request->amount);
 
         if (! $result) {
-            return response()->json(['message' => 'Invalid coupon'], 422);
+            return $this->error('Invalid coupon', 422);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'discount' => $result['discount'],
-                'coupon' => $result['coupon'],
-            ],
+        return $this->success([
+            'discount' => $result['discount'],
+            'coupon' => $result['coupon'],
         ]);
     }
 
@@ -120,7 +100,7 @@ final class CheckoutController extends Controller
 
             $items = collect([[
                 'type' => 'product',
-                'name' => $variant->product->name,
+                'name' => $variant->product?->name ?? 'Unknown Product',
                 'quantity' => $request->quantity ?? 1,
                 'price' => $variant->selling_price ?? $variant->original_price,
                 'image_url' => $variant->image_url,
@@ -149,12 +129,12 @@ final class CheckoutController extends Controller
                 'type' => $type,
                 'quantity' => $request->quantity ?? 1,
                 'price' => $planPrice->price,
-                'duration' => $planPrice->plan->duration,
-                'duration_unit' => $planPrice->plan->duration_unit,
-                'image_url' => $planPrice->tree->image_url,
+                'duration' => $planPrice->plan?->duration ?? 0,
+                'duration_unit' => $planPrice->plan?->duration_unit ?? 'months',
+                'image_url' => $planPrice->tree?->image_url ?? '',
                 'tree' => [
-                    'id' => $planPrice->tree->id,
-                    'name' => $planPrice->tree->name,
+                    'id' => $planPrice->tree?->id,
+                    'name' => $planPrice->tree?->name ?? 'Unknown Tree',
                 ],
                 'plan_price_id' => $planPrice->id,
                 'initiative_site_id' => $request->input('initiative_site_id'),
@@ -178,9 +158,6 @@ final class CheckoutController extends Controller
 
         $summary = $this->checkout->buildSummary($items, $request->query('coupon_code'));
 
-        return response()->json([
-            'success' => true,
-            'data' => $summary,
-        ]);
+        return $this->success($summary);
     }
 }
