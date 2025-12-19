@@ -54,7 +54,7 @@ final readonly class CheckoutService
 
     private function hydrateItems(Collection $items): Collection
     {
-        return $items->map(function ($item): ?array {
+        return $items->map(function (mixed $item): ?array {
             if (is_object($item) && method_exists($item, 'toArray')) {
                 $item = $item->toArray();
             }
