@@ -45,7 +45,7 @@ final readonly class PhonepeService
         $transactionId = 'MT-' . $order->id . '-' . Str::random(6);
         $amountInPaise = (int) round($order->grand_total * 100);
 
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+        $frontendUrl = config('app.frontend_url');
         $callbackUrl = $frontendUrl . ('/payment/phonepe-callback?merchantOrderId=' . $transactionId);
 
         $payload = [
