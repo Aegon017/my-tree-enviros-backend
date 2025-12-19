@@ -6,7 +6,8 @@ namespace App\Filament\Resources\AdminNotifications\Schemas;
 
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Radio;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -17,7 +18,11 @@ final class AdminNotificationForm
         return $schema
             ->components([
                 TextInput::make('title')->required(),
-                Textarea::make('body')->required(),
+                RichEditor::make('body')
+                    ->required()
+                    ->fileAttachmentsDirectory('notification-images')
+                    ->fileAttachmentsVisibility('public'),
+                TextInput::make('link')->url(),
                 CheckboxList::make('channels')
                     ->options([
                         'database' => 'Database',

@@ -12,4 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 final class AdminNotification extends Model
 {
     protected $casts = ['channels' => 'array', 'target' => 'array'];
+
+    protected $fillable = ['title', 'body', 'channels', 'target', 'link'];
 }

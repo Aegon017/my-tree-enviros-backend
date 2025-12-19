@@ -37,7 +37,10 @@ final class SendAdminNotificationJob implements ShouldQueue
                 new BaseAppNotification(
                     $a->title,
                     $a->body,
-                    ['admin_notification_id' => $a->id],
+                    [
+                        'admin_notification_id' => $a->id,
+                        'link' => $a->link,
+                    ],
                     $a->channels
                 )
             );
