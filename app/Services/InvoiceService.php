@@ -14,6 +14,6 @@ final class InvoiceService
         $order->load(['items.tree', 'items.planPrice.plan', 'user', 'shippingAddress']);
 
         return Pdf::view('invoices.order', ['order' => $order])
-            ->name('invoice-'.$order->reference_number.'.pdf');
+            ->name('invoice-' . $order->reference_number . '.pdf');
     }
 }
