@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
 use App\Services\InvoiceService;
+use App\Services\CartService;
 use App\Services\Orders\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,8 @@ final class OrderController extends Controller
 {
     public function __construct(
         private readonly InvoiceService $invoiceService,
-        private readonly OrderService $orderService
+        private readonly OrderService $orderService,
+        private readonly CartService $cartService
     ) {}
 
     public function index(Request $request)
@@ -25,7 +27,7 @@ final class OrderController extends Controller
             ->orders()
             ->with([
                 'items',
-                'items.productVariant.product',
+                'items.productVariant.inventory.product',
                 'items.tree',
                 'items.treeInstance.tree',
                 'items.planPrice',
@@ -51,7 +53,7 @@ final class OrderController extends Controller
     {
 
         $order->load([
-            'items.productVariant.product',
+            'items.productVariant.inventory.product',
             'items.tree',
             'items.treeInstance.tree',
             'items.planPrice',
@@ -80,6 +82,7 @@ final class OrderController extends Controller
 
             if ($request->payment) {
                 $this->orderService->recordPayment($order, $request->payment);
+                $this->cartService->clearUserCart($user->id);
             }
 
             $order->refresh()->load(['items', 'payment', 'orderCharges']);
