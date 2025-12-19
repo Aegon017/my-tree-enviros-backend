@@ -51,4 +51,9 @@ final class OrderItem extends Model
     {
         return $this->belongsTo(Campaign::class);
     }
+
+    public function treeInstance(): BelongsTo
+    {
+        return $this->belongsTo(TreeInstance::class);
+    }
 }
