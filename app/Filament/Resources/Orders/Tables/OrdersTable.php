@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Orders\Tables;
 
+use App\Enums\OrderStatusEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -31,8 +32,9 @@ final class OrdersTable
                     MediaAction::make('invoice')
                         ->icon(Heroicon::OutlinedArrowDownOnSquareStack)
                         ->label('Invoice')
-                        ->media(fn ($record): string => route('admin.orders.invoice', $record))
-                        ->mediaType(MediaAction::TYPE_PDF),
+                        ->media(fn($record): string => route('admin.orders.invoice', $record))
+                        ->mediaType(MediaAction::TYPE_PDF)
+                        ->visible(fn($record): bool => $record->status === OrderStatusEnum::PAID),
                 ]),
             ], position: RecordActionsPosition::BeforeCells);
     }
