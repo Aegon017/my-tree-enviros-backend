@@ -34,6 +34,7 @@ final class OrderController extends Controller
                 'items.initiativeSite',
                 'items.initiativeSite.location',
                 'items.dedication',
+                'items.campaign',
                 'payment',
                 'orderCharges',
                 'shippingAddress'
@@ -60,6 +61,7 @@ final class OrderController extends Controller
             'items.initiativeSite',
             'items.initiativeSite.location',
             'items.dedication',
+            'items.campaign',
             'payment',
             'orderCharges',
             'shippingAddress',

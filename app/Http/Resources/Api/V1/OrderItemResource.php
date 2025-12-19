@@ -6,11 +6,13 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 
 final class OrderItemResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        Log::info($this->campaign);
         return [
             'id' => $this->id,
             'type' => $this->type,
@@ -52,11 +54,16 @@ final class OrderItemResource extends JsonResource
                 'message' => $this->dedication->message,
                 'occasion' => $this->dedication->occasion,
             ]),
+            'campaign_details' => $this->whenLoaded('campaign', fn() => [
+                'id' => $this->campaign->id,
+                'name' => $this->campaign->name,
+                'image_url' => $this->campaign->getFirstMedia('images')->getFullUrl(),
+            ]),
             'name' => match ($this->type) {
                 'product' => $this->productVariant->inventory->product->name ?? 'Product',
                 'sponsor' => $this->planPrice->name ?? 'Sponsorship',
                 'adopt' => $this->tree->name ?? 'Tree Adoption',
-                'campaign' => 'Campaign Contribution',
+                'campaign' => $this->campaign->name ?? 'Campaign Contribution',
                 default => ucfirst($this->type),
             },
         ];
