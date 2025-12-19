@@ -51,8 +51,9 @@ final class BaseAppNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
+            ->greeting('Hello! ' . $notifiable->name)
             ->subject($this->title)
-            ->line($this->body);
+            ->line(new \Illuminate\Support\HtmlString($this->body));
     }
 
     public function toFcmMessage(object $notifiable): FcmMessage
@@ -60,8 +61,8 @@ final class BaseAppNotification extends Notification implements ShouldQueue
         return FcmMessage::create()
             ->setNotification(
                 ResourcesNotification::create()
-                    ->setTitle($this->title)
-                    ->setBody($this->body)
+                    ->title($this->title)
+                    ->body(strip_tags($this->body))
             )
             ->setData($this->data);
     }

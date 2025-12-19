@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\V1\NotificationResource;
 use Illuminate\Http\Request;
 
 final class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        return $request->user()
-            ->notifications()
+        $notifications = $request->user()
+            ->unreadNotifications()
             ->orderByDesc('created_at')
             ->paginate(20);
+
+        return NotificationResource::collection($notifications);
     }
 
     public function markRead(Request $request)
