@@ -23,7 +23,24 @@ final class OrderController extends Controller
     {
         $orders = $request->user()
             ->orders()
-            ->with(['items', 'payment', 'orderCharges', 'shippingAddress'])
+            ->with([
+                'items',
+                'items.productVariant.product',
+                'items.tree',
+                'items.treeInstance.tree',
+                'items.planPrice',
+                'items.initiativeSite',
+                'items.initiativeSite.location',
+                'items.dedication',
+                'payment',
+                'orderCharges',
+                'shippingAddress'
+            ])
+            ->when($request->type, function ($query, $type) {
+                $query->whereHas('items', function ($q) use ($type) {
+                    $q->where('type', $type);
+                });
+            })
             ->latest()
             ->paginate(10);
 
@@ -33,7 +50,18 @@ final class OrderController extends Controller
     public function show(Order $order): OrderResource
     {
 
-        $order->load(['items.productVariant.product', 'items.tree', 'payment', 'orderCharges', 'shippingAddress']);
+        $order->load([
+            'items.productVariant.product',
+            'items.tree',
+            'items.treeInstance.tree',
+            'items.planPrice',
+            'items.initiativeSite',
+            'items.initiativeSite.location',
+            'items.dedication',
+            'payment',
+            'orderCharges',
+            'shippingAddress',
+        ]);
 
         return new OrderResource($order);
     }
