@@ -17,14 +17,14 @@ final class OrderItemResource extends JsonResource
             'quantity' => $this->quantity,
             'amount' => $this->amount,
             'total_amount' => $this->total_amount,
-            'product_name' => $this->when($this->type === 'product', fn() => $this->productVariant->product->name ?? null),
+            'product_name' => $this->when($this->type === 'product', fn() => $this->productVariant->inventory->product->name ?? null),
             'tree_name' => $this->when(in_array($this->type, ['sponsor', 'adopt']), fn() => $this->tree->name ?? null),
             'product_variant' => $this->whenLoaded('productVariant', fn() => [
                 'id' => $this->productVariant->id,
                 'name' => $this->productVariant->name,
                 'image_url' => $this->productVariant->getFirstMedia('images')->getFullUrl(),
                 'product' => [
-                    'name' => $this->productVariant->product->name ?? null,
+                    'name' => $this->productVariant->inventory->product->name ?? null,
                 ],
             ]),
             'tree' => $this->whenLoaded('tree', fn() => [
@@ -53,7 +53,7 @@ final class OrderItemResource extends JsonResource
                 'occasion' => $this->dedication->occasion,
             ]),
             'name' => match ($this->type) {
-                'product' => $this->productVariant->product->name ?? 'Product',
+                'product' => $this->productVariant->inventory->product->name ?? 'Product',
                 'sponsor' => $this->planPrice->name ?? 'Sponsorship',
                 'adopt' => $this->tree->name ?? 'Tree Adoption',
                 'campaign' => 'Campaign Contribution',
