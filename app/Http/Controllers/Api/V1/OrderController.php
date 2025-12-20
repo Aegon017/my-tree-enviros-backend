@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\OrderStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
@@ -12,6 +13,7 @@ use App\Services\CartService;
 use App\Services\Orders\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Spatie\LaravelPdf\PdfBuilder;
 
 final class OrderController extends Controller
 {
@@ -93,10 +95,10 @@ final class OrderController extends Controller
         });
     }
 
-    public function invoice(Order $order): \Spatie\LaravelPdf\PdfBuilder
+    public function invoice(Order $order): PdfBuilder
     {
 
-        if ($order->status !== 'paid') {
+        if ($order->status !== OrderStatusEnum::PAID) {
             abort(403, 'Invoice is only available for paid orders.');
         }
 
