@@ -24,7 +24,8 @@
                             <td class="p-1 align-top pb-10">
                                 My Tree Enviros<br>
                                 123 Green Street<br>
-                                Eco City, Earth
+                                Eco City, Earth<br>
+                                GSTIN: 36AASCM8155B1Z7
                             </td>
                             <td class="p-1 align-top pb-10 text-right">
                                 {{ $order->user->name }}<br>
