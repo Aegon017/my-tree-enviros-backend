@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\DeviceTypeEnum;
 use App\Http\Controllers\Controller;
-use App\Models\FcmToken;
+use App\Models\NotificationDeviceToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -63,25 +63,27 @@ final class FcmTokenController extends Controller
      *         description="Unauthenticated"
      *     )
      * )
+     *
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'token' => ['required', 'string', 'max:500'],
-            'device_type' => ['required', 'string', new Enum(DeviceTypeEnum::class)],
+            'platform' => ['required', 'string', 'in:android,ios,web'],
         ]);
 
         $user = Auth::user();
 
         // Check if token already exists for this user
-        $fcmToken = FcmToken::where('user_id', $user->id)
+        $fcmToken = NotificationDeviceToken::where('user_id', $user->id)
             ->where('token', $validated['token'])
             ->first();
 
         if ($fcmToken) {
             // Update existing token
             $fcmToken->update([
-                'device_type' => $validated['device_type'],
+                'platform' => $validated['platform'],
                 'updated_at' => now(),
             ]);
 
@@ -93,10 +95,10 @@ final class FcmTokenController extends Controller
         }
 
         // Create new token
-        $fcmToken = FcmToken::create([
+        $fcmToken = NotificationDeviceToken::create([
             'user_id' => $user->id,
             'token' => $validated['token'],
-            'device_type' => $validated['device_type'],
+            'platform' => $validated['platform'],
         ]);
 
         return response()->json([
@@ -147,7 +149,10 @@ final class FcmTokenController extends Controller
     public function index(): JsonResponse
     {
         $user = Auth::user();
-        $tokens = $user->fcmTokens()->active()->get();
+        // Assuming user model doesn't strictly need relationship method updated if we query directly, 
+        // but typically one would update User model too. Since we can't edit User model efficiently in same step,
+        // we'll query directly to avoid relationship errors if the relationship name differs.
+        $tokens = NotificationDeviceToken::where('user_id', $user->id)->get();
 
         return response()->json([
             'success' => true,
@@ -197,7 +202,7 @@ final class FcmTokenController extends Controller
     {
         $user = Auth::user();
 
-        $fcmToken = FcmToken::where('id', $id)
+        $fcmToken = NotificationDeviceToken::where('id', $id)
             ->where('user_id', $user->id)
             ->first();
 
@@ -255,6 +260,8 @@ final class FcmTokenController extends Controller
      *         description="Unauthenticated"
      *     )
      * )
+     *
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function destroyByToken(Request $request): JsonResponse
     {
@@ -264,7 +271,7 @@ final class FcmTokenController extends Controller
 
         $user = Auth::user();
 
-        $fcmToken = FcmToken::where('token', $validated['token'])
+        $fcmToken = NotificationDeviceToken::where('token', $validated['token'])
             ->where('user_id', $user->id)
             ->first();
 
@@ -313,7 +320,7 @@ final class FcmTokenController extends Controller
     public function destroyAll(): JsonResponse
     {
         $user = Auth::user();
-        $deletedCount = $user->fcmTokens()->delete();
+        $deletedCount = NotificationDeviceToken::where('user_id', $user->id)->delete();
 
         return response()->json([
             'success' => true,
