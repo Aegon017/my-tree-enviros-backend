@@ -32,7 +32,7 @@ final class BaseAppNotification extends Notification implements ShouldQueue
             }
 
             if ($channel === 'fcm') {
-                $via[] = MultiDeviceFcmChannel::class;
+                $via[] = \NotificationChannels\Fcm\FcmChannel::class;
             }
         }
 
@@ -56,14 +56,23 @@ final class BaseAppNotification extends Notification implements ShouldQueue
             ->line(new \Illuminate\Support\HtmlString($this->body));
     }
 
-    public function toFcmMessage(object $notifiable): FcmMessage
+    public function toFcm(object $notifiable): FcmMessage
     {
+        $image = null;
+        if (preg_match('/<img.+src=[\'"](?P<src>.+?)[\'"].*>/i', $this->body, $image)) {
+            $image = $image['src'];
+        }
+
+        $notification = ResourcesNotification::create()
+            ->title($this->title)
+            ->body(trim(strip_tags($this->body)));
+
+        if ($image) {
+            $notification->image($image);
+        }
+
         return FcmMessage::create()
-            ->setNotification(
-                ResourcesNotification::create()
-                    ->title($this->title)
-                    ->body(strip_tags($this->body))
-            )
-            ->setData($this->data);
+            ->notification($notification)
+            ->data(collect($this->data)->map(fn($value) => (string) $value)->toArray());
     }
 }
