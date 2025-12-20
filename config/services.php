@@ -20,6 +20,10 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
+    'firebase' => [
+        'credentials' => base_path(env('FIREBASE_CREDENTIALS')),
+    ],
+
     'resend' => [
         'key' => env('RESEND_KEY'),
     ],

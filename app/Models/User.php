@@ -36,6 +36,11 @@ final class User extends Authenticatable implements FilamentUserContract, HasMed
         return $this->phone;
     }
 
+    public function routeNotificationForFcm(): array
+    {
+        return $this->notificationDeviceTokens()->pluck('token')->toArray();
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         return str_ends_with($this->email, '@mytree.care');

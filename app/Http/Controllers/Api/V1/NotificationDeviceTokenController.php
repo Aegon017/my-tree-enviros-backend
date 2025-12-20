@@ -21,8 +21,7 @@ final class NotificationDeviceTokenController extends Controller
             ['token' => $data['token']],
             [
                 'platform' => $data['platform'],
-                'device_id' => $data['device_id'],
-                'last_used_at' => now(),
+                'device_id' => $data['device_id'] ?? null,
             ]
         );
 
