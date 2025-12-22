@@ -113,6 +113,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+        Route::get('/{order}/credit-note', [OrderController::class, 'creditNote'])->name('orders.credit-note');
         Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     });
 
