@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\Fcm\FcmMessage;
 use NotificationChannels\Fcm\Resources\Notification as ResourcesNotification;
 
-final class BaseAppNotification extends Notification implements ShouldQueue
+class BaseAppNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

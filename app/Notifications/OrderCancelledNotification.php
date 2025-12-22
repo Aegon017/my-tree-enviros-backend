@@ -3,24 +3,26 @@
 namespace App\Notifications;
 
 
+
 use App\Models\Order;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
-class OrderCancelledNotification extends Notification implements ShouldQueue
+class OrderCancelledNotification extends BaseAppNotification
 {
-    use Queueable;
-
     public function __construct(public Order $order)
     {
         $this->order->load('user');
-    }
 
-    public function via(object $notifiable): array
-    {
-        return ['mail'];
+        parent::__construct(
+            title: 'Order Cancelled - #' . $this->order->reference_number,
+            body: 'Order #' . $this->order->reference_number . ' has been cancelled. Reason: ' . $this->order->cancellation_reason,
+            data: [
+                'order_id' => $this->order->id,
+                'reference_number' => $this->order->reference_number,
+                'type' => 'order_cancelled'
+            ],
+            channels: ['mail', 'database', 'fcm']
+        );
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -49,14 +51,5 @@ class OrderCancelledNotification extends Notification implements ShouldQueue
             ->line('Total Amount: ' . $this->order->grand_total)
             ->line('Please ensure any necessary refund actions are taken.')
             ->action('View Order in Admin', url('/admin/orders/' . $this->order->id));
-    }
-
-    public function toArray(object $notifiable): array
-    {
-        return [
-            'order_id' => $this->order->id,
-            'reference_number' => $this->order->reference_number,
-            'reason' => $this->order->cancellation_reason,
-        ];
     }
 }

@@ -23,6 +23,7 @@ final class OrderResource extends JsonResource
             'grand_total' => $this->grand_total,
             'currency' => $this->currency,
             'created_at' => $this->created_at->toDateTimeString(),
+            'is_shippable' => $this->isShippable(),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'charges' => OrderChargeResource::collection($this->whenLoaded('orderCharges')),
             'payment' => $this->whenLoaded('payment', fn(): array => [
@@ -39,6 +40,12 @@ final class OrderResource extends JsonResource
                 'city' => $this->shippingAddress->city,
                 'postal_code' => $this->shippingAddress->postal_code,
             ] : null),
+            'tracking' => [
+                'courier_name' => $this->courier_name,
+                'tracking_id' => $this->tracking_id,
+                'shipped_at' => $this->shipped_at,
+                'delivered_at' => $this->delivered_at,
+            ],
         ];
     }
 }
