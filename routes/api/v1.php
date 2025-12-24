@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\NotificationDeviceTokenController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PaymentGatewayController;
+use App\Http\Controllers\Api\V1\PhonePePaymentController;
 use App\Http\Controllers\Api\V1\PostOfficeController;
 use App\Http\Controllers\Api\V1\ProductCategoryController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -90,6 +91,17 @@ Route::prefix('initiatives')->group(function (): void {
 });
 
 Route::post('payments/webhook', [PaymentController::class, 'webhook'])->name('api.v1.payment.webhook');
+
+// PhonePe Payment Routes
+Route::prefix('payment/phonepe')->group(function (): void {
+    Route::post('/webhook', [PhonePePaymentController::class, 'webhook'])->name('api.v1.phonepe.webhook');
+    Route::middleware(['auth:sanctum'])->group(function (): void {
+        Route::post('/token', [PhonePePaymentController::class, 'generateToken'])->name('api.v1.phonepe.generate-token');
+        Route::post('/verify', [PhonePePaymentController::class, 'verifyPayment'])->name('api.v1.phonepe.verify');
+        Route::get('/status/{orderId}', [PhonePePaymentController::class, 'getPaymentStatus'])->name('api.v1.phonepe.status');
+        Route::post('/cancel', [PhonePePaymentController::class, 'cancelPayment'])->name('api.v1.phonepe.cancel');
+    });
+});
 
 Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::get('me', [AuthController::class, 'me']);
