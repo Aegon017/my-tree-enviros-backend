@@ -155,6 +155,142 @@ final readonly class PhonepeService
         ];
     }
 
+    /**
+     * Generate checksum token for frontend payment initiation
+     *
+     * @param string $merchantTransactionId Unique transaction identifier
+     * @param int $amount Amount in paise
+     * @param string $userId User identifier
+     * @param string $userMobile User mobile number
+     * @return string Encoded token for PhonePe SDK
+     */
+    public function generateChecksum(
+        string $merchantTransactionId,
+        int $amount,
+        string $userId,
+        string $userMobile
+    ): string {
+        try {
+            $token = $this->getAccessToken();
+
+            // Construct payload for token generation
+            $payload = [
+                'merchantId' => config('services.phonepe.merchant_id'),
+                'merchantTransactionId' => $merchantTransactionId,
+                'merchantUserId' => $userId,
+                'amount' => $amount,
+                'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+                'mobileNumber' => $userMobile,
+                'paymentInstrument' => [
+                    'type' => 'SAVEDCARD',
+                ],
+            ];
+
+            // Encode as base64
+            $encodedPayload = base64_encode(json_encode($payload));
+
+            // Generate checksum (SHA256 HMAC)
+            $checksum = hash_hmac(
+                'sha256',
+                $encodedPayload . '/pg/v1/pay',
+                $this->clientSecret,
+                false
+            );
+
+            // Return token format: encoded_payload###checksum
+            return $encodedPayload . '###' . $checksum . '###1';
+
+        } catch (\Exception $e) {
+            throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Verify transaction status with PhonePe API
+     *
+     * @param string $merchantTransactionId Transaction ID
+     * @param int $orderId Order ID for reference
+     * @return array Verification result
+     */
+    public function verifyTransaction(string $merchantTransactionId, int $orderId): array
+    {
+        try {
+            $token = $this->getAccessToken();
+
+            $path = sprintf('/checkout/v2/order/%s/status', $merchantTransactionId);
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'O-Bearer ' . $token,
+            ])->get($this->baseUrl . $path);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to verify transaction with PhonePe API',
+                    'status_code' => $response->status(),
+                ];
+            }
+
+            $resData = $response->json();
+            $state = $resData['state'] ?? '';
+
+            // Check payment success state
+            if ($state !== 'COMPLETED' && $state !== 'PAYMENT_SUCCESS') {
+                return [
+                    'success' => false,
+                    'message' => 'Payment Validation Failed: ' . ($resData['message'] ?? 'State: ' . $state),
+                    'state' => $state,
+                ];
+            }
+
+            // Extract transaction details
+            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId'] 
+                ?? $resData['orderId'] 
+                ?? $merchantTransactionId;
+
+            $order = Order::findOrFail($orderId);
+
+            // Check if paid
+            if ($order->status === 'paid') {
+                return [
+                    'success' => true,
+                    'message' => 'Order already paid',
+                    'order_id' => $order->id,
+                ];
+            }
+
+            // Create payment record
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'amount' => $order->grand_total,
+                'payment_method' => 'phonepe',
+                'transaction_id' => $phonePeTransactionId,
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+
+            // Update order status
+            $order->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Payment verified and captured successfully',
+                'order_id' => $order->id,
+                'transaction_id' => $phonePeTransactionId,
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Transaction verification failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
     private function getAccessToken(): string
     {
         $authUrl = $this->env === 'PROD'
