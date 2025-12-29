@@ -62,11 +62,13 @@ final class PhonePePaymentController extends Controller
             $phonePeService = PaymentFactory::driver('phonepe');
 
             // Generate token from PhonePe service
+            // Pass the order_id so it can be included in the token payload
             $token = $phonePeService->generateChecksum(
                 $validated['merchant_transaction_id'],
                 $validated['amount'],
                 $validated['user_id'],
-                $validated['user_mobile']
+                $validated['user_mobile'],
+                $validated['order_id']
             );
 
             return $this->success([
