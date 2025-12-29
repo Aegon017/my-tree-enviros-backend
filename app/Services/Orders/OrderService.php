@@ -7,9 +7,13 @@ namespace App\Services\Orders;
 use App\Models\Order;
 use App\Models\PlanPrice;
 use App\Models\ProductVariant;
+use App\Models\User;
+use App\Notifications\OrderPaidNotification;
+use App\Notifications\OrderPlacedNotification;
 use App\Repositories\OrderRepository;
 use App\Services\Coupons\CouponService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 final readonly class OrderService
 {
@@ -48,7 +52,7 @@ final readonly class OrderService
 
             $order = $this->repository->create([
                 'user_id' => $userId,
-                'reference_number' => 'ORD-'.time().'-'.random_int(1000, 9999),
+                'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
                 'status' => 'pending',
                 'subtotal' => $totals['subtotal'],
                 'total_discount' => $totals['discount'],
@@ -104,6 +108,9 @@ final readonly class OrderService
                 $this->repository->attachCoupon($order, $couponId);
             }
 
+            $order->user->notify(new OrderPlacedNotification($order));
+            $this->notifyAdmins(new OrderPlacedNotification($order));
+
             return $order;
         });
     }
@@ -121,6 +128,17 @@ final readonly class OrderService
 
         if (($paymentData['status'] ?? null) === 'paid') {
             $this->repository->update($order, ['status' => 'paid', 'paid_at' => now()]);
+            $order->refresh();
+            $order->user->notify(new OrderPaidNotification($order));
+            $this->notifyAdmins(new OrderPaidNotification($order));
+        }
+    }
+
+    private function notifyAdmins($notification): void
+    {
+        $admins = User::role('super_admin')->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, $notification);
         }
     }
 }

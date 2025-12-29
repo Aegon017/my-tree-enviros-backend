@@ -105,15 +105,40 @@ final class OrderController extends Controller
         return $this->invoiceService->generate($order);
     }
 
-    public function cancel(Order $order): OrderResource
+    public function cancel(Request $request, Order $order): OrderResource
     {
+        $request->validate([
+            'reason' => 'required|string|min:5|max:255',
+        ]);
 
-        if ($order->status === 'paid' || $order->status === 'completed') {
-            abort(422, 'Cannot cancel a paid or completed order.');
+        if ($order->status === OrderStatusEnum::COMPLETED || $order->status === OrderStatusEnum::CANCELLED || $order->status === OrderStatusEnum::REFUNDED) {
+            abort(422, 'Cannot cancel a completed or already cancelled order.');
         }
 
-        $order->update(['status' => 'cancelled']);
+        // Policy: "Pre-Shipment Cancellation: You may cancel your order for a full refund... provided the order has not yet been shipped."
+        $order->update([
+            'status' => OrderStatusEnum::CANCELLED,
+            'cancellation_reason' => $request->reason,
+        ]);
+
+        // Send notifications to Customer and Admin
+        $order->user->notify(new \App\Notifications\OrderCancelledNotification($order));
+
+        // Notify Admin (Assuming Admin user exists or using route notification)
+        // For now sending to a configurable admin email or route
+        \Illuminate\Support\Facades\Notification::route('mail', config('mail.from.address'))
+            ->notify(new \App\Notifications\OrderCancelledNotification($order));
 
         return new OrderResource($order);
+    }
+
+    public function creditNote(Order $order): PdfBuilder
+    {
+        // Credit Notes are typically for cancelled/refunded orders
+        if (!in_array($order->status, [OrderStatusEnum::CANCELLED, OrderStatusEnum::REFUNDED])) {
+            abort(403, 'Credit Note is only available for cancelled or refunded orders.');
+        }
+
+        return $this->invoiceService->generateCreditNote($order);
     }
 }

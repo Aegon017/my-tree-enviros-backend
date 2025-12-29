@@ -26,6 +26,7 @@ return new class extends Migration
             $table->foreignId('coupon_id')->nullable()->constrained()->nullOnDelete();
             $table->string('currency', 8);
             $table->timestamp('paid_at')->nullable();
+            $table->string('cancellation_reason')->nullable();
             $table->timestamps();
         });
     }

@@ -57,4 +57,9 @@ final class Order extends Model
     {
         return $this->hasMany(OrderCharge::class);
     }
+
+    public function isShippable(): bool
+    {
+        return $this->items()->where('type', 'product')->exists();
+    }
 }
