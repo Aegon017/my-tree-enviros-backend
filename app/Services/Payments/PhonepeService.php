@@ -173,23 +173,16 @@ public function generateChecksum(
     int $orderId = null
 ): string {
     try {
-        // Ensure orderId is treated as string and prefixed if needed
-        $orderIdForPayload = $orderId ? 'MT-' . (string)$orderId : $merchantTransactionId;
-        
         $payload = [
             'merchantId' => config('services.phonepe.merchant_id'),
-            'orderId' => $orderIdForPayload, // Use prefixed string
             'merchantTransactionId' => $merchantTransactionId,
             'merchantUserId' => $userId,
             'amount' => $amount,
             'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
             'mobileNumber' => $userMobile,
-            'paymentInstrument' => [
-                'type' => 'PAY_PAGE',
-            ],
         ];
 
-        if (isDebugEnabled) {
+        if (config('app.debug')) {
             \Log::info('PhonePe Payload:', $payload);
         }
 
