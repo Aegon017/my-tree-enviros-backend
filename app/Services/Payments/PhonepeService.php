@@ -176,9 +176,10 @@ final readonly class PhonepeService
             $token = $this->getAccessToken();
 
             // Construct payload for token generation
-            // For PhonePe mobile SDK v3.1.1, use the exact field names it expects
+            // For PhonePe mobile SDK v3.1.1, these are the required fields
             $payload = [
                 'merchantId' => config('services.phonepe.merchant_id'),
+                'orderId' => (string)($orderId ?? $merchantTransactionId), // Prefer numeric order ID, fallback to transaction ID
                 'merchantTransactionId' => $merchantTransactionId,
                 'merchantUserId' => $userId,
                 'amount' => $amount,
