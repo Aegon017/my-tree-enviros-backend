@@ -162,7 +162,7 @@ final readonly class PhonepeService
      * @param int $amount Amount in paise
      * @param string $userId User identifier
      * @param string $userMobile User mobile number
-     * @param int $orderId Order ID from database
+     * @param int $orderId Order ID from database (not used in SDK payload)
      * @return string Encoded token for PhonePe SDK
      */
     public function generateChecksum(
@@ -176,11 +176,9 @@ final readonly class PhonepeService
             $token = $this->getAccessToken();
 
             // Construct payload for token generation
-            // Note: This payload is for the PhonePe mobile SDK, not the server API
-            // The mobile SDK expects specific field names
+            // For PhonePe mobile SDK v3.1.1, use the exact field names it expects
             $payload = [
                 'merchantId' => config('services.phonepe.merchant_id'),
-                'orderId' => (string) ($orderId ?? $merchantTransactionId), // Use numeric orderId if available
                 'merchantTransactionId' => $merchantTransactionId,
                 'merchantUserId' => $userId,
                 'amount' => $amount,
