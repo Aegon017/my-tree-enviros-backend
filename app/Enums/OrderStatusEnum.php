@@ -20,6 +20,12 @@ enum OrderStatusEnum: string
 
     case COMPLETED = 'completed';
 
+    case SHIPPED = 'shipped';
+
+    case OUT_FOR_DELIVERY = 'out_for_delivery';
+
+    case DELIVERED = 'delivered';
+
     public function label(): string
     {
         return match ($this) {
@@ -30,6 +36,9 @@ enum OrderStatusEnum: string
             self::CANCELLED => 'Cancelled',
             self::REFUNDED => 'Refunded',
             self::COMPLETED => 'Completed',
+            self::SHIPPED => 'Shipped',
+            self::OUT_FOR_DELIVERY => 'Out for Delivery',
+            self::DELIVERED => 'Delivered',
         };
     }
 }
