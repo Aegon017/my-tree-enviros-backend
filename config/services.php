@@ -56,6 +56,7 @@ return [
     ],
 
     'phonepe' => [
+        'merchant_id' => env('PHONEPE_MERCHANT_ID'),
         'client_id' => env('PHONEPE_CLIENT_ID'),
         'client_secret' => env('PHONEPE_CLIENT_SECRET'),
         'client_index' => env('PHONEPE_CLIENT_INDEX', 1),
