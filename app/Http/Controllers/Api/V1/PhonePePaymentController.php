@@ -16,7 +16,7 @@ final class PhonePePaymentController extends Controller
 {
     use ResponseHelpers;
 
-   /**
+/**
  * Generate PhonePe payment token for mobile SDK
  */
 public function generateToken(Request $request): JsonResponse
@@ -37,7 +37,8 @@ public function generateToken(Request $request): JsonResponse
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        $phonePeService = new PhonepeService();
+        // Use PaymentFactory instead of directly instantiating PhonepeService
+        $phonePeService = PaymentFactory::driver('phonepe');
         
         // Generate token
         $token = $phonePeService->generateChecksum(
@@ -67,7 +68,7 @@ public function generateToken(Request $request): JsonResponse
             'message' => 'Validation failed',
             'errors' => $e->errors()
         ], 422);
-    } catch (ModelNotFoundException $e) {
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
         return response()->json([
             'success' => false,
             'message' => 'Order not found or does not belong to user'
