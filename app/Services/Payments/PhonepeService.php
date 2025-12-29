@@ -156,58 +156,61 @@ final readonly class PhonepeService
     }
 
     /**
-     * Generate checksum token for frontend payment initiation
-     *
-     * @param string $merchantTransactionId Unique transaction identifier
-     * @param int $amount Amount in paise
-     * @param string $userId User identifier
-     * @param string $userMobile User mobile number
-     * @param int $orderId Order ID from database (not used in SDK payload)
-     * @return string Encoded token for PhonePe SDK
-     */
-    public function generateChecksum(
-        string $merchantTransactionId,
-        int $amount,
-        string $userId,
-        string $userMobile,
-        int $orderId = null
-    ): string {
-        try {
-            $token = $this->getAccessToken();
+ * Generate checksum token for frontend payment initiation
+ *
+ * @param string $merchantTransactionId Unique transaction identifier
+ * @param int $amount Amount in paise
+ * @param string $userId User identifier
+ * @param string $userMobile User mobile number
+ * @param int $orderId Order ID from database
+ * @return string Encoded token for PhonePe SDK
+ */
+public function generateChecksum(
+    string $merchantTransactionId,
+    int $amount,
+    string $userId,
+    string $userMobile,
+    int $orderId = null
+): string {
+    try {
+        // Ensure orderId is treated as string and prefixed if needed
+        $orderIdForPayload = $orderId ? 'MT-' . (string)$orderId : $merchantTransactionId;
+        
+        $payload = [
+            'merchantId' => config('services.phonepe.merchant_id'),
+            'orderId' => $orderIdForPayload, // Use prefixed string
+            'merchantTransactionId' => $merchantTransactionId,
+            'merchantUserId' => $userId,
+            'amount' => $amount,
+            'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+            'mobileNumber' => $userMobile,
+            'paymentInstrument' => [
+                'type' => 'PAY_PAGE',
+            ],
+        ];
 
-            // Construct payload for token generation
-            // For PhonePe mobile SDK v3.1.1, these are the required fields
-            $payload = [
-                'merchantId' => config('services.phonepe.merchant_id'),
-                'orderId' => (string)($orderId ?? $merchantTransactionId), // Prefer numeric order ID, fallback to transaction ID
-                'merchantTransactionId' => $merchantTransactionId,
-                'merchantUserId' => $userId,
-                'amount' => $amount,
-                'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
-                'mobileNumber' => $userMobile,
-                'paymentInstrument' => [
-                    'type' => 'SAVEDCARD',
-                ],
-            ];
-
-            // Encode as base64
-            $encodedPayload = base64_encode(json_encode($payload));
-
-            // Generate checksum (SHA256 HMAC)
-            $checksum = hash_hmac(
-                'sha256',
-                $encodedPayload . '/pg/v1/pay',
-                $this->clientSecret,
-                false
-            );
-
-            // Return token format: encoded_payload###checksum###version
-            return $encodedPayload . '###' . $checksum . '###1';
-
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
+        if (isDebugEnabled) {
+            \Log::info('PhonePe Payload:', $payload);
         }
+
+        // Encode as base64
+        $encodedPayload = base64_encode(json_encode($payload));
+
+        // Generate checksum (SHA256 HMAC)
+        $checksum = hash_hmac(
+            'sha256',
+            $encodedPayload . '/pg/v1/pay',
+            $this->clientSecret,
+            false
+        );
+
+        // Return token format: encoded_payload###checksum###version
+        return $encodedPayload . '###' . $checksum . '###1';
+
+    } catch (\Exception $e) {
+        throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
     }
+}
 
     /**
      * Verify transaction status with PhonePe API
