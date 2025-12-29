@@ -174,8 +174,11 @@ final readonly class PhonepeService
             $token = $this->getAccessToken();
 
             // Construct payload for token generation
+            // Note: This payload is for the PhonePe mobile SDK, not the server API
+            // The mobile SDK expects specific field names
             $payload = [
                 'merchantId' => config('services.phonepe.merchant_id'),
+                'orderId' => $merchantTransactionId, // SDK expects orderId
                 'merchantTransactionId' => $merchantTransactionId,
                 'merchantUserId' => $userId,
                 'amount' => $amount,
@@ -197,7 +200,7 @@ final readonly class PhonepeService
                 false
             );
 
-            // Return token format: encoded_payload###checksum
+            // Return token format: encoded_payload###checksum###version
             return $encodedPayload . '###' . $checksum . '###1';
 
         } catch (\Exception $e) {
