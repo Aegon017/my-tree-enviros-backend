@@ -179,7 +179,7 @@ final readonly class PhonepeService
                 'merchantTransactionId' => $merchantTransactionId,
                 'merchantUserId' => $userId,
                 'amount' => $amount,
-                'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+                'callbackUrl' => config('app.url') . '/api/v1/payment/phonepe-webhook',
                 'mobileNumber' => $userMobile,
             ];
 
