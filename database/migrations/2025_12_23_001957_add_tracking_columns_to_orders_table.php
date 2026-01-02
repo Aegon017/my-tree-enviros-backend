@@ -15,11 +15,4 @@ return new class extends Migration
             $table->timestamp('delivered_at')->nullable()->after('shipped_at');
         });
     }
-
-    public function down(): void
-    {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['courier_name', 'tracking_id', 'shipped_at', 'delivered_at']);
-        });
-    }
 };

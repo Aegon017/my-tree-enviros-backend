@@ -7,6 +7,7 @@ namespace App\Services\Payments;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -162,29 +163,29 @@ final readonly class PhonepeService
      * @param int $amount Amount in paise
      * @param string $userId User identifier
      * @param string $userMobile User mobile number
+     * @param int $orderId Order ID from database
      * @return string Encoded token for PhonePe SDK
      */
     public function generateChecksum(
         string $merchantTransactionId,
         int $amount,
         string $userId,
-        string $userMobile
+        string $userMobile,
+        int $orderId = null
     ): string {
         try {
-            $token = $this->getAccessToken();
-
-            // Construct payload for token generation
             $payload = [
                 'merchantId' => config('services.phonepe.merchant_id'),
                 'merchantTransactionId' => $merchantTransactionId,
                 'merchantUserId' => $userId,
                 'amount' => $amount,
-                'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+                'callbackUrl' => config('app.url') . '/api/v1/payment/phonepe-webhook',
                 'mobileNumber' => $userMobile,
-                'paymentInstrument' => [
-                    'type' => 'SAVEDCARD',
-                ],
             ];
+
+            if (config('app.debug')) {
+                Log::info('PhonePe Payload:', $payload);
+            }
 
             // Encode as base64
             $encodedPayload = base64_encode(json_encode($payload));
@@ -197,9 +198,8 @@ final readonly class PhonepeService
                 false
             );
 
-            // Return token format: encoded_payload###checksum
+            // Return token format: encoded_payload###checksum###version
             return $encodedPayload . '###' . $checksum . '###1';
-
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
         }
@@ -245,8 +245,8 @@ final readonly class PhonepeService
             }
 
             // Extract transaction details
-            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId'] 
-                ?? $resData['orderId'] 
+            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId']
+                ?? $resData['orderId']
                 ?? $merchantTransactionId;
 
             $order = Order::findOrFail($orderId);
@@ -282,7 +282,6 @@ final readonly class PhonepeService
                 'order_id' => $order->id,
                 'transaction_id' => $phonePeTransactionId,
             ];
-
         } catch (\Exception $e) {
             return [
                 'success' => false,
