@@ -10,78 +10,78 @@ use App\Services\Payments\PaymentFactory;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 final class PhonePePaymentController extends Controller
 {
     use ResponseHelpers;
 
-/**
- * Generate PhonePe payment token for mobile SDK
- */
-public function generateToken(Request $request): JsonResponse
-{
-    try {
-        $validated = $request->validate([
-            'order_id' => 'required|integer|exists:orders,id',
-            'amount' => 'required|integer|min:1',
-            'merchant_transaction_id' => 'required|string',
-            'user_id' => 'required|string',
-            'user_mobile' => 'required|string|regex:/^[0-9]{10}$/',
-        ]);
+    /**
+     * Generate PhonePe payment token for mobile SDK
+     */
+    public function generateToken(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'order_id' => 'required|integer|exists:orders,id',
+                'amount' => 'required|integer|min:1',
+                'merchant_transaction_id' => 'required|string',
+                'user_id' => 'required|string',
+                'user_mobile' => 'required|string|regex:/^[0-9]{10}$/',
+            ]);
 
-        $user = $request->user();
-        
-        // Verify order belongs to authenticated user
-        $order = Order::where('id', $validated['order_id'])
-            ->where('user_id', $user->id)
-            ->firstOrFail();
+            $user = $request->user();
 
-        // Use PaymentFactory instead of directly instantiating PhonepeService
-        $phonePeService = PaymentFactory::driver('phonepe');
-        
-        // Generate token
-        $token = $phonePeService->generateChecksum(
-            $validated['merchant_transaction_id'],
-            $validated['amount'],
-            $validated['user_id'],
-            $validated['user_mobile'],
-            $validated['order_id']
-        );
+            // Verify order belongs to authenticated user
+            $order = Order::where('id', $validated['order_id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'token' => $token,
-                'merchant_transaction_id' => $validated['merchant_transaction_id'],
-                'amount' => $validated['amount'],
-                'currency' => 'INR',
-                'order_id' => $order->id,
-                'reference_number' => $order->reference_number,
-            ],
-            'message' => 'Token generated successfully'
-        ]);
+            // Use PaymentFactory instead of directly instantiating PhonepeService
+            $phonePeService = PaymentFactory::driver('phonepe');
 
-    } catch (ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation failed',
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Order not found or does not belong to user'
-        ], 404);
-    } catch (\Exception $e) {
-        \Log::error('PhonePe Token Generation Error: ' . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to generate token: ' . $e->getMessage()
-        ], 500);
+            // Generate token
+            $token = $phonePeService->generateChecksum(
+                $validated['merchant_transaction_id'],
+                $validated['amount'],
+                $validated['user_id'],
+                $validated['user_mobile'],
+                $validated['order_id']
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'token' => $token,
+                    'merchant_transaction_id' => $validated['merchant_transaction_id'],
+                    'amount' => $validated['amount'],
+                    'currency' => 'INR',
+                    'order_id' => $order->id,
+                    'reference_number' => $order->reference_number,
+                ],
+                'message' => 'Token generated successfully'
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found or does not belong to user'
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('PhonePe Token Generation Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate token: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     /**
      * Verify PhonePe payment after transaction completion
@@ -130,7 +130,7 @@ public function generateToken(Request $request): JsonResponse
 
             // Verify payment with PhonePe API
             $phonePeService = PaymentFactory::driver('phonepe');
-            
+
             $verificationResult = $phonePeService->verifyTransaction(
                 $validated['merchant_transaction_id'],
                 $order->id
@@ -160,7 +160,6 @@ public function generateToken(Request $request): JsonResponse
                 'paid_at' => $order->paid_at?->toIso8601String(),
                 'message' => 'Payment verified successfully',
             ]);
-
         } catch (ValidationException $e) {
             return $this->error(
                 'Validation failed',
@@ -217,7 +216,6 @@ public function generateToken(Request $request): JsonResponse
                 'payment_method' => $payment?->payment_method,
                 'paid_at' => $payment?->paid_at?->toIso8601String(),
             ]);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->error('Order not found', 404);
         } catch (\Exception $e) {
@@ -253,10 +251,9 @@ public function generateToken(Request $request): JsonResponse
                 'message' => 'Webhook processed',
                 'data' => $result,
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('PhonePe Webhook Error: ' . $e->getMessage());
-            
+            Log::error('PhonePe Webhook Error: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Webhook processing failed',
@@ -319,7 +316,6 @@ public function generateToken(Request $request): JsonResponse
                 'status' => $order->status,
                 'message' => 'Payment cancelled successfully',
             ]);
-
         } catch (ValidationException $e) {
             return $this->error(
                 'Validation failed',
