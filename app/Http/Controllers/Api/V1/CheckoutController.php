@@ -23,7 +23,8 @@ final class CheckoutController extends Controller
     public function __construct(
         private readonly OrderService $orders,
         private readonly CouponService $coupons,
-        private readonly CheckoutService $checkout
+        private readonly CheckoutService $checkout,
+        private readonly \App\Services\CheckoutSessionService $checkoutSession
     ) {}
 
     public function index(Request $request)
@@ -49,25 +50,62 @@ final class CheckoutController extends Controller
     public function prepare(CheckoutRequest $request)
     {
         $userId = $request->user()->id;
+        $paymentMethod = $request->payment_method ?? 'razorpay';
 
+        // COD Exception: Create order immediately
+        if ($paymentMethod === 'cod') {
+            return $this->handleCODCheckout($request, $userId);
+        }
+
+        // Online payment: Create checkout session (NOT order)
+        $session = $this->checkoutSession->createSession([
+            'items' => $request->items,
+            'coupon_code' => $request->coupon_code,
+            'payment_method' => $paymentMethod,
+            'currency' => 'INR',
+            'shipping_address_id' => $request->shipping_address_id,
+        ], $userId);
+
+        // Create payment gateway order
+        $driver = $paymentMethod;
+        $payment = PaymentFactory::driver($driver)->createGatewayOrder($session);
+
+        // Store gateway order ID in session
+        $session->update([
+            'gateway_order_id' => $payment['order_id'] ?? $payment['id'] ?? null,
+            'gateway_response' => $payment,
+        ]);
+
+        return $this->success([
+            'session_token' => $session->session_token,
+            'payment' => $payment,
+            'expires_at' => $session->expires_at,
+            'pricing' => $session->pricing,
+        ]);
+    }
+
+    /**
+     * Handle COD checkout (exception to payment-first rule)
+     */
+    private function handleCODCheckout(CheckoutRequest $request, int $userId)
+    {
         $payload = [
             'items' => $request->items,
             'coupon_code' => $request->coupon_code,
-            'payment_method' => $request->payment_method ?? 'razorpay',
+            'payment_method' => 'cod',
             'currency' => 'INR',
             'shipping_address_id' => $request->shipping_address_id,
         ];
 
         $order = $this->orders->createDraftOrder($payload, $userId);
-
-        $order->load('orderCharges');
-
-        $driver = $request->payment_method ?? 'razorpay';
-        $payment = PaymentFactory::driver($driver)->createGatewayOrder($order);
+        $order->update([
+            'payment_status' => 'pending',
+            'status' => 'confirmed',
+        ]);
 
         return $this->success([
-            'order' => new OrderResource($order),
-            'payment' => $payment,
+            'order' => new OrderResource($order->load('items')),
+            'message' => 'Order placed successfully. Pay on delivery.',
         ]);
     }
 

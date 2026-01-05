@@ -17,19 +17,20 @@ final readonly class RazorpayService
         $this->api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
     }
 
-    public function createGatewayOrder(Order $order): array
+    public function createGatewayOrder(\App\Models\CheckoutSession $session): array
     {
         $rzpOrder = $this->api->order->create([
-            'receipt' => $order->reference_number,
-            'amount' => (int) round($order->grand_total * 100),
-            'currency' => $order->currency ?? 'INR',
+            'receipt' => 'SESSION-' . $session->id,
+            'amount' => (int) round($session->pricing['grand_total'] * 100),
+            'currency' => $session->currency ?? 'INR',
         ]);
 
         return [
             'gateway' => 'razorpay',
             'order_id' => $rzpOrder['id'],
-            'amount' => (int) round($order->grand_total * 100),
-            'currency' => $order->currency ?? 'INR',
+            'amount' => (int) round($session->pricing['grand_total'] * 100),
+            'currency' => $session->currency ?? 'INR',
+            'key' => config('services.razorpay.key'),
         ];
     }
 
