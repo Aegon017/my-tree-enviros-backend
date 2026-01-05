@@ -180,36 +180,33 @@ public function generateChecksum(
             'amount' => $amount,
             'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
             'mobileNumber' => $userMobile,
-            // FIX 1: Add the mandatory paymentInstrument
-            'paymentInstrument' => [
-                'type' => 'PAY_PAGE'
-            ]
+            // REMOVED: 'paymentInstrument' => ['type' => 'PAY_PAGE'] 
+            // The Native SDK does not support 'PAY_PAGE' instrument type in the payload.
+            // It automatically handles the UI.
         ];
 
         if (config('app.debug')) {
             \Log::info('PhonePe Payload:', $payload);
         }
 
-        // Encode as base64
         $encodedPayload = base64_encode(json_encode($payload));
 
-        // FIX 2: Use correct Checksum Logic (Concatenation, NOT HMAC)
-        // Format: SHA256(Base64Body + Endpoint + SaltKey) + ### + SaltIndex
-        $saltKey = $this->clientSecret; // Assuming client_secret holds your Salt Key
-        $saltIndex = 1; // Usually 1, check your dashboard
+        $saltKey = $this->clientSecret; 
+        $saltIndex = 1; 
         
         $stringToHash = $encodedPayload . '/pg/v1/pay' . $saltKey;
         $checksumHash = hash('sha256', $stringToHash);
         
         $checksum = $checksumHash . '###' . $saltIndex;
 
-        // Return token format: encoded_payload###checksum###version
         return $encodedPayload . '###' . $checksum . '###1';
 
     } catch (\Exception $e) {
         throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
     }
 }
+
+
 
     /**
      * Verify transaction status with PhonePe API
