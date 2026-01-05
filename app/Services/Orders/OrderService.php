@@ -7,6 +7,7 @@ namespace App\Services\Orders;
 use App\Models\Order;
 use App\Models\PlanPrice;
 use App\Models\ProductVariant;
+use App\Models\ShippingAddress;
 use App\Models\User;
 use App\Notifications\OrderPaidNotification;
 use App\Notifications\OrderPlacedNotification;
@@ -20,7 +21,8 @@ final readonly class OrderService
     public function __construct(
         private OrderPricingService $pricing,
         private CouponService $coupons,
-        private OrderRepository $repository
+        private OrderRepository $repository,
+        private OrderSnapshotService $snapshot
     ) {}
 
     public function createDraftOrder(array $payload, int $userId): Order
@@ -50,6 +52,13 @@ final readonly class OrderService
 
             $totals = $this->pricing->calculateTotals($items, $couponResult);
 
+            // Capture shipping address snapshot
+            $shippingAddress = null;
+            if (! empty($payload['shipping_address_id'])) {
+                $shippingAddress = ShippingAddress::find($payload['shipping_address_id']);
+            }
+            $shippingSnapshot = $this->snapshot->createShippingAddressSnapshot($shippingAddress);
+
             $order = $this->repository->create([
                 'user_id' => $userId,
                 'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
@@ -64,9 +73,15 @@ final readonly class OrderService
                 'payment_method' => $payload['payment_method'] ?? null,
                 'currency' => $payload['currency'] ?? 'INR',
                 'shipping_address_id' => $payload['shipping_address_id'] ?? null,
+                'shipping_address_snapshot' => $shippingSnapshot,
             ]);
 
             foreach ($items as $item) {
+                // Create immutable snapshot of the item
+                $itemSnapshot = $this->snapshot->createItemSnapshot($item);
+                $itemName = $this->snapshot->extractItemName($itemSnapshot);
+                $unitPrice = $this->snapshot->extractUnitPrice($itemSnapshot);
+
                 $orderItem = $this->repository->createItem([
                     'order_id' => $order->id,
                     'type' => $item['type'],
@@ -81,7 +96,16 @@ final readonly class OrderService
                     'quantity' => $item['quantity'],
                     'amount' => $item['amount'],
                     'total_amount' => $item['total_amount'],
+                    // Snapshot columns
+                    'item_snapshot' => $itemSnapshot,
+                    'item_name' => $itemName,
+                    'unit_price' => $unitPrice,
+                    'discount_amount' => 0, // TODO: Calculate per-item discount if applicable
+                    'tax_amount' => 0, // TODO: Calculate per-item tax if applicable
                 ]);
+
+                // Copy image from source entity to order item using Spatie Media Library
+                $this->snapshot->copySnapshotImage($item, $orderItem);
 
                 // Create dedication if provided
                 if (! empty($item['dedication'])) {
