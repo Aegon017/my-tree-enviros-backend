@@ -7,7 +7,6 @@ namespace App\Services\Payments;
 use App\Models\Order;
 use App\Models\OrderPayment;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -157,53 +156,60 @@ final readonly class PhonepeService
     }
 
     /**
-     * Generate checksum token for frontend payment initiation
-     *
-     * @param string $merchantTransactionId Unique transaction identifier
-     * @param int $amount Amount in paise
-     * @param string $userId User identifier
-     * @param string $userMobile User mobile number
-     * @param int $orderId Order ID from database
-     * @return string Encoded token for PhonePe SDK
-     */
-    public function generateChecksum(
-        string $merchantTransactionId,
-        int $amount,
-        string $userId,
-        string $userMobile,
-        int $orderId = null
-    ): string {
-        try {
-            $payload = [
-                'merchantId' => config('services.phonepe.merchant_id'),
-                'merchantTransactionId' => $merchantTransactionId,
-                'merchantUserId' => $userId,
-                'amount' => $amount,
-                'callbackUrl' => config('app.url') . '/api/v1/payment/phonepe-webhook',
-                'mobileNumber' => $userMobile,
-            ];
+ * Generate checksum token for frontend payment initiation
+ *
+ * @param string $merchantTransactionId Unique transaction identifier
+ * @param int $amount Amount in paise
+ * @param string $userId User identifier
+ * @param string $userMobile User mobile number
+ * @param int $orderId Order ID from database
+ * @return string Encoded token for PhonePe SDK
+ */
+public function generateChecksum(
+    string $merchantTransactionId,
+    int $amount,
+    string $userId,
+    string $userMobile,
+    int $orderId = null
+): string {
+    try {
+        $payload = [
+            'merchantId' => config('services.phonepe.merchant_id'),
+            'merchantTransactionId' => $merchantTransactionId,
+            'merchantUserId' => $userId,
+            'amount' => $amount,
+            'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+            'mobileNumber' => $userMobile,
+            // FIX 1: Add the mandatory paymentInstrument
+            'paymentInstrument' => [
+                'type' => 'PAY_PAGE'
+            ]
+        ];
 
-            if (config('app.debug')) {
-                Log::info('PhonePe Payload:', $payload);
-            }
-
-            // Encode as base64
-            $encodedPayload = base64_encode(json_encode($payload));
-
-            // Generate checksum (SHA256 HMAC)
-            $checksum = hash_hmac(
-                'sha256',
-                $encodedPayload . '/pg/v1/pay',
-                $this->clientSecret,
-                false
-            );
-
-            // Return token format: encoded_payload###checksum###version
-            return $encodedPayload . '###' . $checksum . '###1';
-        } catch (\Exception $e) {
-            throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
+        if (config('app.debug')) {
+            \Log::info('PhonePe Payload:', $payload);
         }
+
+        // Encode as base64
+        $encodedPayload = base64_encode(json_encode($payload));
+
+        // FIX 2: Use correct Checksum Logic (Concatenation, NOT HMAC)
+        // Format: SHA256(Base64Body + Endpoint + SaltKey) + ### + SaltIndex
+        $saltKey = $this->clientSecret; // Assuming client_secret holds your Salt Key
+        $saltIndex = 1; // Usually 1, check your dashboard
+        
+        $stringToHash = $encodedPayload . '/pg/v1/pay' . $saltKey;
+        $checksumHash = hash('sha256', $stringToHash);
+        
+        $checksum = $checksumHash . '###' . $saltIndex;
+
+        // Return token format: encoded_payload###checksum###version
+        return $encodedPayload . '###' . $checksum . '###1';
+
+    } catch (\Exception $e) {
+        throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
     }
+}
 
     /**
      * Verify transaction status with PhonePe API
@@ -245,8 +251,8 @@ final readonly class PhonepeService
             }
 
             // Extract transaction details
-            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId']
-                ?? $resData['orderId']
+            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId'] 
+                ?? $resData['orderId'] 
                 ?? $merchantTransactionId;
 
             $order = Order::findOrFail($orderId);
@@ -282,6 +288,7 @@ final readonly class PhonepeService
                 'order_id' => $order->id,
                 'transaction_id' => $phonePeTransactionId,
             ];
+
         } catch (\Exception $e) {
             return [
                 'success' => false,
