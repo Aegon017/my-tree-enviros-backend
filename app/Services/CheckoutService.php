@@ -91,6 +91,7 @@ final readonly class CheckoutService
                     'plan_price_id' => $item['plan_price_id'],
                     'plan_id' => $planPrice->plan_id,
                     'tree_id' => $planPrice->tree_id,
+                    'tree_instance_id' => $item['tree_instance_id'] ?? null,
                     'name' => $planPrice->tree->name,
                     'image_url' => $planPrice->tree->getFirstMedia('images')->getFullUrl(),
                     'duration' => $planPrice->plan->duration,

@@ -27,6 +27,7 @@ final readonly class RazorpayService
 
         return [
             'gateway' => 'razorpay',
+            'key' => config('services.razorpay.key'),
             'order_id' => $rzpOrder['id'],
             'amount' => (int) round($order->grand_total * 100),
             'currency' => $order->currency ?? 'INR',

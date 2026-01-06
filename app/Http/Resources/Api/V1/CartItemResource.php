@@ -59,7 +59,7 @@ final class CartItemResource extends JsonResource
             ->map(function ($planPrices) use ($planPrice): array {
                 $firstPlanPrice = $planPrices->first();
 
-                $filteredPlanPrices = $planPrices->filter(fn ($pp): bool => $pp->plan->type === $planPrice->plan->type);
+                $filteredPlanPrices = $planPrices->filter(fn($pp): bool => $pp->plan->type === $planPrice->plan->type);
 
                 if ($filteredPlanPrices->isEmpty()) {
                     return [];
@@ -69,7 +69,7 @@ final class CartItemResource extends JsonResource
                     'id' => $firstPlanPrice->plan->id,
                     'duration' => $firstPlanPrice->plan->duration,
                     'duration_unit' => $firstPlanPrice->plan->duration_unit,
-                    'plan_prices' => $filteredPlanPrices->map(fn ($pp): array => [
+                    'plan_prices' => $filteredPlanPrices->map(fn($pp): array => [
                         'id' => $pp->id,
                         'price' => (float) $pp->price,
                         'plan' => [
@@ -81,7 +81,7 @@ final class CartItemResource extends JsonResource
                     ])->values()->toArray(),
                 ];
             })
-            ->filter(fn ($item): bool => ! empty($item))
+            ->filter(fn($item): bool => ! empty($item))
             ->values()
             ->toArray();
 
@@ -94,6 +94,7 @@ final class CartItemResource extends JsonResource
             'price' => (float) $this->amount,
             'image_url' => $imageUrl,
             'plan_price_id' => $planPrice->id,
+            'tree_instance_id' => $this->tree_instance_id,
 
             'tree' => [
                 'id' => $tree->id,
