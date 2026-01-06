@@ -6,7 +6,11 @@ namespace App\Services\Payments;
 
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Models\PaymentAttempt;
+use App\Models\User;
+use App\Notifications\OrderPaidNotification;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -38,12 +42,12 @@ final readonly class PhonepeService
             : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
     }
 
-    public function createGatewayOrder(Order $order): array
+    public function createGatewayOrder(PaymentAttempt $attempt): array
     {
         $token = $this->getAccessToken();
 
-        $transactionId = 'MT-' . $order->id . '-' . Str::random(6);
-        $amountInPaise = (int) round($order->grand_total * 100);
+        $transactionId = 'MT-' . $attempt->id . '-' . Str::random(6);
+        $amountInPaise = (int) round($attempt->grand_total * 100);
 
         $frontendUrl = config('app.frontend_url');
         $callbackUrl = $frontendUrl . ('/payment/phonepe-callback?merchantOrderId=' . $transactionId);
@@ -78,6 +82,9 @@ final readonly class PhonepeService
         if (! $redirectUrl) {
             throw new RuntimeException('PhonePe Redirect URL not found in V2 response');
         }
+
+        // Store gateway order ID in attempt
+        $attempt->update(['payment_gateway_order_id' => $orderId]);
 
         return [
             'gateway' => 'phonepe',
@@ -120,11 +127,13 @@ final readonly class PhonepeService
             throw new RuntimeException('Invalid Transaction ID format');
         }
 
-        $orderId = (int) $parts[1];
+        $attemptId = (int) $parts[1];
 
-        $order = Order::findOrFail($orderId);
+        $attempt = PaymentAttempt::findOrFail($attemptId);
 
-        if ($order->status === 'paid') {
+        // Check if already converted to order
+        if ($attempt->status === 'completed' && $attempt->created_order_id) {
+            $order = Order::find($attempt->created_order_id);
             return [
                 'success' => true,
                 'order_id' => $order->id,
@@ -132,12 +141,15 @@ final readonly class PhonepeService
             ];
         }
 
+        // Convert attempt to order
+        $order = app(PaymentAttemptService::class)->convertToOrder($attempt);
+
         $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId'] ?? $resData['orderId'] ?? $merchantTransactionId;
 
         OrderPayment::create([
             'order_id' => $order->id,
             'amount' => $order->grand_total,
-            'payment_method' => 'phonepe', // Or strtolower($paymentMode)
+            'payment_method' => 'phonepe',
             'transaction_id' => $phonePeTransactionId,
             'status' => 'paid',
             'paid_at' => now(),
@@ -148,6 +160,10 @@ final readonly class PhonepeService
             'paid_at' => now(),
         ]);
 
+        // Send notifications
+        $order->user->notify(new OrderPaidNotification($order));
+        $this->notifyAdmins(new OrderPaidNotification($order));
+
         return [
             'success' => true,
             'order_id' => $order->id,
@@ -156,60 +172,59 @@ final readonly class PhonepeService
     }
 
     /**
- * Generate checksum token for frontend payment initiation
- *
- * @param string $merchantTransactionId Unique transaction identifier
- * @param int $amount Amount in paise
- * @param string $userId User identifier
- * @param string $userMobile User mobile number
- * @param int $orderId Order ID from database
- * @return string Encoded token for PhonePe SDK
- */
-public function generateChecksum(
-    string $merchantTransactionId,
-    int $amount,
-    string $userId,
-    string $userMobile,
-    int $orderId = null
-): string {
-    try {
-        $payload = [
-            'merchantId' => config('services.phonepe.merchant_id'),
-            'merchantTransactionId' => $merchantTransactionId,
-            'merchantUserId' => $userId,
-            'amount' => $amount,
-            'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
-            'mobileNumber' => $userMobile,
-            // FIX 1: Add the mandatory paymentInstrument
-            'paymentInstrument' => [
-                'type' => 'PAY_PAGE'
-            ]
-        ];
+     * Generate checksum token for frontend payment initiation
+     *
+     * @param string $merchantTransactionId Unique transaction identifier
+     * @param int $amount Amount in paise
+     * @param string $userId User identifier
+     * @param string $userMobile User mobile number
+     * @param int $orderId Order ID from database
+     * @return string Encoded token for PhonePe SDK
+     */
+    public function generateChecksum(
+        string $merchantTransactionId,
+        int $amount,
+        string $userId,
+        string $userMobile,
+        int $orderId = null
+    ): string {
+        try {
+            $payload = [
+                'merchantId' => config('services.phonepe.merchant_id'),
+                'merchantTransactionId' => $merchantTransactionId,
+                'merchantUserId' => $userId,
+                'amount' => $amount,
+                'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+                'mobileNumber' => $userMobile,
+                // FIX 1: Add the mandatory paymentInstrument
+                'paymentInstrument' => [
+                    'type' => 'PAY_PAGE'
+                ]
+            ];
 
-        if (config('app.debug')) {
-            \Log::info('PhonePe Payload:', $payload);
+            if (config('app.debug')) {
+                \Log::info('PhonePe Payload:', $payload);
+            }
+
+            // Encode as base64
+            $encodedPayload = base64_encode(json_encode($payload));
+
+            // FIX 2: Use correct Checksum Logic (Concatenation, NOT HMAC)
+            // Format: SHA256(Base64Body + Endpoint + SaltKey) + ### + SaltIndex
+            $saltKey = $this->clientSecret; // Assuming client_secret holds your Salt Key
+            $saltIndex = 1; // Usually 1, check your dashboard
+
+            $stringToHash = $encodedPayload . '/pg/v1/pay' . $saltKey;
+            $checksumHash = hash('sha256', $stringToHash);
+
+            $checksum = $checksumHash . '###' . $saltIndex;
+
+            // Return token format: encoded_payload###checksum###version
+            return $encodedPayload . '###' . $checksum . '###1';
+        } catch (\Exception $e) {
+            throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
         }
-
-        // Encode as base64
-        $encodedPayload = base64_encode(json_encode($payload));
-
-        // FIX 2: Use correct Checksum Logic (Concatenation, NOT HMAC)
-        // Format: SHA256(Base64Body + Endpoint + SaltKey) + ### + SaltIndex
-        $saltKey = $this->clientSecret; // Assuming client_secret holds your Salt Key
-        $saltIndex = 1; // Usually 1, check your dashboard
-        
-        $stringToHash = $encodedPayload . '/pg/v1/pay' . $saltKey;
-        $checksumHash = hash('sha256', $stringToHash);
-        
-        $checksum = $checksumHash . '###' . $saltIndex;
-
-        // Return token format: encoded_payload###checksum###version
-        return $encodedPayload . '###' . $checksum . '###1';
-
-    } catch (\Exception $e) {
-        throw new RuntimeException('Failed to generate checksum: ' . $e->getMessage());
     }
-}
 
     /**
      * Verify transaction status with PhonePe API
@@ -251,20 +266,24 @@ public function generateChecksum(
             }
 
             // Extract transaction details
-            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId'] 
-                ?? $resData['orderId'] 
+            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId']
+                ?? $resData['orderId']
                 ?? $merchantTransactionId;
 
-            $order = Order::findOrFail($orderId);
+            $attempt = PaymentAttempt::findOrFail($orderId);
 
-            // Check if paid
-            if ($order->status === 'paid') {
+            // Check if already converted
+            if ($attempt->status === 'completed' && $attempt->created_order_id) {
+                $order = Order::find($attempt->created_order_id);
                 return [
                     'success' => true,
                     'message' => 'Order already paid',
                     'order_id' => $order->id,
                 ];
             }
+
+            // Convert attempt to order
+            $order = app(PaymentAttemptService::class)->convertToOrder($attempt);
 
             // Create payment record
             OrderPayment::create([
@@ -282,13 +301,16 @@ public function generateChecksum(
                 'paid_at' => now(),
             ]);
 
+            // Send notifications
+            $order->user->notify(new OrderPaidNotification($order));
+            $this->notifyAdmins(new OrderPaidNotification($order));
+
             return [
                 'success' => true,
                 'message' => 'Payment verified and captured successfully',
                 'order_id' => $order->id,
                 'transaction_id' => $phonePeTransactionId,
             ];
-
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -315,5 +337,13 @@ public function generateChecksum(
         }
 
         return $response->json()['access_token'];
+    }
+
+    private function notifyAdmins($notification): void
+    {
+        $admins = User::role('super_admin')->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, $notification);
+        }
     }
 }

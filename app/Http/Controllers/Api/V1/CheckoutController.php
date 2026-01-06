@@ -13,6 +13,7 @@ use App\Services\CheckoutService;
 use App\Services\Coupons\CouponService;
 use App\Services\Orders\OrderService;
 use App\Http\Resources\Api\V1\OrderResource;
+use App\Services\Payments\PaymentAttemptService;
 use App\Services\Payments\PaymentFactory;
 use Illuminate\Http\Request;
 
@@ -23,7 +24,8 @@ final class CheckoutController extends Controller
     public function __construct(
         private readonly OrderService $orders,
         private readonly CouponService $coupons,
-        private readonly CheckoutService $checkout
+        private readonly CheckoutService $checkout,
+        private readonly PaymentAttemptService $paymentAttempts
     ) {}
 
     public function index(Request $request)
@@ -58,15 +60,21 @@ final class CheckoutController extends Controller
             'shipping_address_id' => $request->shipping_address_id,
         ];
 
-        $order = $this->orders->createDraftOrder($payload, $userId);
+        // Create payment attempt instead of draft order
+        $attempt = $this->paymentAttempts->createAttempt($payload, $userId);
 
-        $order->load('orderCharges');
+        $attempt->load('charges');
 
         $driver = $request->payment_method ?? 'razorpay';
-        $payment = PaymentFactory::driver($driver)->createGatewayOrder($order);
+        $payment = PaymentFactory::driver($driver)->createGatewayOrder($attempt);
 
         return $this->success([
-            'order' => new OrderResource($order),
+            'attempt' => [
+                'id' => $attempt->id,
+                'attempt_reference' => $attempt->attempt_reference,
+                'grand_total' => $attempt->grand_total,
+                'currency' => $attempt->currency,
+            ],
             'payment' => $payment,
         ]);
     }
