@@ -16,30 +16,25 @@ use RuntimeException;
 
 final readonly class PhonepeService
 {
-    private string $clientId;
-
-    private string $clientSecret;
-
-    private int $clientVersion;
-
-    private string $baseUrl;
-
-    private string $env;
+    private StandardCheckoutClient $client;
 
     public function __construct()
     {
-        $this->clientId = (string) config('services.phonepe.client_id');
-        $this->clientSecret = (string) config('services.phonepe.client_secret');
-        $this->clientVersion = (int) (config('services.phonepe.client_version') ?? 1);
-        $this->env = (string) config('services.phonepe.env', 'UAT');
+        $clientId = (string) config('services.phonepe.client_id');
+        $clientSecret = (string) config('services.phonepe.client_secret');
+        $clientVersion = (int) (config('services.phonepe.client_version') ?? 1);
+        $env = config('services.phonepe.env', 'UAT') === 'PROD' ? Env::PRODUCTION : Env::UAT;
 
-        if ($this->clientId === '' || $this->clientId === '0' || ($this->clientSecret === '' || $this->clientSecret === '0')) {
+        if ($clientId === '' || $clientSecret === '') {
             throw new RuntimeException('PhonePe credentials (client_id or client_secret) are missing in config.');
         }
 
-        $this->baseUrl = $this->env === 'PROD'
-            ? 'https://api.phonepe.com/apis/pg'
-            : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+        $this->client = StandardCheckoutClient::getInstance(
+            $clientId,
+            $clientVersion,
+            $clientSecret,
+            $env
+        );
     }
 
     public function createGatewayOrder(PaymentAttempt $attempt): array
@@ -52,35 +47,32 @@ final readonly class PhonepeService
         $backendUrl = config('app.api_url');
         $callbackUrl = $backendUrl . '/api/v1/payment/callback?merchantOrderId=' . $transactionId;
 
-        $payload = [
-            'merchantOrderId' => $transactionId,
-            'amount' => $amountInPaise,
-            'paymentFlow' => [
-                'type' => 'PG_CHECKOUT',
-                'merchantUrls' => [
-                    'redirectUrl' => $callbackUrl,
-                ],
-            ],
-        ];
+        try {
+            $payRequest = StandardCheckoutPayRequestBuilder::builder()
+                ->merchantOrderId($merchantOrderId)
+                ->amount($amountInPaise)
+                ->redirectUrl($redirectUrl)
+                ->message('Order payment for session ' . $session->id)
+                ->build();
 
-        $endpoint = $this->baseUrl . '/checkout/v2/pay';
+            $payResponse = $this->client->pay($payRequest);
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Authorization' => 'O-Bearer ' . $token,
-        ])->post($endpoint, $payload);
+            if ($payResponse->getState() !== 'PENDING') {
+                throw new RuntimeException('Payment initiation failed: ' . $payResponse->getState());
+            }
 
-        if (! $response->successful()) {
-            throw new RuntimeException('PhonePe API Error: ' . $response->body());
-        }
-
-        $resData = $response->json();
-
-        $redirectUrl = $resData['redirectUrl'] ?? null;
-        $orderId = $resData['orderId'] ?? null;
-
-        if (! $redirectUrl) {
-            throw new RuntimeException('PhonePe Redirect URL not found in V2 response');
+            return [
+                'gateway' => 'phonepe',
+                'order_id' => $merchantOrderId,
+                'phonepe_order_id' => $payResponse->getOrderId(),
+                'amount' => $amountInPaise,
+                'currency' => 'INR',
+                'url' => $payResponse->getRedirectUrl(),
+                'state' => $payResponse->getState(),
+                'expires_at' => $payResponse->getExpireAt(),
+            ];
+        } catch (\PhonePe\common\exceptions\PhonePeException $e) {
+            throw new RuntimeException('PhonePe SDK Error: ' . $e->getMessage(), 0, $e);
         }
 
         // Store gateway order ID in attempt
@@ -97,7 +89,7 @@ final readonly class PhonepeService
         ];
     }
 
-    public function verifyAndCapture(array $payload): array
+    public function verifyOrderStatus(string $merchantOrderId): array
     {
         $merchantTransactionId = $payload['razorpay_order_id'] ?? $payload['transaction_id'] ?? '';
 
@@ -136,8 +128,17 @@ final readonly class PhonepeService
             $order = Order::find($attempt->created_order_id);
             return [
                 'success' => true,
-                'order_id' => $order->id,
-                'reference_number' => $order->reference_number,
+                'merchant_order_id' => $merchantOrderId,
+                'phonepe_order_id' => $statusResponse->getOrderId(),
+                'state' => $statusResponse->getState(),
+                'amount' => $statusResponse->getAmount(),
+                'payment_details' => $statusResponse->getPaymentDetails(),
+                'error_code' => $statusResponse->getErrorCode(),
+            ];
+        } catch (\PhonePe\common\exceptions\PhonePeException $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
             ];
         }
 
@@ -226,24 +227,14 @@ final readonly class PhonepeService
         }
     }
 
-    /**
-     * Verify transaction status with PhonePe API
-     *
-     * @param string $merchantTransactionId Transaction ID
-     * @param int $orderId Order ID for reference
-     * @return array Verification result
-     */
-    public function verifyTransaction(string $merchantTransactionId, int $orderId): array
+    public function initiateRefund(string $originalMerchantOrderId, int $amountInPaise, string $merchantRefundId): array
     {
         try {
-            $token = $this->getAccessToken();
-
-            $path = sprintf('/checkout/v2/order/%s/status', $merchantTransactionId);
-
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Authorization' => 'O-Bearer ' . $token,
-            ])->get($this->baseUrl . $path);
+            $refundRequest = StandardCheckoutRefundRequestBuilder::builder()
+                ->merchantRefundId($merchantRefundId)
+                ->originalMerchantOrderId($originalMerchantOrderId)
+                ->amount($amountInPaise)
+                ->build();
 
             if (!$response->successful()) {
                 return [
@@ -307,36 +298,37 @@ final readonly class PhonepeService
 
             return [
                 'success' => true,
-                'message' => 'Payment verified and captured successfully',
-                'order_id' => $order->id,
-                'transaction_id' => $phonePeTransactionId,
+                'refund_id' => $refundResponse->getRefundId(),
+                'state' => $refundResponse->getState(),
+                'amount' => $refundResponse->getAmount(),
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Transaction verification failed: ' . $e->getMessage(),
+                'error' => $e->getMessage(),
             ];
         }
     }
 
-    private function getAccessToken(): string
+    public function checkRefundStatus(string $merchantRefundId): array
     {
-        $authUrl = $this->env === 'PROD'
-            ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token'
-            : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+        try {
+            $refundStatusResponse = $this->client->getRefundStatus($merchantRefundId);
 
-        $response = Http::asForm()->post($authUrl, [
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'grant_type' => 'client_credentials',
-            'client_version' => $this->clientVersion,
-        ]);
-
-        if (! $response->successful()) {
-            throw new RuntimeException('PhonePe Auth Error: ' . $response->body());
+            return [
+                'success' => true,
+                'refund_id' => $refundStatusResponse->getRefundId(),
+                'state' => $refundStatusResponse->getState(),
+                'amount' => $refundStatusResponse->getAmount(),
+                'original_order_id' => $refundStatusResponse->getOriginalMerchantOrderId(),
+                'payment_details' => $refundStatusResponse->getPaymentDetails(),
+            ];
+        } catch (\PhonePe\common\exceptions\PhonePeException $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
         }
-
-        return $response->json()['access_token'];
     }
 
     private function notifyAdmins($notification): void

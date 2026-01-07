@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\NotificationDeviceTokenController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PaymentGatewayController;
+use App\Http\Controllers\Api\V1\PaymentWebhookController;
 use App\Http\Controllers\Api\V1\PhonePePaymentController;
 use App\Http\Controllers\Api\V1\PostOfficeController;
 use App\Http\Controllers\Api\V1\ProductCategoryController;
@@ -94,6 +95,8 @@ Route::prefix('initiatives')->group(function (): void {
 Route::get('payment/callback', [PaymentController::class, 'callback'])->name('api.v1.payment.callback');
 
 Route::post('payments/webhook', [PaymentController::class, 'webhook'])->name('api.v1.payment.webhook');
+Route::post('webhooks/razorpay', [PaymentWebhookController::class, 'razorpay'])->name('api.v1.webhooks.razorpay');
+Route::post('webhooks/phonepe', [PaymentWebhookController::class, 'phonepe'])->name('api.v1.webhooks.phonepe');
 
 // PhonePe Payment Routes
 Route::prefix('payment/phonepe')->group(function (): void {

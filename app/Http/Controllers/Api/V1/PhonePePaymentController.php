@@ -83,33 +83,6 @@ final class PhonePePaymentController extends Controller
         }
     }
 
-    /**
-     * Verify PhonePe payment after transaction completion
-     *
-     * Endpoint: POST /api/v1/payment/phonepe-verify
-     * 
-     * Request body:
-     * {
-     *   "merchant_transaction_id": "TX_123_abc123",
-     *   "phonepe_transaction_id": "2024121200123456789",
-     *   "order_reference": "ORD-2024-001",
-     *   "amount": 50000,
-     *   "status": "SUCCESS"
-     * }
-     *
-     * Response:
-     * {
-     *   "success": true,
-     *   "data": {
-     *     "order_id": 123,
-     *     "reference_number": "ORD-2024-001",
-     *     "status": "paid",
-     *     "amount": 500.00,
-     *     "transaction_id": "2024121200123456789",
-     *     "paid_at": "2024-12-12T10:30:00Z"
-     *   }
-     * }
-     */
     public function verifyPayment(Request $request): JsonResponse
     {
         try {
@@ -176,25 +149,6 @@ final class PhonePePaymentController extends Controller
         }
     }
 
-    /**
-     * Get payment status for an order
-     *
-     * Endpoint: GET /api/v1/payment/phonepe/status/{orderId}
-     * 
-     * Response:
-     * {
-     *   "success": true,
-     *   "data": {
-     *     "order_id": 123,
-     *     "order_status": "paid",
-     *     "payment_status": "completed",
-     *     "amount": 500.00,
-     *     "transaction_id": "2024121200123456789",
-     *     "payment_method": "phonepe",
-     *     "paid_at": "2024-12-12T10:30:00Z"
-     *   }
-     * }
-     */
     public function getPaymentStatus(Request $request, int $orderId): JsonResponse
     {
         try {
@@ -226,13 +180,6 @@ final class PhonePePaymentController extends Controller
         }
     }
 
-    /**
-     * Webhook endpoint for PhonePe callbacks
-     *
-     * Endpoint: POST /api/v1/payment/phonepe-webhook
-     * 
-     * 
-     */
     public function webhook(Request $request): JsonResponse
     {
         try {
@@ -261,28 +208,6 @@ final class PhonePePaymentController extends Controller
         }
     }
 
-    /**
-     * Handle payment cancellation
-     *
-     * Endpoint: POST /api/v1/payment/phonepe-cancel
-     * 
-     * Request body:
-     * {
-     *   "order_id": 123,
-     *   "merchant_transaction_id": "TX_123_abc123",
-     *   "reason": "User cancelled payment"
-     * }
-     *
-     * Response:
-     * {
-     *   "success": true,
-     *   "data": {
-     *     "order_id": 123,
-     *     "status": "cancelled",
-     *     "message": "Payment cancelled successfully"
-     *   }
-     * }
-     */
     public function cancelPayment(Request $request): JsonResponse
     {
         try {
