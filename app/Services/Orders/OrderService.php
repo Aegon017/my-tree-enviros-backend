@@ -7,6 +7,7 @@ namespace App\Services\Orders;
 use App\Models\Order;
 use App\Models\PlanPrice;
 use App\Models\ProductVariant;
+use App\Models\ShippingAddress;
 use App\Models\User;
 use App\Notifications\OrderPaidNotification;
 use App\Notifications\OrderPlacedNotification;
@@ -20,7 +21,8 @@ final readonly class OrderService
     public function __construct(
         private OrderPricingService $pricing,
         private CouponService $coupons,
-        private OrderRepository $repository
+        private OrderRepository $repository,
+        private OrderSnapshotService $snapshot
     ) {}
 
     public function createDraftOrder(array $payload, int $userId): Order
@@ -50,6 +52,13 @@ final readonly class OrderService
 
             $totals = $this->pricing->calculateTotals($items, $couponResult);
 
+            // Capture shipping address snapshot
+            $shippingAddress = null;
+            if (! empty($payload['shipping_address_id'])) {
+                $shippingAddress = ShippingAddress::find($payload['shipping_address_id']);
+            }
+            $shippingSnapshot = $this->snapshot->createShippingAddressSnapshot($shippingAddress);
+
             $order = $this->repository->create([
                 'user_id' => $userId,
                 'reference_number' => 'ORD-' . time() . '-' . random_int(1000, 9999),
@@ -64,9 +73,15 @@ final readonly class OrderService
                 'payment_method' => $payload['payment_method'] ?? null,
                 'currency' => $payload['currency'] ?? 'INR',
                 'shipping_address_id' => $payload['shipping_address_id'] ?? null,
+                'shipping_address_snapshot' => $shippingSnapshot,
             ]);
 
             foreach ($items as $item) {
+                // Create immutable snapshot of the item
+                $itemSnapshot = $this->snapshot->createItemSnapshot($item);
+                $itemName = $this->snapshot->extractItemName($itemSnapshot);
+                $unitPrice = $this->snapshot->extractUnitPrice($itemSnapshot);
+
                 $orderItem = $this->repository->createItem([
                     'order_id' => $order->id,
                     'type' => $item['type'],
@@ -81,7 +96,16 @@ final readonly class OrderService
                     'quantity' => $item['quantity'],
                     'amount' => $item['amount'],
                     'total_amount' => $item['total_amount'],
+                    // Snapshot columns
+                    'item_snapshot' => $itemSnapshot,
+                    'item_name' => $itemName,
+                    'unit_price' => $unitPrice,
+                    'discount_amount' => 0, // TODO: Calculate per-item discount if applicable
+                    'tax_amount' => 0, // TODO: Calculate per-item tax if applicable
                 ]);
+
+                // Copy image from source entity to order item using Spatie Media Library
+                $this->snapshot->copySnapshotImage($item, $orderItem);
 
                 // Create dedication if provided
                 if (! empty($item['dedication'])) {
@@ -134,11 +158,87 @@ final readonly class OrderService
         }
     }
 
+    private function generateReferenceNumber(): string
+    {
+        return 'ORD-' . time() . '-' . random_int(1000, 9999);
+    }
+
     private function notifyAdmins($notification): void
     {
         $admins = User::role('super_admin')->get();
         if ($admins->isNotEmpty()) {
             Notification::send($admins, $notification);
         }
+    }
+
+    /**
+     * Create order from checkout session (after payment success)
+     */
+    public function createOrderFromSession(\App\Models\CheckoutSession $session): Order
+    {
+        return DB::transaction(function () use ($session): Order {
+            // Create order with snapshot data
+            $order = Order::create([
+                'user_id' => $session->user_id,
+                'reference_number' => $this->generateReferenceNumber(),
+                'status' => 'confirmed',
+                'payment_status' => 'paid',
+                'subtotal' => $session->pricing['subtotal'],
+                'total_discount' => $session->pricing['discount'],
+                'total_tax' => $session->pricing['tax'],
+                'total_shipping' => $session->pricing['shipping'],
+                'grand_total' => $session->pricing['grand_total'],
+                'currency' => $session->currency,
+                'shipping_address_id' => $session->shipping_address_id,
+                'shipping_address_snapshot' => $session->shipping_address_snapshot,
+                'coupon_id' => $session->coupon_id,
+                'checkout_session_id' => $session->session_token,
+                'paid_at' => now(),
+            ]);
+
+            // Create order items with snapshots
+            foreach ($session->items as $item) {
+                // Create immutable snapshot of the item
+                $itemSnapshot = $this->snapshot->createItemSnapshot($item);
+                $itemName = $this->snapshot->extractItemName($itemSnapshot);
+                $unitPrice = $this->snapshot->extractUnitPrice($itemSnapshot);
+
+                $orderItem = $this->repository->createItem([
+                    'order_id' => $order->id,
+                    'type' => $item['type'],
+                    'product_variant_id' => $item['product_variant_id'] ?? null,
+                    'campaign_id' => $item['campaign_id'] ?? null,
+                    'tree_id' => $item['tree_id'] ?? null,
+                    'plan_id' => $item['plan_id'] ?? null,
+                    'plan_price_id' => $item['plan_price_id'] ?? null,
+                    'initiative_site_id' => $item['initiative_site_id'] ?? null,
+                    'tree_instance_id' => $item['tree_instance_id'] ?? null,
+                    'sponsor_quantity' => $item['sponsor_quantity'] ?? null,
+                    'quantity' => $item['quantity'],
+                    'amount' => $item['amount'] ?? $item['price'] ?? 0,
+                    'total_amount' => $item['total_amount'] ?? ($item['quantity'] * ($item['amount'] ?? $item['price'] ?? 0)),
+                    // Snapshot columns
+                    'item_snapshot' => $itemSnapshot,
+                    'item_name' => $itemName,
+                    'unit_price' => $unitPrice,
+                    'discount_amount' => 0,
+                    'tax_amount' => 0,
+                ]);
+
+                // Copy image from source entity to order item
+                $this->snapshot->copySnapshotImage($item, $orderItem);
+
+                // Create dedication if provided
+                if (! empty($item['dedication'])) {
+                    $orderItem->dedication()->create([
+                        'name' => $item['dedication']['name'] ?? '',
+                        'occasion' => $item['dedication']['occasion'] ?? '',
+                        'message' => $item['dedication']['message'] ?? null,
+                    ]);
+                }
+            }
+
+            return $order->fresh('items');
+        });
     }
 }

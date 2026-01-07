@@ -31,15 +31,7 @@ final class OrderResource extends JsonResource
                 'status' => $this->payment->status,
                 'transaction_id' => $this->payment->transaction_id,
             ]),
-            'shipping_address' => $this->whenLoaded('shippingAddress', fn(): ?array => $this->shippingAddress ? [
-                'id' => $this->shippingAddress->id,
-                'name' => $this->shippingAddress->name,
-                'phone' => $this->shippingAddress->phone,
-                'address' => $this->shippingAddress->address,
-                'area' => $this->shippingAddress->area,
-                'city' => $this->shippingAddress->city,
-                'postal_code' => $this->shippingAddress->postal_code,
-            ] : null),
+            'shipping_address' => $this->getShippingAddress(),
             'tracking' => [
                 'courier_name' => $this->courier_name,
                 'tracking_id' => $this->tracking_id,
@@ -47,5 +39,30 @@ final class OrderResource extends JsonResource
                 'delivered_at' => $this->delivered_at,
             ],
         ];
+    }
+
+    /**
+     * Get shipping address from snapshot (preferred) or relationship (fallback)
+     */
+    private function getShippingAddress(): ?array
+    {
+        // Prefer snapshot data
+        if ($this->shipping_address_snapshot) {
+            return $this->shipping_address_snapshot;
+        }
+
+        // Fallback to relationship if snapshot not available
+        if ($this->relationLoaded('shippingAddress') && $this->shippingAddress) {
+            return [
+                'name' => $this->shippingAddress->name,
+                'phone' => $this->shippingAddress->phone,
+                'address' => $this->shippingAddress->address,
+                'area' => $this->shippingAddress->area,
+                'city' => $this->shippingAddress->city,
+                'postal_code' => $this->shippingAddress->postal_code,
+            ];
+        }
+
+        return null;
     }
 }

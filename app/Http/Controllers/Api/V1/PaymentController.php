@@ -5,57 +5,125 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Services\Payments\PaymentFactory;
-use Exception;
+use App\Models\CheckoutSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 final class PaymentController extends Controller
 {
-    public function verify(Request $request)
+    /**
+     * Handle payment callback/redirect from payment gateways
+     * This is where PhonePe redirects users after payment
+     */
+    public function callback(Request $request)
     {
-        $gateway = 'razorpay';
-
-        if ($request->has('code') || $request->has('merchantId') || $request->has('merchantOrderId') || ($request->has('transaction_id') && str_starts_with($request->transaction_id, 'MT-'))) {
-            $gateway = 'phonepe';
-        }
-
-        $payload = $request->all();
-        $result = PaymentFactory::driver($gateway)->verifyAndCapture($payload);
-
-        return response()->json($result);
-    }
-
-    public function webhook(Request $request)
-    {
-        if ($request->has('response') && $request->header('x-verify')) {
-            $gateway = 'phonepe';
-        } elseif ($request->has('razorpay_payment_id')) {
-            $gateway = 'razorpay';
-        } else {
-            return response()->json(['message' => 'Unknown gateway'], 400);
-        }
+        $frontendUrl = config('app.frontend_url');
 
         try {
-            if ($gateway === 'phonepe') {
-                $responseStr = $request->input('response');
-                $decoded = json_decode(base64_decode((string) $responseStr), true);
-                $payload = [
-                    'transaction_id' => $decoded['data']['merchantTransactionId'] ?? null,
-                    'raw_response' => $decoded,
-                    'is_webhook' => true,
-                ];
-                if ($payload['transaction_id']) {
-                    PaymentFactory::driver('phonepe')->verifyAndCapture($payload);
-                }
-
-                return response()->json(['success' => true]);
+            // Detect gateway
+            $gateway = 'razorpay';
+            if (
+                $request->has('code') || $request->has('merchantId') || $request->has('merchantOrderId') ||
+                ($request->has('transactionId') && str_starts_with($request->transactionId, 'MT-'))
+            ) {
+                $gateway = 'phonepe';
             }
 
-            PaymentFactory::driver($gateway)->verifyAndCapture($request->all());
+            // Extract transaction ID
+            $transactionId = $request->input('merchantTransactionId')
+                ?? $request->input('merchantOrderId')
+                ?? $request->input('transactionId');
 
-            return response()->json(['success' => true]);
-        } catch (Exception $exception) {
-            return response()->json(['success' => false, 'message' => $exception->getMessage()], 500);
+            if (!$transactionId) {
+                return redirect($frontendUrl . '/payment/failure?reason=missing_transaction_id');
+            }
+
+            // Verify payment
+            $payload = $request->all();
+            $payload['transaction_id'] = $transactionId;
+
+            $result = PaymentFactory::driver($gateway)->verifyAndCapture($payload);
+
+            if ($result['success'] ?? false) {
+                // Redirect to success page with order ID
+                return redirect($frontendUrl . '/payment/success?order_id=' . $result['order_id']);
+            }
+
+            return redirect($frontendUrl . '/payment/failure?reason=payment_verification_failed');
+        } catch (Exception $e) {
+            \Log::error('Payment callback error: ' . $e->getMessage());
+            return redirect($frontendUrl . '/payment/failure?reason=' . urlencode($e->getMessage()));
         }
+    }
+
+    public function verify(Request $request)
+    {
+        $request->validate([
+            'session_token' => 'required|string',
+        ]);
+
+        $sessionToken = $request->input('session_token');
+        $session = CheckoutSession::where('session_token', $sessionToken)->first();
+
+        if (!$session) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid session token',
+            ], 404);
+        }
+
+        if ($session->status === 'completed') {
+            return response()->json([
+                'success' => true,
+                'status' => 'completed',
+                'message' => 'Payment already verified',
+                'session_token' => $sessionToken,
+                'order_id' => $session->order_id,
+            ]);
+        }
+
+        if ($request->has('razorpay_order_id')) {
+            try {
+                $attributes = [
+                    'razorpay_order_id' => $request->input('razorpay_order_id'),
+                    'razorpay_payment_id' => $request->input('razorpay_payment_id'),
+                    'razorpay_signature' => $request->input('razorpay_signature'),
+                ];
+
+                $api = new \Razorpay\Api\Api(
+                    config('services.razorpay.key'),
+                    config('services.razorpay.secret')
+                );
+                $api->utility->verifyPaymentSignature($attributes);
+
+                Log::info('Razorpay payment verified (client-side)', [
+                    'session_token' => $sessionToken,
+                    'payment_id' => $request->input('razorpay_payment_id'),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment verified. Order will be created via webhook.',
+                    'session_token' => $sessionToken,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Razorpay verification failed', [
+                    'session_token' => $sessionToken,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment verification failed',
+                ], 400);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'status' => 'pending',
+            'message' => 'Payment verification initiated. Awaiting webhook confirmation.',
+            'session_token' => $sessionToken,
+        ]);
     }
 }
