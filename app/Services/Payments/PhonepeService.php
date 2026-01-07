@@ -173,50 +173,50 @@ final readonly class PhonepeService
     }
 
     /**
-     * Generate checksum token for frontend payment initiation
-     *
-     * @param string $merchantTransactionId Unique transaction identifier
-     * @param int $amount Amount in paise
-     * @param string $userId User identifier
-     * @param string $userMobile User mobile number
-     * @param int $orderId Order ID from database
-     * @return string Encoded token for PhonePe SDK
-     */
-    public function generateChecksum(
-        string $merchantTransactionId,
-        int $amount,
-        string $userId,
-        string $userMobile,
-        int $orderId = null
-    ): string {
-        try {
-            $payload = [
-                'merchantId' => config('services.phonepe.merchant_id'),
-                'merchantTransactionId' => $merchantTransactionId,
-                'merchantUserId' => $userId,
-                'amount' => $amount,
-                'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
-                'mobileNumber' => $userMobile,
-                // FIX 1: Add the mandatory paymentInstrument
-                'paymentInstrument' => [
-                    'type' => 'PAY_PAGE'
-                ]
-            ];
+ * Generate checksum token for frontend payment initiation
+ *
+ * @param string $merchantTransactionId Unique transaction identifier
+ * @param int $amount Amount in paise
+ * @param string $userId User identifier
+ * @param string $userMobile User mobile number
+ * @param int $orderId Order ID from database
+ * @return string Encoded token for PhonePe SDK
+ */
+public function generateChecksum(
+    string $merchantTransactionId,
+    int $amount,
+    string $userId,
+    string $userMobile,
+    int $orderId = null
+): string {
+    try {
+        $payload = [
+            'merchantId' => config('services.phonepe.merchant_id'),
+            'merchantTransactionId' => $merchantTransactionId,
+            'merchantUserId' => $userId,
+            'amount' => $amount,
+            'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+            'mobileNumber' => $userMobile,
+            // REMOVED: 'paymentInstrument' => ['type' => 'PAY_PAGE'] 
+            // The Native SDK does not support 'PAY_PAGE' instrument type in the payload.
+            // It automatically handles the UI.
+        ];
 
             if (config('app.debug')) {
                 \Log::info('PhonePe Payload:', $payload);
             }
 
-            // Encode as base64
-            $encodedPayload = base64_encode(json_encode($payload));
+        $encodedPayload = base64_encode(json_encode($payload));
 
-            // FIX 2: Use correct Checksum Logic (Concatenation, NOT HMAC)
-            // Format: SHA256(Base64Body + Endpoint + SaltKey) + ### + SaltIndex
-            $saltKey = $this->clientSecret; // Assuming client_secret holds your Salt Key
-            $saltIndex = 1; // Usually 1, check your dashboard
+        $saltKey = $this->clientSecret; 
+        $saltIndex = 1; 
+        
+        $stringToHash = $encodedPayload . '/pg/v1/pay' . $saltKey;
+        $checksumHash = hash('sha256', $stringToHash);
+        
+        $checksum = $checksumHash . '###' . $saltIndex;
 
-            $stringToHash = $encodedPayload . '/pg/v1/pay' . $saltKey;
-            $checksumHash = hash('sha256', $stringToHash);
+        return $encodedPayload . '###' . $checksum . '###1';
 
             $checksum = $checksumHash . '###' . $saltIndex;
 
@@ -227,7 +227,16 @@ final readonly class PhonepeService
         }
     }
 
-    public function initiateRefund(string $originalMerchantOrderId, int $amountInPaise, string $merchantRefundId): array
+
+
+    /**
+     * Verify transaction status with PhonePe API
+     *
+     * @param string $merchantTransactionId Transaction ID
+     * @param int $orderId Order ID for reference
+     * @return array Verification result
+     */
+    public function verifyTransaction(string $merchantTransactionId, int $orderId): array
     {
         try {
             $refundRequest = StandardCheckoutRefundRequestBuilder::builder()
