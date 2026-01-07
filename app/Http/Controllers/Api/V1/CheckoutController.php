@@ -58,8 +58,8 @@ final class CheckoutController extends Controller
             return $this->handleCODCheckout($request, $userId);
         }
 
-        // Online payment: Create checkout session (NOT order)
-        $session = $this->checkoutSession->createSession([
+        // Online payment: Create payment attempt
+        $attempt = $this->paymentAttempts->createAttempt([
             'items' => $request->items,
             'coupon_code' => $request->coupon_code,
             'payment_method' => $paymentMethod,
@@ -67,21 +67,19 @@ final class CheckoutController extends Controller
             'shipping_address_id' => $request->shipping_address_id,
         ], $userId);
 
+        // Load relationships needed for payment gateway
+        $attempt->load('charges');
+
         // Create payment gateway order
         $driver = $paymentMethod;
-        $payment = PaymentFactory::driver($driver)->createGatewayOrder($session);
-
-        // Store gateway order ID in session
-        $session->update([
-            'gateway_order_id' => $payment['order_id'] ?? $payment['id'] ?? null,
-            'gateway_response' => $payment,
-        ]);
+        $payment = PaymentFactory::driver($driver)->createGatewayOrder($attempt);
 
         return $this->success([
-            'session_token' => $session->session_token,
+            'attempt_reference' => $attempt->attempt_reference,
             'payment' => $payment,
-            'expires_at' => $session->expires_at,
-            'pricing' => $session->pricing,
+            'expires_at' => $attempt->expires_at,
+            'grand_total' => $attempt->grand_total,
+            'currency' => $attempt->currency,
         ]);
     }
 

@@ -56,11 +56,12 @@ return [
     ],
 
     'phonepe' => [
-        'merchant_id' => env('PHONEPE_MERCHANT_ID'),
         'client_id' => env('PHONEPE_CLIENT_ID'),
+        'client_version' => env('PHONEPE_CLIENT_VERSION', 1),
         'client_secret' => env('PHONEPE_CLIENT_SECRET'),
-        'client_index' => env('PHONEPE_CLIENT_INDEX', 1),
-        'env' => env('PHONEPE_ENV'),
+        'env' => env('PHONEPE_ENV', 'UAT'),
+        'webhook_username' => env('PHONEPE_WEBHOOK_USERNAME'),
+        'webhook_password' => env('PHONEPE_WEBHOOK_PASSWORD'),
     ],
 
     'google' => [
