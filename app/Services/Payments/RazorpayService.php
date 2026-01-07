@@ -6,6 +6,10 @@ namespace App\Services\Payments;
 
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Models\PaymentAttempt;
+use App\Models\User;
+use App\Notifications\OrderPaidNotification;
+use Illuminate\Support\Facades\Notification;
 use Razorpay\Api\Api;
 
 final readonly class RazorpayService
@@ -17,20 +21,23 @@ final readonly class RazorpayService
         $this->api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
     }
 
-    public function createGatewayOrder(\App\Models\CheckoutSession $session): array
+    public function createGatewayOrder(PaymentAttempt $attempt): array
     {
         $rzpOrder = $this->api->order->create([
-            'receipt' => 'SESSION-' . $session->id,
-            'amount' => (int) round($session->pricing['grand_total'] * 100),
-            'currency' => $session->currency ?? 'INR',
+            'receipt' => $attempt->attempt_reference,
+            'amount' => (int) round($attempt->grand_total * 100),
+            'currency' => $attempt->currency ?? 'INR',
         ]);
+
+        // Store gateway order ID in attempt
+        $attempt->update(['payment_gateway_order_id' => $rzpOrder['id']]);
 
         return [
             'gateway' => 'razorpay',
-            'order_id' => $rzpOrder['id'],
-            'amount' => (int) round($session->pricing['grand_total'] * 100),
-            'currency' => $session->currency ?? 'INR',
             'key' => config('services.razorpay.key'),
+            'order_id' => $rzpOrder['id'],
+            'amount' => (int) round($attempt->grand_total * 100),
+            'currency' => $attempt->currency ?? 'INR',
         ];
     }
 
@@ -44,7 +51,10 @@ final readonly class RazorpayService
 
         $this->api->utility->verifyPaymentSignature($attributes);
 
-        $order = Order::where('reference_number', $payload['order_reference'])->firstOrFail();
+        $attempt = PaymentAttempt::where('attempt_reference', $payload['attempt_reference'])->firstOrFail();
+
+        // Convert attempt to order
+        $order = app(PaymentAttemptService::class)->convertToOrder($attempt);
 
         OrderPayment::create([
             'order_id' => $order->id,
@@ -60,10 +70,22 @@ final readonly class RazorpayService
             'paid_at' => now(),
         ]);
 
+        // Send notifications
+        $order->user->notify(new OrderPaidNotification($order));
+        $this->notifyAdmins(new OrderPaidNotification($order));
+
         return [
             'success' => true,
             'order_id' => $order->id,
             'reference_number' => $order->reference_number,
         ];
+    }
+
+    private function notifyAdmins($notification): void
+    {
+        $admins = User::role('super_admin')->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, $notification);
+        }
     }
 }

@@ -91,6 +91,9 @@ Route::prefix('initiatives')->group(function (): void {
     Route::get('/', [InitiativeController::class, 'index']);
 });
 
+// Payment callback route (for PhonePe redirects)
+Route::get('payment/callback', [PaymentController::class, 'callback'])->name('api.v1.payment.callback');
+
 Route::post('payments/webhook', [PaymentController::class, 'webhook'])->name('api.v1.payment.webhook');
 Route::post('webhooks/razorpay', [PaymentWebhookController::class, 'razorpay'])->name('api.v1.webhooks.razorpay');
 Route::post('webhooks/phonepe', [PaymentWebhookController::class, 'phonepe'])->name('api.v1.webhooks.phonepe');

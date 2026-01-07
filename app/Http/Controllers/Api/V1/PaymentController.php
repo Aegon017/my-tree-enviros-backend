@@ -11,6 +11,51 @@ use Illuminate\Support\Facades\Log;
 
 final class PaymentController extends Controller
 {
+    /**
+     * Handle payment callback/redirect from payment gateways
+     * This is where PhonePe redirects users after payment
+     */
+    public function callback(Request $request)
+    {
+        $frontendUrl = config('app.frontend_url');
+
+        try {
+            // Detect gateway
+            $gateway = 'razorpay';
+            if (
+                $request->has('code') || $request->has('merchantId') || $request->has('merchantOrderId') ||
+                ($request->has('transactionId') && str_starts_with($request->transactionId, 'MT-'))
+            ) {
+                $gateway = 'phonepe';
+            }
+
+            // Extract transaction ID
+            $transactionId = $request->input('merchantTransactionId')
+                ?? $request->input('merchantOrderId')
+                ?? $request->input('transactionId');
+
+            if (!$transactionId) {
+                return redirect($frontendUrl . '/payment/failure?reason=missing_transaction_id');
+            }
+
+            // Verify payment
+            $payload = $request->all();
+            $payload['transaction_id'] = $transactionId;
+
+            $result = PaymentFactory::driver($gateway)->verifyAndCapture($payload);
+
+            if ($result['success'] ?? false) {
+                // Redirect to success page with order ID
+                return redirect($frontendUrl . '/payment/success?order_id=' . $result['order_id']);
+            }
+
+            return redirect($frontendUrl . '/payment/failure?reason=payment_verification_failed');
+        } catch (Exception $e) {
+            \Log::error('Payment callback error: ' . $e->getMessage());
+            return redirect($frontendUrl . '/payment/failure?reason=' . urlencode($e->getMessage()));
+        }
+    }
+
     public function verify(Request $request)
     {
         $request->validate([
