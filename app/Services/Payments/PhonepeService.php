@@ -32,6 +32,40 @@ final readonly class PhonepeService
         if ($this->clientId === '' || $this->clientId === '0' || ($this->clientSecret === '' || $this->clientSecret === '0')) {
             throw new RuntimeException('PhonePe credentials (client_id or client_secret) are missing in config.');
         }
+    }
+
+    /**
+     * Get OAuth access token (with caching)
+     */
+    private function getAccessToken(): string
+    {
+        $cacheKey = 'phonepe_access_token';
+
+        // Try to get cached token
+        $cachedToken = Cache::get($cacheKey);
+        if ($cachedToken) {
+            return $cachedToken;
+        }
+
+        // Generate new token
+        $response = Http::asForm()->post($this->authUrl . '/v1/oauth/token', [
+            'client_id' => $this->clientId,
+            'client_version' => $this->clientVersion,
+            'client_secret' => $this->clientSecret,
+            'grant_type' => 'client_credentials',
+        ]);
+
+        if (!$response->successful()) {
+            throw new RuntimeException('Failed to generate PhonePe access token: ' . $response->body());
+        }
+
+        $data = $response->json();
+        $accessToken = $data['access_token'] ?? null;
+        $expiresAt = $data['expires_at'] ?? null;
+
+        if (!$accessToken) {
+            throw new RuntimeException('PhonePe access token not found in response');
+        }
 
         $this->baseUrl = $this->env === 'PROD'
             ? 'https://api.phonepe.com/apis/pg'
@@ -81,43 +115,42 @@ final readonly class PhonepeService
 
         return [
             'gateway' => 'phonepe',
-            'order_id' => $transactionId,
-            'phonepe_order_id' => $orderId,
+            'order_id' => $merchantOrderId,
+            'phonepe_order_id' => $resData['orderId'],
             'amount' => $amountInPaise,
             'currency' => 'INR',
-            'url' => $redirectUrl,
-            'env' => $this->env,
+            'url' => $resData['redirectUrl'],
+            'state' => $resData['state'] ?? 'PENDING',
+            'expires_at' => $resData['expireAt'] ?? null,
         ];
     }
 
     public function verifyAndCapture(array $payload): array
     {
-        $merchantTransactionId = $payload['razorpay_order_id'] ?? $payload['transaction_id'] ?? '';
-
-        if (empty($merchantTransactionId)) {
-            throw new RuntimeException('Transaction ID missing for verification');
-        }
-
         $token = $this->getAccessToken();
-
-        $path = sprintf('/checkout/v2/order/%s/status', $merchantTransactionId);
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'Authorization' => 'O-Bearer ' . $token,
-        ])->get($this->baseUrl . $path);
+        ])->get($this->baseUrl . '/checkout/v2/order/' . $merchantOrderId . '/status', [
+            'details' => 'false',
+        ]);
 
-        $resData = $response->json();
-
-        $state = $resData['state'] ?? '';
-
-        if ($state !== 'COMPLETED' && $state !== 'PAYMENT_SUCCESS') {
-            throw new RuntimeException('Payment Validation Failed: ' . ($resData['message'] ?? 'State: ' . $state));
+        if (!$response->successful()) {
+            throw new RuntimeException('Failed to verify PhonePe transaction: ' . $response->body());
         }
 
-        $parts = explode('-', (string) $merchantTransactionId);
+        $resData = $response->json();
+        $state = $resData['state'] ?? '';
+
+        if ($state !== 'COMPLETED') {
+            throw new RuntimeException('Payment not completed. State: ' . $state);
+        }
+
+        // Extract attempt ID from merchant order ID (format: MT-{attemptId}-{random})
+        $parts = explode('-', $merchantOrderId);
         if (count($parts) < 2) {
-            throw new RuntimeException('Invalid Transaction ID format');
+            throw new RuntimeException('Invalid merchant order ID format');
         }
 
         $orderId = (int) $parts[1];
