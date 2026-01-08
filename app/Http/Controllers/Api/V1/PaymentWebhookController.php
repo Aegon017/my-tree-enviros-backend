@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\CheckoutSession;
 use App\Models\OrderPayment;
-use App\Services\CheckoutSessionService;
-use App\Services\Orders\OrderService;
+use App\Models\PaymentAttempt;
+use App\Services\Payments\PaymentAttemptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,8 +15,7 @@ use Illuminate\Support\Facades\Log;
 final class PaymentWebhookController extends Controller
 {
     public function __construct(
-        private readonly CheckoutSessionService $checkoutSession,
-        private readonly OrderService $orderService
+        private readonly PaymentAttemptService $paymentAttempts
     ) {}
 
     /**
@@ -51,87 +49,43 @@ final class PaymentWebhookController extends Controller
     }
 
     /**
-     * Handle PhonePe webhook using SDK
+     * Handle PhonePe webhook (OAuth-based API)
      */
     public function phonepe(Request $request)
     {
-        // Get headers and request body
-        $headers = $request->headers->all();
-        $requestBody = $request->all();
+        // Verify webhook authorization
+        $authHeader = $request->header('Authorization');
+        $webhookUsername = config('services.phonepe.webhook_username');
+        $webhookPassword = config('services.phonepe.webhook_password');
 
-        // Webhook credentials
-        $username = config('services.phonepe.webhook_username');
-        $password = config('services.phonepe.webhook_password');
+        if ($webhookUsername && $webhookPassword) {
+            $expectedAuth = hash('sha256', $webhookUsername . ':' . $webhookPassword);
 
-        try {
-            // Initialize PhonePe client
-            $clientId = config('services.phonepe.client_id');
-            $clientVersion = (int) config('services.phonepe.client_version', 1);
-            $clientSecret = config('services.phonepe.client_secret');
-            $env = config('services.phonepe.env', 'UAT') === 'PROD'
-                ? \PhonePe\Env::PRODUCTION
-                : \PhonePe\Env::UAT;
-
-            $client = \PhonePe\payments\v2\standardCheckout\StandardCheckoutClient::getInstance(
-                $clientId,
-                $clientVersion,
-                $clientSecret,
-                $env
-            );
-
-            // Verify and parse callback using SDK
-            $callbackResponse = $client->verifyCallbackResponse(
-                $headers,
-                $requestBody,
-                $username,
-                $password
-            );
-
-            // Get callback type and payload
-            $callbackType = $callbackResponse->getType();
-            $payload = $callbackResponse->getPayload();
-
-            Log::info('PhonePe webhook received (SDK)', [
-                'type' => $callbackType,
-                'merchantOrderId' => $payload->getOriginalMerchantOrderId() ?? $payload->getMerchantOrderId() ?? null,
-                'state' => $payload->getState(),
-            ]);
-
-            // Handle different callback types
-            if ($callbackType === 'CHECKOUT_ORDER_COMPLETED') {
-                $this->handlePhonePeSuccess([
-                    'merchantOrderId' => $payload->getOriginalMerchantOrderId() ?? $payload->getMerchantOrderId(),
-                    'orderId' => $payload->getOrderId(),
-                    'state' => $payload->getState(),
-                    'amount' => $payload->getAmount(),
-                    'paymentDetails' => $payload->getPaymentDetails(),
-                ]);
+            if ($authHeader !== $expectedAuth) {
+                Log::error('Invalid PhonePe webhook authorization');
+                return response()->json(['error' => 'Unauthorized'], 401);
             }
-
-            if ($callbackType === 'CHECKOUT_ORDER_FAILED') {
-                $this->handlePhonePeFailure([
-                    'merchantOrderId' => $payload->getOriginalMerchantOrderId() ?? $payload->getMerchantOrderId(),
-                    'state' => $payload->getState(),
-                    'errorCode' => $payload->getErrorCode(),
-                    'detailedErrorCode' => $payload->getDetailedErrorCode(),
-                    'paymentDetails' => $payload->getPaymentDetails(),
-                ]);
-            }
-
-            return response()->json(['status' => 'ok'], 200);
-        } catch (\PhonePe\common\exceptions\PhonePeException $e) {
-            Log::error('PhonePe webhook verification failed', [
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'http_status' => $e->getHttpStatusCode(),
-            ]);
-            return response()->json(['error' => 'Verification failed'], 400);
-        } catch (\Exception $e) {
-            Log::error('PhonePe webhook processing error', [
-                'error' => $e->getMessage(),
-            ]);
-            return response()->json(['error' => 'Internal error'], 500);
         }
+
+        $event = $request->input('event');
+        $payload = $request->input('payload');
+
+        Log::info('PhonePe webhook received', [
+            'event' => $event,
+            'merchantOrderId' => $payload['merchantOrderId'] ?? null,
+            'state' => $payload['state'] ?? null,
+        ]);
+
+        // Handle different event types
+        if ($event === 'checkout.order.completed') {
+            $this->handlePhonePeSuccess($payload);
+        }
+
+        if ($event === 'checkout.order.failed') {
+            $this->handlePhonePeFailure($payload);
+        }
+
+        return response()->json(['status' => 'ok'], 200);
     }
 
     /**
@@ -151,59 +105,70 @@ final class PaymentWebhookController extends Controller
             return;
         }
 
-        // Find checkout session by gateway order ID
-        $session = $this->checkoutSession->findByGatewayOrderId($merchantOrderId);
-
-        if (!$session) {
-            Log::error('Checkout session not found for PhonePe payment', [
+        // Extract attempt ID from merchant order ID (format: MT-{attemptId}-{random})
+        $parts = explode('-', $merchantOrderId);
+        if (count($parts) < 2) {
+            Log::error('Invalid merchant order ID format', [
                 'merchantOrderId' => $merchantOrderId,
             ]);
             return;
         }
 
-        if ($session->status !== 'active') {
-            Log::warning('Checkout session not active', [
-                'session_id' => $session->id,
-                'status' => $session->status,
+        $attemptId = (int) $parts[1];
+        $attempt = PaymentAttempt::find($attemptId);
+
+        if (!$attempt) {
+            Log::error('Payment attempt not found for PhonePe payment', [
+                'merchantOrderId' => $merchantOrderId,
+                'attemptId' => $attemptId,
+            ]);
+            return;
+        }
+
+        // Check if already converted to order
+        if ($attempt->status === 'completed' && $attempt->created_order_id) {
+            Log::info('Payment attempt already converted to order', [
+                'attempt_id' => $attempt->id,
+                'order_id' => $attempt->created_order_id,
             ]);
             return;
         }
 
         try {
             // Create order in transaction
-            DB::transaction(function () use ($session, $payload) {
-                // Create order with snapshots
-                $order = $this->orderService->createOrderFromSession($session);
+            DB::transaction(function () use ($attempt, $payload) {
+                // Convert attempt to order
+                $order = $this->paymentAttempts->convertToOrder($attempt);
 
                 // Extract payment details
                 $paymentDetails = $payload['paymentDetails'][0] ?? [];
                 $transactionId = $paymentDetails['transactionId'] ?? $payload['orderId'] ?? null;
-                $paymentMode = $paymentDetails['paymentMode'] ?? 'PHONEPE';
 
                 // Create payment record
                 OrderPayment::create([
                     'order_id' => $order->id,
                     'payment_method' => 'phonepe',
                     'transaction_id' => $transactionId,
-                    'amount' => $payload['amount'] / 100, // PhonePe uses paise
-                    'currency' => 'INR',
-                    'status' => 'success',
-                    'gateway_response' => $payload,
+                    'amount' => $order->grand_total,
+                    'status' => 'paid',
                     'paid_at' => now(),
                 ]);
 
-                // Mark session as completed
-                $session->markCompleted($transactionId);
+                // Update order status
+                $order->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                ]);
 
                 Log::info('Order created from PhonePe payment', [
                     'order_id' => $order->id,
-                    'session_id' => $session->id,
+                    'attempt_id' => $attempt->id,
                     'transaction_id' => $transactionId,
                 ]);
             });
         } catch (\Exception $e) {
             Log::error('Failed to create order from PhonePe payment', [
-                'session_id' => $session->id,
+                'attempt_id' => $attempt->id,
                 'merchantOrderId' => $merchantOrderId,
                 'error' => $e->getMessage(),
             ]);
@@ -217,17 +182,22 @@ final class PaymentWebhookController extends Controller
     {
         $merchantOrderId = $payload['merchantOrderId'];
 
-        $session = $this->checkoutSession->findByGatewayOrderId($merchantOrderId);
+        // Extract attempt ID from merchant order ID
+        $parts = explode('-', $merchantOrderId);
+        if (count($parts) >= 2) {
+            $attemptId = (int) $parts[1];
+            $attempt = PaymentAttempt::find($attemptId);
 
-        if ($session) {
-            Log::info('PhonePe payment failed for session', [
-                'session_id' => $session->id,
-                'merchantOrderId' => $merchantOrderId,
-                'state' => $payload['state'] ?? 'UNKNOWN',
-                'errorCode' => $payload['paymentDetails'][0]['errorCode'] ?? null,
-            ]);
+            if ($attempt) {
+                Log::info('PhonePe payment failed for attempt', [
+                    'attempt_id' => $attempt->id,
+                    'merchantOrderId' => $merchantOrderId,
+                    'state' => $payload['state'] ?? 'UNKNOWN',
+                    'errorCode' => $payload['errorCode'] ?? null,
+                ]);
 
-            // Session will expire naturally, no need to mark as failed
+                // Attempt will expire naturally, no need to mark as failed
+            }
         }
     }
 
