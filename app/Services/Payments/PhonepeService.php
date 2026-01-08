@@ -6,11 +6,13 @@ namespace App\Services\Payments;
 
 use App\Models\Order;
 use App\Models\OrderPayment;
+use App\Models\PaymentAttempt;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-final readonly class PhonepeService
+final class PhonepeService
 {
     private string $clientId;
 
@@ -28,6 +30,11 @@ final readonly class PhonepeService
         $this->clientSecret = (string) config('services.phonepe.client_secret');
         $this->clientVersion = (int) (config('services.phonepe.client_version') ?? 1);
         $this->env = (string) config('services.phonepe.env', 'UAT');
+
+        // Initialize baseUrl based on environment
+        $this->baseUrl = $this->env === 'PROD'
+            ? 'https://api.phonepe.com/apis/pg'
+            : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
 
         if ($this->clientId === '' || $this->clientId === '0' || ($this->clientSecret === '' || $this->clientSecret === '0')) {
             throw new RuntimeException('PhonePe credentials (client_id or client_secret) are missing in config.');
@@ -47,8 +54,13 @@ final readonly class PhonepeService
             return $cachedToken;
         }
 
+        // Set auth URL based on environment
+        $authUrl = $this->env === 'PROD'
+            ? 'https://api.phonepe.com/apis/identity-manager'
+            : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+
         // Generate new token
-        $response = Http::asForm()->post($this->authUrl . '/v1/oauth/token', [
+        $response = Http::asForm()->post($authUrl . '/v1/oauth/token', [
             'client_id' => $this->clientId,
             'client_version' => $this->clientVersion,
             'client_secret' => $this->clientSecret,
@@ -67,17 +79,19 @@ final readonly class PhonepeService
             throw new RuntimeException('PhonePe access token not found in response');
         }
 
-        $this->baseUrl = $this->env === 'PROD'
-            ? 'https://api.phonepe.com/apis/pg'
-            : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+        // Cache token until 5 minutes before expiry
+        $ttl = $expiresAt ? ($expiresAt - time() - 300) : 3600;
+        Cache::put($cacheKey, $accessToken, $ttl);
+
+        return $accessToken;
     }
 
-    public function createGatewayOrder(Order $order): array
+    public function createGatewayOrder(PaymentAttempt $attempt): array
     {
         $token = $this->getAccessToken();
 
-        $transactionId = 'MT-' . $order->id . '-' . Str::random(6);
-        $amountInPaise = (int) round($order->grand_total * 100);
+        $transactionId = 'MT-' . $attempt->id . '-' . Str::random(6);
+        $amountInPaise = (int) round($attempt->grand_total * 100);
 
         $frontendUrl = config('app.frontend_url');
         $callbackUrl = $frontendUrl . ('/payment/phonepe-callback?merchantOrderId=' . $transactionId);
@@ -113,13 +127,21 @@ final readonly class PhonepeService
             throw new RuntimeException('PhonePe Redirect URL not found in V2 response');
         }
 
+        // Store PhonePe order ID in attempt metadata
+        $attempt->update([
+            'payment_gateway_order_id' => $transactionId,
+            'metadata' => array_merge($attempt->metadata ?? [], [
+                'phonepe_order_id' => $orderId,
+            ]),
+        ]);
+
         return [
             'gateway' => 'phonepe',
-            'order_id' => $merchantOrderId,
-            'phonepe_order_id' => $resData['orderId'],
+            'order_id' => $transactionId,
+            'phonepe_order_id' => $orderId,
             'amount' => $amountInPaise,
             'currency' => 'INR',
-            'url' => $resData['redirectUrl'],
+            'url' => $redirectUrl,
             'state' => $resData['state'] ?? 'PENDING',
             'expires_at' => $resData['expireAt'] ?? null,
         ];
@@ -187,59 +209,58 @@ final readonly class PhonepeService
             'reference_number' => $order->reference_number,
         ];
     }
-/**
- * Generate PhonePe V2 token for React Native SDK
- *
- * V2 DOES NOT use base64###checksum format
- * According to PhonePe support: "base64 encoding is not needed in V2"
- *
- * @param string $merchantTransactionId Unique transaction identifier
- * @param int $amount Amount in paise
- * @param string $userId User identifier
- * @param string $userMobile User mobile number
- * @param int $orderId Order ID from database
- * @return string V2 token for PhonePe SDK
- */
-public function generateChecksum(
-    string $merchantTransactionId,
-    int $amount,
-    string $userId,
-    string $userMobile,
-    int $orderId = null
-): string {
-    try {
-        // V2: Create a JSON object with required parameters
-        // NO base64 encoding according to PhonePe support
-        $payload = [
-            'merchantId' => config('services.phonepe.merchant_id'),
-            'merchantTransactionId' => $merchantTransactionId,
-            'merchantUserId' => $userId,
-            'amount' => $amount,
-            'redirectUrl' => config('app.frontend_url') . '/payment/success',
-            'redirectMode' => 'POST',
-            'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
-            'mobileNumber' => $userMobile,
-            'paymentInstrument' => [
-                'type' => 'PAY_PAGE'
-            ]
-        ];
-        
-        // V2: Return JSON string directly, NOT base64 encoded
-        $token = json_encode($payload);
-        
-        if (config('app.debug')) {
-            \Log::info('PhonePe V2 Token Generated (No Base64):', [
-                'payload' => $payload,
-                'json_token' => $token
-            ]);
+    /**
+     * Generate PhonePe V2 token for React Native SDK
+     *
+     * V2 DOES NOT use base64###checksum format
+     * According to PhonePe support: "base64 encoding is not needed in V2"
+     *
+     * @param string $merchantTransactionId Unique transaction identifier
+     * @param int $amount Amount in paise
+     * @param string $userId User identifier
+     * @param string $userMobile User mobile number
+     * @param int $orderId Order ID from database
+     * @return string V2 token for PhonePe SDK
+     */
+    public function generateChecksum(
+        string $merchantTransactionId,
+        int $amount,
+        string $userId,
+        string $userMobile,
+        int $orderId = null
+    ): string {
+        try {
+            // V2: Create a JSON object with required parameters
+            // NO base64 encoding according to PhonePe support
+            $payload = [
+                'merchantId' => config('services.phonepe.merchant_id'),
+                'merchantTransactionId' => $merchantTransactionId,
+                'merchantUserId' => $userId,
+                'amount' => $amount,
+                'redirectUrl' => config('app.frontend_url') . '/payment/success',
+                'redirectMode' => 'POST',
+                'callbackUrl' => config('app.api_url') . '/api/v1/payment/phonepe-webhook',
+                'mobileNumber' => $userMobile,
+                'paymentInstrument' => [
+                    'type' => 'PAY_PAGE'
+                ]
+            ];
+
+            // V2: Return JSON string directly, NOT base64 encoded
+            $token = json_encode($payload);
+
+            if (config('app.debug')) {
+                \Log::info('PhonePe V2 Token Generated (No Base64):', [
+                    'payload' => $payload,
+                    'json_token' => $token
+                ]);
+            }
+
+            return $token;
+        } catch (\Exception $e) {
+            throw new RuntimeException('Failed to generate V2 token: ' . $e->getMessage());
         }
-        
-        return $token;
-        
-    } catch (\Exception $e) {
-        throw new RuntimeException('Failed to generate V2 token: ' . $e->getMessage());
     }
-}
 
 
     /**
@@ -282,8 +303,8 @@ public function generateChecksum(
             }
 
             // Extract transaction details
-            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId'] 
-                ?? $resData['orderId'] 
+            $phonePeTransactionId = $resData['paymentDetails'][0]['transactionId']
+                ?? $resData['orderId']
                 ?? $merchantTransactionId;
 
             $order = Order::findOrFail($orderId);
@@ -319,32 +340,11 @@ public function generateChecksum(
                 'order_id' => $order->id,
                 'transaction_id' => $phonePeTransactionId,
             ];
-
         } catch (\Exception $e) {
             return [
                 'success' => false,
                 'message' => 'Transaction verification failed: ' . $e->getMessage(),
             ];
         }
-    }
-
-    private function getAccessToken(): string
-    {
-        $authUrl = $this->env === 'PROD'
-            ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token'
-            : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
-
-        $response = Http::asForm()->post($authUrl, [
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'grant_type' => 'client_credentials',
-            'client_version' => $this->clientVersion,
-        ]);
-
-        if (! $response->successful()) {
-            throw new RuntimeException('PhonePe Auth Error: ' . $response->body());
-        }
-
-        return $response->json()['access_token'];
     }
 }
