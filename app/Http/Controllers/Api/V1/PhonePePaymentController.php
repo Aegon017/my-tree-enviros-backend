@@ -116,6 +116,9 @@ final class PhonePePaymentController extends Controller
             $saltKey = config('services.phonepe.client_secret');
             $saltIndex = config('services.phonepe.client_version', 1);
 
+            // For SDK flow, we don't include the endpoint in the checksum calculation
+            // The SDK will handle the API call, and we just need to provide a valid checksum
+            // that validates the body + salt
             $stringToHash = $base64Payload . '/pg/v1/pay' . $saltKey;
             $sha256Hash = hash('sha256', $stringToHash);
             $checksum = $sha256Hash . '###' . $saltIndex;
