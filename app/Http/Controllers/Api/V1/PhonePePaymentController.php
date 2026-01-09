@@ -76,6 +76,16 @@ final class PhonePePaymentController extends Controller
         }
     }
 
+    /**
+     * Legacy method - alias for createOrderToken
+     * Kept for backward compatibility with old mobile app code
+     */
+    public function generateToken(Request $request): JsonResponse
+    {
+        return $this->createOrderToken($request);
+    }
+
+
     public function verifyPayment(Request $request): JsonResponse
     {
         try {
