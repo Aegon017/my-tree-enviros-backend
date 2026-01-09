@@ -19,9 +19,9 @@ final class CartService
 
     public function __construct(private CartRepository $repo) {}
 
-    public function getCart(int $userId): JsonResponse
+    public function getCart(?int $userId, ?string $sessionId = null): JsonResponse
     {
-        $cart = $this->repo->getOrCreate($userId);
+        $cart = $this->repo->getOrCreate($userId, $sessionId);
 
         $cart->load([
             'items.tree.planPrices.plan',
@@ -34,16 +34,24 @@ final class CartService
         return $this->success(['cart' => new CartResource($cart)]);
     }
 
-    public function addToUserCart(int $userId, array $data): JsonResponse
+    public function countUserCartItems(?int $userId, ?string $sessionId = null): JsonResponse
     {
-        $cart = $this->repo->getOrCreate($userId);
+        $cart = $this->repo->getOrCreate($userId, $sessionId);
+        $count = $cart->items()->sum('quantity');
+
+        return $this->success(['count' => (int) $count]);
+    }
+
+    public function addToUserCart(?int $userId, array $data, ?string $sessionId = null): JsonResponse
+    {
+        $cart = $this->repo->getOrCreate($userId, $sessionId);
 
         return $this->addItem($cart, $data);
     }
 
-    public function updateUserCartItem(int $userId, int $itemId, array $data): JsonResponse
+    public function updateUserCartItem(?int $userId, int $itemId, array $data, ?string $sessionId = null): JsonResponse
     {
-        $cart = $this->repo->getOrCreate($userId);
+        $cart = $this->repo->getOrCreate($userId, $sessionId);
 
         $item = $cart->items()->findOrFail($itemId);
 
@@ -77,47 +85,77 @@ final class CartService
 
         $item->save();
 
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication',
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
+        return $this->success(null, 'Cart updated successfully');
     }
 
-    public function removeUserCartItem(int $userId, int $itemId): JsonResponse
+    public function removeUserCartItem(?int $userId, int $itemId, ?string $sessionId = null): JsonResponse
     {
-        $cart = $this->repo->getOrCreate($userId);
+        $cart = $this->repo->getOrCreate($userId, $sessionId);
         $cart->items()->where('id', $itemId)->delete();
 
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication',
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
+        return $this->success(null, 'Item removed from cart');
     }
 
-    public function clearUserCart(int $userId): JsonResponse
+    public function clearUserCart(?int $userId, ?string $sessionId = null): JsonResponse
     {
-        $cart = $this->repo->getOrCreate($userId);
+        $cart = $this->repo->getOrCreate($userId, $sessionId);
         $cart->items()->delete();
 
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication',
-        ]);
+        return $this->success(null, 'Cart cleared successfully');
+    }
 
-        return $this->success(['cart' => new CartResource($cart)]);
+    public function mergeGuestCart(string $sessionId, int $userId): void
+    {
+        // 1. Find Guest Cart
+        $guestCart = Cart::where('session_id', $sessionId)
+            ->where('status', Cart::STATUS_ACTIVE)
+            ->first();
+
+        if (! $guestCart) {
+            return;
+        }
+
+        // 2. Find or Create User Cart
+        $userCart = $this->repo->getOrCreate($userId);
+
+        // 3. Merge Items
+        DB::transaction(function () use ($guestCart, $userCart) {
+            foreach ($guestCart->items as $guestItem) {
+                // Check if identical item exists in user cart
+                // Note: Complex matching logic might be needed depending on business rules. 
+                // For now, based on simplified conflict resolution (DB constraints or basic logic).
+
+                // We attempt to find a matching item in the user cart to just increase quantity.
+                // If the item is entirely unique (like dedicated tree), we might just move it.
+                // If it's a product, we sum quantity.
+
+                // Simple strict matching for products:
+                $match = null;
+                if ($guestItem->product_variant_id) {
+                    $match = $userCart->items()
+                        ->where('product_variant_id', $guestItem->product_variant_id)
+                        ->where('type', $guestItem->type)
+                        ->first();
+                }
+
+                // Logic can be expanded for Trees/Plans as needed.
+
+                if ($match) {
+                    $match->quantity += $guestItem->quantity;
+                    $match->amount = $guestItem->amount; // Update price if changed?
+                    $match->total_amount = $match->quantity * $match->amount;
+                    $match->save();
+                    $guestItem->delete();
+                } else {
+                    // Reassign owner
+                    $guestItem->cart_id = $userCart->id;
+                    $guestItem->save();
+                }
+            }
+
+            // 4. Delete or Deactivate Guest Cart
+            $guestCart->delete(); // or $guestCart->update(['status' => 'merged']);
+        });
     }
 
     private function addSponsorTree(Cart $cart, array $data): JsonResponse
@@ -142,15 +180,7 @@ final class CartService
             $item->dedication()->create($data['dedication']);
         }
 
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication',
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
+        return $this->success(['item' => new \App\Http\Resources\Api\V1\CartItemResource($item)], 'Item added to cart');
     }
 
     private function addAdoptTree(Cart $cart, array $data): JsonResponse
@@ -177,15 +207,7 @@ final class CartService
             $item->dedication()->create($data['dedication']);
         }
 
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication',
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
+        return $this->success(['item' => new \App\Http\Resources\Api\V1\CartItemResource($item)], 'Item added to cart');
     }
 
     private function addProduct(Cart $cart, array $data): JsonResponse
@@ -195,7 +217,7 @@ final class CartService
         $amount = $variant->selling_price ?? $variant->original_price;
         $total = $amount * $data['quantity'];
 
-        $cart->items()->create([
+        $item = $cart->items()->create([
             'type' => 'product',
             'product_variant_id' => $variant->id,
             'quantity' => $data['quantity'],
@@ -203,15 +225,7 @@ final class CartService
             'total_amount' => $total,
         ]);
 
-        $cart->load([
-            'items.tree.planPrices.plan',
-            'items.productVariant.inventory.product',
-            'items.productVariant.media',
-            'items.planPrice.plan',
-            'items.dedication',
-        ]);
-
-        return $this->success(['cart' => new CartResource($cart)]);
+        return $this->success(['item' => new \App\Http\Resources\Api\V1\CartItemResource($item)], 'Item added to cart');
     }
 
     private function addItem(Cart $cart, array $data): JsonResponse

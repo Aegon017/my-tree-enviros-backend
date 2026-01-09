@@ -10,6 +10,24 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 final class CartItem extends Model
 {
+    public const TYPE_NORMAL = 'normal';
+    public const TYPE_BUYNOW = 'buynow';
+
+    protected $fillable = [
+        'cart_id',
+        'product_id',
+        'product_variant_id',
+        'initiative_site_id',
+        'tree_id',
+        'tree_instance_id',
+        'plan_id',
+        'plan_price_id',
+        'quantity',
+        'amount',
+        'total_amount',
+        'type',
+        'expires_at',
+    ];
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

@@ -16,26 +16,53 @@ final readonly class CartController
 
     public function index(Request $request): JsonResponse
     {
-        return $this->cartService->getCart($request->user()->id);
+        return $this->cartService->getCart(
+            $request->user()?->id,
+            $request->session()->get('guest_cart_id')
+        );
+    }
+
+    public function count(Request $request): JsonResponse
+    {
+        return $this->cartService->countUserCartItems(
+            $request->user()?->id,
+            $request->session()->get('guest_cart_id')
+        );
     }
 
     public function store(CartStoreRequest $request): JsonResponse
     {
-        return $this->cartService->addToUserCart($request->user()->id, $request->validated());
+        return $this->cartService->addToUserCart(
+            $request->user()?->id,
+            $request->validated(),
+            $request->session()->get('guest_cart_id')
+        );
     }
 
     public function update(CartUpdateRequest $request, string $id): JsonResponse
     {
-        return $this->cartService->updateUserCartItem($request->user()->id, (int) $id, $request->validated());
+        return $this->cartService->updateUserCartItem(
+            $request->user()?->id,
+            (int) $id,
+            $request->validated(),
+            $request->session()->get('guest_cart_id')
+        );
     }
 
     public function destroy(Request $request, string $id): JsonResponse
     {
-        return $this->cartService->removeUserCartItem($request->user()->id, (int) $id);
+        return $this->cartService->removeUserCartItem(
+            $request->user()?->id,
+            (int) $id,
+            $request->session()->get('guest_cart_id')
+        );
     }
 
     public function clear(Request $request): JsonResponse
     {
-        return $this->cartService->clearUserCart($request->user()->id);
+        return $this->cartService->clearUserCart(
+            $request->user()?->id,
+            $request->session()->get('guest_cart_id')
+        );
     }
 }

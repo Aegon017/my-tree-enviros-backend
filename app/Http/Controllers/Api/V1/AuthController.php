@@ -12,6 +12,7 @@ use App\Http\Requests\Api\Auth\UpdateProfileRequest;
 use App\Http\Requests\Api\Auth\VerifyOtpRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Services\AuthService;
+use App\Services\CartService;
 use App\Traits\ResponseHelpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,10 @@ final class AuthController extends Controller
 {
     use ResponseHelpers;
 
-    public function __construct(private readonly AuthService $service) {}
+    public function __construct(
+        private readonly AuthService $service,
+        private readonly CartService $cartService
+    ) {}
 
     public function signUp(SignUpRequest $request): JsonResponse
     {
@@ -67,6 +71,15 @@ final class AuthController extends Controller
         }
 
         $token = $this->service->createToken($user);
+
+        $guestSessionId = $request->session()->get('guest_cart_id');
+        if ($guestSessionId) {
+            try {
+                $this->cartService->mergeGuestCart($guestSessionId, $user->id);
+            } catch (\Exception $e) {
+                report($e);
+            }
+        }
 
         return $this->success([
             'user' => new UserResource($user),

@@ -9,9 +9,25 @@ use App\Models\CartItem;
 
 final class CartRepository
 {
-    public function getOrCreate(int $userId): Cart
+    public function getOrCreate(?int $userId, ?string $sessionId = null): Cart
     {
-        return Cart::firstOrCreate(['user_id' => $userId]);
+        if ($userId) {
+            $cart = Cart::firstOrCreate(
+                ['user_id' => $userId, 'status' => Cart::STATUS_ACTIVE],
+                ['session_id' => $sessionId]
+            );
+
+            return $cart;
+        }
+
+        if ($sessionId) {
+            return Cart::firstOrCreate(
+                ['session_id' => $sessionId, 'status' => Cart::STATUS_ACTIVE],
+                ['user_id' => null]
+            );
+        }
+
+        throw new \InvalidArgumentException('Either User ID or Session ID must be provided.');
     }
 
     public function getWithRelations(Cart $cart): Cart

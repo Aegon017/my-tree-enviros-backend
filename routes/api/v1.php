@@ -116,18 +116,21 @@ Route::prefix('payment/phonepe')->group(function (): void {
     });
 });
 
+Route::prefix('cart')->group(function (): void {
+    Route::get('/', [CartController::class, 'index']);
+    Route::get('/count', [CartController::class, 'count']);
+    Route::post('/items', [CartController::class, 'store']);
+    Route::put('/items/{id}', [CartController::class, 'update']);
+    Route::delete('/items/{id}', [CartController::class, 'destroy']);
+    Route::delete('/', [CartController::class, 'clear']);
+});
+
 Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('me', [AuthController::class, 'updateProfile']);
     Route::post('sign-out', [AuthController::class, 'signOut']);
 
-    Route::prefix('cart')->group(function (): void {
-        Route::get('/', [CartController::class, 'index']);
-        Route::post('/items', [CartController::class, 'store']);
-        Route::put('/items/{id}', [CartController::class, 'update']);
-        Route::delete('/items/{id}', [CartController::class, 'destroy']);
-        Route::delete('/', [CartController::class, 'clear']);
-    });
+
 
     Route::get('/checkout', [CheckoutController::class, 'index']);
     Route::post('/checkout/prepare', [CheckoutController::class, 'prepare'])->name('checkout.prepare');

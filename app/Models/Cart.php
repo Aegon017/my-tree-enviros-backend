@@ -10,6 +10,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Cart extends Model
 {
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_CHECKED_OUT = 'checked_out';
+
+    protected $fillable = [
+        'user_id',
+        'session_id',
+        'status',
+        'type',
+    ];
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
