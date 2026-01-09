@@ -59,6 +59,7 @@ return [
         'client_id' => env('PHONEPE_CLIENT_ID'),
         'client_version' => env('PHONEPE_CLIENT_VERSION', 1),
         'client_secret' => env('PHONEPE_CLIENT_SECRET'),
+        'merchant_id' => env('PHONEPE_MERCHANT_ID'),
         'env' => env('PHONEPE_ENV', 'UAT'),
         'webhook_username' => env('PHONEPE_WEBHOOK_USERNAME'),
         'webhook_password' => env('PHONEPE_WEBHOOK_PASSWORD'),

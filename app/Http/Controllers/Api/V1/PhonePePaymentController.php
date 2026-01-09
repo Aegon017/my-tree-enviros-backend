@@ -18,17 +18,14 @@ final class PhonePePaymentController extends Controller
     use ResponseHelpers;
 
     /**
-     * Generate PhonePe payment token for mobile SDK
+     * Create Order Token for SDK integration (React Native / Web)
      */
-    public function generateToken(Request $request): JsonResponse
+    public function createOrderToken(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
                 'order_id' => 'required|integer|exists:orders,id',
-                'amount' => 'required|integer|min:1',
-                'merchant_transaction_id' => 'required|string',
-                'user_id' => 'required|string',
-                'user_mobile' => 'required|string|regex:/^[0-9]{10}$/',
+                'amount' => 'required|integer|min:100',
             ]);
 
             $user = $request->user();
@@ -38,48 +35,44 @@ final class PhonePePaymentController extends Controller
                 ->where('user_id', $user->id)
                 ->firstOrFail();
 
-            // Use PaymentFactory instead of directly instantiating PhonepeService
+            // Use PaymentFactory to get PhonePe service
             $phonePeService = PaymentFactory::driver('phonepe');
 
-            // Generate token
-            $token = $phonePeService->generateChecksum(
-                $validated['merchant_transaction_id'],
-                $validated['amount'],
-                $validated['user_id'],
-                $validated['user_mobile'],
-                $validated['order_id']
+            // Create order token
+            $result = $phonePeService->createOrderToken(
+                $order->id,
+                $validated['amount']
             );
 
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'token' => $token,
-                    'merchant_transaction_id' => $validated['merchant_transaction_id'],
-                    'amount' => $validated['amount'],
-                    'currency' => 'INR',
-                    'order_id' => $order->id,
-                    'reference_number' => $order->reference_number,
-                ],
-                'message' => 'Token generated successfully'
+            if (!$result['success']) {
+                return $this->error(
+                    $result['message'] ?? 'Failed to create order token',
+                    500
+                );
+            }
+
+            return $this->success([
+                'orderId' => $result['orderId'],
+                'merchantOrderId' => $result['merchantOrderId'],
+                'token' => $result['token'],
+                'state' => $result['state'],
+                'expireAt' => $result['expireAt'],
+                'amount' => $validated['amount'],
+                'currency' => 'INR',
             ]);
         } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            return $this->error(
+                'Validation failed',
+                422,
+                $e->errors()
+            );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order not found or does not belong to user'
-            ], 404);
+            return $this->error('Order not found or does not belong to user', 404);
         } catch (\Exception $e) {
-            Log::error('PhonePe Token Generation Error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to generate token: ' . $e->getMessage()
-            ], 500);
+            return $this->error(
+                'Failed to create order token: ' . $e->getMessage(),
+                500
+            );
         }
     }
 
@@ -180,6 +173,125 @@ final class PhonePePaymentController extends Controller
         }
     }
 
+    /**
+     * Check Order Status by merchant order ID
+     */
+    public function checkOrderStatus(Request $request, string $merchantOrderId): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            $phonePeService = PaymentFactory::driver('phonepe');
+            $result = $phonePeService->checkOrderStatus($merchantOrderId, false, true);
+
+            if (!$result['success']) {
+                return $this->error(
+                    $result['message'] ?? 'Failed to check order status',
+                    $result['status_code'] ?? 500
+                );
+            }
+
+            return $this->success($result['data']);
+        } catch (\Exception $e) {
+            return $this->error(
+                'Failed to check order status: ' . $e->getMessage(),
+                500
+            );
+        }
+    }
+
+    /**
+     * Initiate Refund
+     */
+    public function initiateRefund(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'order_id' => 'required|integer|exists:orders,id',
+                'merchant_order_id' => 'required|string',
+                'amount' => 'required|integer|min:100',
+                'reason' => 'nullable|string|max:500',
+            ]);
+
+            $user = $request->user();
+
+            $order = Order::where('id', $validated['order_id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
+            // Only allow refund if order is paid
+            if ($order->status !== 'paid') {
+                return $this->error(
+                    'Only paid orders can be refunded',
+                    400
+                );
+            }
+
+            $merchantRefundId = 'REFUND-' . time() . '-' . $order->id;
+
+            $phonePeService = PaymentFactory::driver('phonepe');
+            $result = $phonePeService->initiateRefund(
+                $merchantRefundId,
+                $validated['merchant_order_id'],
+                $validated['amount']
+            );
+
+            if (!$result['success']) {
+                return $this->error(
+                    $result['message'] ?? 'Failed to initiate refund',
+                    500
+                );
+            }
+
+            return $this->success([
+                'refundId' => $result['refundId'],
+                'merchantRefundId' => $merchantRefundId,
+                'amount' => $result['amount'],
+                'state' => $result['state'],
+            ]);
+        } catch (ValidationException $e) {
+            return $this->error(
+                'Validation failed',
+                422,
+                $e->errors()
+            );
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->error('Order not found', 404);
+        } catch (\Exception $e) {
+            return $this->error(
+                'Failed to initiate refund: ' . $e->getMessage(),
+                500
+            );
+        }
+    }
+
+    /**
+     * Get Refund Status
+     */
+    public function getRefundStatus(Request $request, string $merchantRefundId): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            $phonePeService = PaymentFactory::driver('phonepe');
+            $result = $phonePeService->checkRefundStatus($merchantRefundId);
+
+            if (!$result['success']) {
+                return $this->error(
+                    $result['message'] ?? 'Failed to check refund status',
+                    $result['status_code'] ?? 500
+                );
+            }
+
+            return $this->success($result['data']);
+        } catch (\Exception $e) {
+            return $this->error(
+                'Failed to check refund status: ' . $e->getMessage(),
+                500
+            );
+        }
+    }
+
     public function webhook(Request $request): JsonResponse
     {
         try {
@@ -191,7 +303,7 @@ final class PhonePePaymentController extends Controller
 
             // Verify and capture payment
             $phonePeService = PaymentFactory::driver('phonepe');
-            $result = $phonePeService->verifyAndCapture($payload);
+            $result = $phonePeService->handleWebhook($payload);
 
             return response()->json([
                 'success' => true,

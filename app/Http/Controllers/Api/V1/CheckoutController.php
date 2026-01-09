@@ -80,6 +80,15 @@ final class CheckoutController extends Controller
             'expires_at' => $attempt->expires_at,
             'grand_total' => $attempt->grand_total,
             'currency' => $attempt->currency,
+            // Add order field for React Native compatibility
+            'order' => [
+                'id' => $attempt->id,
+                'reference_number' => $attempt->attempt_reference,
+                'grand_total' => $attempt->grand_total,
+                'total' => $attempt->grand_total,
+                'currency' => $attempt->currency,
+                'status' => 'pending',
+            ],
         ]);
     }
 
