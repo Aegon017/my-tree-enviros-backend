@@ -102,10 +102,17 @@ Route::post('webhooks/phonepe', [PaymentWebhookController::class, 'phonepe'])->n
 Route::prefix('payment/phonepe')->group(function (): void {
     Route::post('/webhook', [PhonePePaymentController::class, 'webhook'])->name('api.v1.phonepe.webhook');
     Route::middleware(['auth:sanctum'])->group(function (): void {
+        // Legacy routes (keep for backward compatibility)
         Route::post('/token', [PhonePePaymentController::class, 'generateToken'])->name('api.v1.phonepe.generate-token');
         Route::post('/verify', [PhonePePaymentController::class, 'verifyPayment'])->name('api.v1.phonepe.verify');
         Route::get('/status/{orderId}', [PhonePePaymentController::class, 'getPaymentStatus'])->name('api.v1.phonepe.status');
         Route::post('/cancel', [PhonePePaymentController::class, 'cancelPayment'])->name('api.v1.phonepe.cancel');
+
+        // New SDK routes
+        Route::post('/create-order', [PhonePePaymentController::class, 'createOrderToken'])->name('api.v1.phonepe.create-order');
+        Route::get('/order-status/{merchantOrderId}', [PhonePePaymentController::class, 'checkOrderStatus'])->name('api.v1.phonepe.order-status');
+        Route::post('/refund', [PhonePePaymentController::class, 'initiateRefund'])->name('api.v1.phonepe.refund');
+        Route::get('/refund-status/{merchantRefundId}', [PhonePePaymentController::class, 'getRefundStatus'])->name('api.v1.phonepe.refund-status');
     });
 });
 
