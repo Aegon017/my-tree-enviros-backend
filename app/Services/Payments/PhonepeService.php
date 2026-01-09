@@ -24,11 +24,14 @@ final class PhonepeService
 
     private string $env;
 
+    private string $merchantId;
+
     public function __construct()
     {
         $this->clientId = (string) config('services.phonepe.client_id');
         $this->clientSecret = (string) config('services.phonepe.client_secret');
         $this->clientVersion = (int) (config('services.phonepe.client_version') ?? 1);
+        $this->merchantId = (string) config('services.phonepe.merchant_id');
         $this->env = (string) config('services.phonepe.env', 'UAT');
 
         // Initialize baseUrl based on environment
@@ -38,6 +41,10 @@ final class PhonepeService
 
         if ($this->clientId === '' || $this->clientId === '0' || ($this->clientSecret === '' || $this->clientSecret === '0')) {
             throw new RuntimeException('PhonePe credentials (client_id or client_secret) are missing in config.');
+        }
+
+        if ($this->merchantId === '' || $this->merchantId === '0') {
+            throw new RuntimeException('PhonePe merchant_id is missing in config.');
         }
     }
 
@@ -344,6 +351,247 @@ final class PhonepeService
             return [
                 'success' => false,
                 'message' => 'Transaction verification failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Create Order Token for SDK integration (React Native / Web)
+     * Uses the new v2/sdk/order endpoint
+     */
+    public function createOrderToken(int $orderId, int $amountInPaise, array $metaInfo = []): array
+    {
+        try {
+            $token = $this->getAccessToken();
+
+            $merchantOrderId = 'TX' . time() . $orderId;
+
+            $payload = [
+                'merchantOrderId' => $merchantOrderId,
+                'amount' => $amountInPaise,
+                'expireAfter' => 1200, // 20 minutes
+                'metaInfo' => array_merge([
+                    'udf1' => (string) $orderId,
+                    'udf2' => '',
+                    'udf3' => '',
+                    'udf4' => '',
+                    'udf5' => '',
+                ], $metaInfo),
+                'paymentFlow' => [
+                    'type' => 'PG_CHECKOUT',
+                ],
+            ];
+
+            $endpoint = $this->baseUrl . '/checkout/v2/sdk/order';
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'O-Bearer ' . $token,
+            ])->post($endpoint, $payload);
+
+            if (!$response->successful()) {
+                throw new RuntimeException('PhonePe Create Order Token Error: ' . $response->body());
+            }
+
+            $resData = $response->json();
+
+            return [
+                'success' => true,
+                'orderId' => $resData['orderId'] ?? null,
+                'merchantOrderId' => $merchantOrderId,
+                'state' => $resData['state'] ?? 'PENDING',
+                'expireAt' => $resData['expireAt'] ?? null,
+                'token' => $resData['token'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to create order token: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Check Order Status by merchant order ID
+     */
+    public function checkOrderStatus(string $merchantOrderId, bool $details = false, bool $errorContext = true): array
+    {
+        try {
+            $token = $this->getAccessToken();
+
+            $endpoint = $this->baseUrl . '/checkout/v2/order/' . $merchantOrderId . '/status';
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'O-Bearer ' . $token,
+            ])->get($endpoint, [
+                'details' => $details ? 'true' : 'false',
+                'errorContext' => $errorContext ? 'true' : 'false',
+            ]);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to check order status',
+                    'status_code' => $response->status(),
+                ];
+            }
+
+            $resData = $response->json();
+
+            return [
+                'success' => true,
+                'data' => $resData,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Order status check failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Initiate Refund
+     */
+    public function initiateRefund(string $merchantRefundId, string $originalMerchantOrderId, int $amountInPaise): array
+    {
+        try {
+            $token = $this->getAccessToken();
+
+            $payload = [
+                'merchantRefundId' => $merchantRefundId,
+                'originalMerchantOrderId' => $originalMerchantOrderId,
+                'amount' => $amountInPaise,
+            ];
+
+            $endpoint = $this->baseUrl . '/payments/v2/refund';
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'O-Bearer ' . $token,
+            ])->post($endpoint, $payload);
+
+            if (!$response->successful()) {
+                throw new RuntimeException('PhonePe Refund Initiation Error: ' . $response->body());
+            }
+
+            $resData = $response->json();
+
+            return [
+                'success' => true,
+                'refundId' => $resData['refundId'] ?? null,
+                'amount' => $resData['amount'] ?? null,
+                'state' => $resData['state'] ?? 'PENDING',
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to initiate refund: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Check Refund Status
+     */
+    public function checkRefundStatus(string $merchantRefundId): array
+    {
+        try {
+            $token = $this->getAccessToken();
+
+            $endpoint = $this->baseUrl . '/payments/v2/refund/' . $merchantRefundId . '/status';
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'O-Bearer ' . $token,
+            ])->get($endpoint);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to check refund status',
+                    'status_code' => $response->status(),
+                ];
+            }
+
+            $resData = $response->json();
+
+            return [
+                'success' => true,
+                'data' => $resData,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Refund status check failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Handle Webhook Callback (new event-based format)
+     */
+    public function handleWebhook(array $payload): array
+    {
+        try {
+            $event = $payload['event'] ?? null;
+            $payloadData = $payload['payload'] ?? [];
+
+            if (!$event) {
+                throw new RuntimeException('Webhook event type not found');
+            }
+
+            $orderId = $payloadData['orderId'] ?? null;
+            $merchantOrderId = $payloadData['merchantOrderId'] ?? null;
+            $state = $payloadData['state'] ?? null;
+
+            // Extract order ID from merchant order ID (format: TX{timestamp}{orderId})
+            if ($merchantOrderId && preg_match('/TX\d+(\d+)$/', $merchantOrderId, $matches)) {
+                $extractedOrderId = (int) $matches[1];
+            }
+
+            $result = [
+                'success' => true,
+                'event' => $event,
+                'orderId' => $orderId,
+                'merchantOrderId' => $merchantOrderId,
+                'state' => $state,
+                'extractedOrderId' => $extractedOrderId ?? null,
+            ];
+
+            // Handle different event types
+            if ($event === 'checkout.order.completed' && $state === 'COMPLETED') {
+                // Payment successful - update order
+                if (isset($extractedOrderId)) {
+                    $order = Order::find($extractedOrderId);
+                    if ($order && $order->status !== 'paid') {
+                        $transactionId = $payloadData['paymentDetails'][0]['transactionId'] ?? $orderId;
+
+                        OrderPayment::create([
+                            'order_id' => $order->id,
+                            'amount' => $order->grand_total,
+                            'payment_method' => 'phonepe',
+                            'transaction_id' => $transactionId,
+                            'status' => 'paid',
+                            'paid_at' => now(),
+                        ]);
+
+                        $order->update([
+                            'status' => 'paid',
+                            'paid_at' => now(),
+                        ]);
+
+                        $result['order_updated'] = true;
+                    }
+                }
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Webhook processing failed: ' . $e->getMessage(),
             ];
         }
     }
