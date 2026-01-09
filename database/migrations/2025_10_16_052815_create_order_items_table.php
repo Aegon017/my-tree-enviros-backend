@@ -25,6 +25,11 @@ return new class extends Migration
             $table->unsignedInteger('quantity');
             $table->decimal('amount', 12, 2)->nullable();
             $table->decimal('total_amount', 12, 2)->nullable();
+            $table->json('item_snapshot')->nullable();
+            $table->string('item_name')->nullable();
+            $table->decimal('unit_price', 12, 2)->nullable();
+            $table->decimal('discount_amount', 12, 2)->default(0);
+            $table->decimal('tax_amount', 12, 2)->default(0);
             $table->timestamps();
         });
     }

@@ -23,11 +23,16 @@ return new class extends Migration
             $table->decimal('grand_total', 12, 2)->default(0);
             $table->string('reference_number')->unique();
             $table->foreignId('shipping_address_id')->nullable()->constrained()->nullOnDelete();
+            $table->json('shipping_address_snapshot')->nullable();
             $table->foreignId('coupon_id')->nullable()->constrained()->nullOnDelete();
             $table->string('currency', 8);
             $table->timestamp('paid_at')->nullable();
             $table->decimal('total_amount', 12, 2)->nullable();
             $table->string('cancellation_reason')->nullable();
+            $table->string('courier_name')->nullable();
+            $table->string('tracking_id')->nullable();
+            $table->timestamp('shipped_at')->nullable();
+            $table->timestamp('delivered_at')->nullable();
             $table->timestamps();
         });
     }

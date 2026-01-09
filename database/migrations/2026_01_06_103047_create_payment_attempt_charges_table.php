@@ -12,16 +12,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('payment_attempt_id')->constrained()->cascadeOnDelete();
             $table->foreignId('charge_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('type'); // tax, shipping, fee
+            $table->string('type');
             $table->string('label');
             $table->decimal('amount', 12, 2);
             $table->json('meta')->nullable();
             $table->timestamps();
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('payment_attempt_charges');
     }
 };
