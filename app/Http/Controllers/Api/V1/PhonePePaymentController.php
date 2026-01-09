@@ -77,14 +77,76 @@ final class PhonePePaymentController extends Controller
     }
 
     /**
-     * Legacy method - alias for createOrderToken
-     * Kept for backward compatibility with old mobile app code
+     * Legacy method - Generate token for old mobile app integration
+     * Works with payment-first architecture using PaymentAttempt
      */
     public function generateToken(Request $request): JsonResponse
     {
-        return $this->createOrderToken($request);
-    }
+        try {
+            $validated = $request->validate([
+                'order_id' => 'nullable|integer', // This might be attempt ID in new flow
+                'amount' => 'required|integer|min:100',
+                'merchant_transaction_id' => 'required|string',
+                'user_id' => 'nullable|string',
+                'user_mobile' => 'nullable|string',
+            ]);
 
+            $user = $request->user();
+
+            // Use PaymentFactory to get PhonePe service
+            $phonePeService = PaymentFactory::driver('phonepe');
+
+            // Generate merchant order ID from the transaction ID
+            $merchantOrderId = $validated['merchant_transaction_id'];
+
+            // Create a simple payload for token generation
+            // In the old flow, this creates a checkout session
+            $payload = [
+                'merchantOrderId' => $merchantOrderId,
+                'amount' => $validated['amount'],
+                'paymentFlow' => [
+                    'type' => 'PG_CHECKOUT',
+                ],
+            ];
+
+            // Generate base64 encoded payload
+            $base64Payload = base64_encode(json_encode($payload));
+
+            // Generate checksum (SHA256 hash)
+            $saltKey = config('services.phonepe.client_secret');
+            $saltIndex = config('services.phonepe.client_version', 1);
+
+            $stringToHash = $base64Payload . '/pg/v1/pay' . $saltKey;
+            $sha256Hash = hash('sha256', $stringToHash);
+            $checksum = $sha256Hash . '###' . $saltIndex;
+
+            // Combine into final token
+            $token = $base64Payload . '###' . $checksum;
+
+            return $this->success([
+                'token' => $token,
+                'merchant_transaction_id' => $merchantOrderId,
+                'amount' => $validated['amount'],
+                'currency' => 'INR',
+            ]);
+        } catch (ValidationException $e) {
+            return $this->error(
+                'Validation failed',
+                422,
+                $e->errors()
+            );
+        } catch (\Exception $e) {
+            Log::error('PhonePe generateToken error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->error(
+                'Failed to generate PhonePe token: ' . $e->getMessage(),
+                500
+            );
+        }
+    }
 
     public function verifyPayment(Request $request): JsonResponse
     {
