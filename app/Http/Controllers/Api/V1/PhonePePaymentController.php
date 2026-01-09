@@ -99,10 +99,10 @@ final class PhonePePaymentController extends Controller
             // Generate merchant order ID from the transaction ID
             $merchantOrderId = $validated['merchant_transaction_id'];
 
-            // Create a simple payload for token generation
-            // In the old flow, this creates a checkout session
+            // Create payload for PhonePe SDK
+            // SDK expects 'orderId' field (not 'merchantOrderId')
             $payload = [
-                'merchantOrderId' => $merchantOrderId,
+                'orderId' => $merchantOrderId,
                 'amount' => $validated['amount'],
                 'paymentFlow' => [
                     'type' => 'PG_CHECKOUT',
